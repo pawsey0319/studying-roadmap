@@ -1,0 +1,2 @@
+# 统一用 LF 换行，避免 Windows 检出后 .sh 脚本因 CRLF 无法运行
+* text=auto eol=lf

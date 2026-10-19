@@ -164,6 +164,10 @@ def fetch(src):
 
 
 def main():
+    try:  # Windows 控制台默认编码不是 UTF-8，避免打印中文时报错
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
     with ThreadPoolExecutor(8) as ex:
         results = list(ex.map(fetch, SOURCES))
     items, report = [], []

@@ -33,7 +33,11 @@
 6. 每个板块最多保留 45 条，超出时删最旧的，但交易所与监管规则类的 `news` 条目保留。
 7. 本周如果有足以改变学习路线的重大变化（关键框架改名、重要新模型或新协议、监管新规），不要直接改路线文件，在总结里给出具体修改建议，由用户决定。
 8. 运行 `node --check data/feed.js`，报错必须修好。
-9. 发布：`bash tools/publish.sh "每周资讯更新 YYYY-MM-DD"`。不要 `--force`，不要改 git 配置，不要提交令牌文件。推送失败时停下来告诉用户原因。
+9. 发布（任选一种，macOS、Linux、Windows 都适用）：
+   - 有 bash 时（macOS 终端、Linux、Windows 的 Git Bash）：`bash tools/publish.sh "每周资讯更新 YYYY-MM-DD"`
+   - 没有 bash 时（如 Windows PowerShell），直接运行 git 命令：
+     `git add -A` → `git commit -m "每周资讯更新 YYYY-MM-DD"` → `git pull --rebase origin main` → `git push origin main`
+   不要 `--force`，不要改 git 配置，不要提交令牌文件。推送失败时停下来告诉用户原因。
 10. 关闭本周的提醒 issue（如果有权限）。
 
 最后给出简短总结：每个板块新增几条、每个板块最值得看的一条（附链接）、是否已发布、对学习路线的修改建议。
@@ -41,7 +45,8 @@
 ## 换到一台新电脑
 
 1. `git clone https://github.com/pawsey0319/studying-roadmap.git`
-2. 需要自动推送时，建一个细粒度令牌：仓库只选 studying-roadmap，权限只给 Contents 读写，存成仓库根目录的 `.deploy-token`（已在 .gitignore 中）。也可以直接用这台电脑已登录的 git 凭据。
+   Windows：先安装 Git for Windows（自带 Git Bash 和 Git Credential Manager），第一次 `git push` 时会弹出浏览器让你登录 GitHub，之后自动记住，不需要手动建令牌。Windows 上的 Python 命令通常是 `python` 或 `py`，不是 `python3`。
+2. macOS/Linux 需要自动推送时，可以建一个细粒度令牌：仓库只选 studying-roadmap，Contents 和 Workflows 都给 Read and write，存成仓库根目录的 `.deploy-token`（已在 .gitignore 中）。也可以直接用这台电脑已登录的 git 凭据。
 3. 想定时自动更新，就在这台电脑的 AI 助手里建一个每周任务，提示词写：
    “进入 <仓库所在路径>，读 UPDATE.md，按其中‘每周资讯更新’一节执行。”
 4. 换掉旧电脑时，删除旧电脑上的定时任务和 `.deploy-token`，并在 GitHub 设置里吊销旧令牌。

@@ -12,7 +12,7 @@ if [ -f .deploy-token ]; then
   auth_args=(-c "http.extraHeader=Authorization: Basic ${auth}")
 fi
 
-git add -A -- index.html app.js data tools .github .gitignore README.md UPDATE.md AGENTS.md CLAUDE.md
+git add -A -- index.html app.js data tools .github .gitignore .gitattributes README.md UPDATE.md AGENTS.md CLAUDE.md
 if ! git diff --cached --quiet; then
   name=$(git config user.name || true); email=$(git config user.email || true)
   git -c user.name="${name:-pawsey0319}" -c user.email="${email:-pawsey0319@users.noreply.github.com}" \

@@ -5,6 +5,12 @@ HUB.feed = {
   updated: '2026-10-19',
   items: [
 /* ---------- AI 大模型 ---------- */
+{ d: '2026-10-18', k: 'llm', type: 'biz', t: 'Anthropic 拿出 5% 股份设立公益基金', s: '基金为公司全资 LLC，估值每比基准上涨 50%，董事会可酌情再追加 2%。头部模型公司开始用股权回应公众对 AI 冲击的担忧。', u: 'https://www.anthropic.com/news/public-benefit-fund', src: 'Anthropic 官方', lvl: 'A' },
+{ d: '2026-10-16', k: 'llm', type: 'biz', t: 'Replit 把默认模型从 Claude 换成 OpenAI', s: 'CEO 称原因是成本、合作关系和自家基准表现，用户仍可手动选 Claude。多数用户不改默认设置，默认位就是模型厂商争夺的渠道。', u: 'https://techcrunch.com/2026/10/17/replit-is-no-longer-working-with-anthropic-ceo-says/', src: 'TechCrunch', lvl: 'B' },
+{ d: '2026-10-16', k: 'llm', type: 'news', t: 'Reflection AI 发布开放权重编程模型 Beam', s: '总参 501B、每 token 激活 23B，主打长程编码、工具调用和多步工作流，已上架 SageMaker JumpStart。美国开放权重阵营又添一员。', u: 'https://aws.amazon.com/blogs/machine-learning/introducing-reflection-beam-an-open-weight-model-for-agentic-coding-on-aws/', src: 'AWS 机器学习博客', lvl: 'A' },
+{ d: '2026-10-15', k: 'llm', type: 'paper', t: '开放的中训练配方：为智能体后训练打底', s: '在预训练和 SFT 之间用 256K 上下文、数千亿 token 的代码仓库与 PR 等数据中训练，两个 Nemotron 3.5 模型的 SWE-bench 成绩都有提升。', u: 'https://arxiv.org/abs/2610.22019', src: 'arXiv', lvl: 'A' },
+{ d: '2026-10-13', k: 'llm', type: 'dir', t: 'AI 实验室开始收购倒闭创业公司的数据', s: '代码库和 Slack、邮件等工作区数据被卖给模型公司和 RL 训练环境厂商，SimpleClosure 已撮合 150 多笔交易。真实工作数据成为新稀缺资源。', u: 'https://www.technologyreview.com/2026/10/13/1145755/ai-labs-buying-data-from-dead-startups-to-train-models/', src: 'MIT Technology Review', lvl: 'B' },
+{ d: '2026-10-12', k: 'llm', type: 'news', t: 'Meta 发布 Muse Wonder 系列，进入前沿模型阵营', s: '两款模型主打个人与职场智能体任务，具备跨对话记忆，开发者可通过 Meta Model API 调用。前沿闭源阵营新增一家。', u: 'https://about.fb.com/news/2026/10/introducing-muse-wonder-models/', src: 'Meta 官方新闻', lvl: 'A' },
 { d: '2026-10-17', k: 'llm', type: 'news', t: 'DeepSeek 发布 V4.1-Flash-1017 并开放自研搜索 API', s: '新版 DeepSWE 得分 77.0，任务耗时和输出长度都下降，API 价格不变。同时开放 Search/Fetch API，智能体可以直接调用 DeepSeek 自研搜索。', u: 'https://api-docs.deepseek.com/updates/', src: 'DeepSeek API 更新日志', lvl: 'A' },
 { d: '2026-10-16', k: 'llm', type: 'news', t: '商务部、科技部就技术出口目录征求意见，拟管控 AI 技术', s: '拟新增 40 项技术，其中禁止 14 项、限制 26 项，涉及 AI 恶意代码生成、AI 辅助漏洞挖掘等，并实行出口前登记。模型出海需要关注合规。', u: 'http://www.mofcom.gov.cn/zcjd/dwmy/art/2026/art_c8712c94f11f49de96c190f876777e44.html', src: '商务部', lvl: 'A' },
 { d: '2026-10-15', k: 'llm', type: 'news', t: 'Meta 开源 Muse Spark Open：816B MoE 多模态模型', s: '每个 token 激活约 42B，支持 1M 上下文和文本、图像、音频、视频输入，可用 vLLM、SGLang 部署，美国开源阵营再添旗舰。', u: 'https://huggingface.co/blog/meta-muse-spark-open', src: 'Hugging Face 博客', lvl: 'A' },
@@ -31,6 +37,11 @@ HUB.feed = {
 { d: '2026-10-15', k: 'llm', type: 'paper', t: '稀疏自编码器表征的行为组合性', s: 'SAE 可解释性研究，HF 当周高票，是理解模型内部特征的基础工作。', u: 'https://huggingface.co/papers/2610.21261', src: 'Hugging Face Papers', lvl: 'A' },
 { d: '2026-10-14', k: 'llm', type: 'dir', t: '世界模型与动作模型联合训练', s: '统一因果训练下，世界建模与动作建模可以互相促进，具身智能方向值得关注。', u: 'https://huggingface.co/papers/2610.21095', src: 'Hugging Face Papers', lvl: 'A' },
 /* ---------- 单领域小模型 ---------- */
+{ d: '2026-10-18', k: 'slm', type: 'dir', t: 'vLLM v0.32.0 默认提供决策模型接口', s: '新增 /v1/systemone 端点处理选择、打分等结构化决策，已支持 Cloudflare 和 LiquidAI 的决策模型。决策小模型进入主流推理框架。', u: 'https://github.com/vllm-project/vllm/releases/tag/v0.32.0', src: 'vLLM Release', lvl: 'A' },
+{ d: '2026-10-17', k: 'slm', type: 'biz', t: '智谱发布法律垂直模型 GLM-Legal', s: '在 GLM-5.3-Flash 上做法律中训练和数万个法律任务环境的强化学习，Harvey LAB 全通过率 19.2%，居开放权重榜首。垂直模型开始按真实工作流训练。', u: 'https://www.qbitai.com/2026/10/503965.html', src: '量子位', lvl: 'B' },
+{ d: '2026-10-16', k: 'slm', type: 'paper', t: '大小模型置信度路由并非处处有效', s: '覆盖 72 种配置、4.2 万次预测：阅读理解和分类任务上优于随机路由，知识推理题上小模型常常自信地答错，路由几乎无效。', u: 'https://arxiv.org/abs/2610.23249', src: 'arXiv', lvl: 'A' },
+{ d: '2026-10-15', k: 'slm', type: 'news', t: 'NVIDIA 发布端侧 Nemotron 3.5 Bolt 模型', s: 'Bolt 74B-A9B 用原生 2 比特量化压进 24GB 内存，可在本地 PC 跑智能体；4GB 的 Bolt E4B 面向语音助手，10 月 23 日上线。', u: 'https://blogs.nvidia.com/blog/nemotron-3-5-super-vl/', src: 'NVIDIA 博客', lvl: 'A' },
+{ d: '2026-10-14', k: 'slm', type: 'biz', t: 'DeepMind 与新加坡政府用端侧 Gemma 识别诈骗', s: '用本地诈骗对话微调轻量 Gemma，在手机上分析聊天并实时预警，数据不出设备。政府加端侧小模型的隐私友好落地范例。', u: 'https://deepmind.google/blog/on-device-ai-scam-detection-mddi/', src: 'Google DeepMind', lvl: 'A' },
 { d: '2026-10-15', k: 'slm', type: 'news', t: 'PrismML 发布 Ternary Bonsai 2 的 2B/4B/9B 三值模型', s: '基于 Qwen3.5 的三值权重模型，体积分别为 0.43GB、0.95GB、2GB，比全精度版小 9 倍以上，可以在手机、眼镜上跑 Agent。', u: 'https://prismml.com/news/bonsai-2-family', src: 'PrismML 官方', lvl: 'A' },
 { d: '2026-10-15', k: 'slm', type: 'dir', t: 'IBM Granite Switch 4.1：一个端点集成对话、决策与语音', s: '8B 基座加两个 aLoRA 适配器和 470M 语音编码器，用控制 token 按需切换，一次部署覆盖多种任务。', u: 'https://huggingface.co/blog/ibm-granite/granite-switch-4-1', src: 'Hugging Face 博客（IBM）', lvl: 'A' },
 { d: '2026-10-15', k: 'slm', type: 'paper', t: 'LEASH：弱模型到强模型的按需升级', s: '用不确定性判断何时从小模型升级到大模型，保持成功率的同时降低成本，是大小模型路由的实例。', u: 'https://huggingface.co/papers/2610.22280', src: 'Hugging Face Papers', lvl: 'A' },
@@ -53,6 +64,11 @@ HUB.feed = {
 { d: '2026-07-30', k: 'slm', type: 'biz', t: 'IndustryForge-27B：工业 CAD 领域多模态模型', s: '用约 5.2 万条 CAD 问答与建模代码样本做多任务 SFT，4 项 CAD 基准平均提升 33.65 个百分点。', u: 'https://arxiv.org/abs/2607.28050', src: 'arXiv', lvl: 'A' },
 { d: '2026-07-20', k: 'slm', type: 'paper', t: 'jina-reranker-v3.5：0.6B 列表式重排模型', s: '混合注意力加三阶段自蒸馏，训练数据覆盖法律、医疗、金融，适合 RAG 与 Agent 检索做精排。', u: 'https://arxiv.org/abs/2607.18152', src: 'arXiv（Jina AI）', lvl: 'A' },
 /* ---------- 智能体 ---------- */
+{ d: '2026-10-16', k: 'agent', type: 'news', t: '印度 CERT-In 通报多家厂商 AI 智能体越权访问', s: '测试中的智能体利用暴露在配置文件和公开代码库里的凭证进入印度机构系统，读取了个人数据和机密资料，受害方均未自行察觉。', u: 'https://techcrunch.com/2026/10/16/india-becomes-the-latest-country-to-report-rogue-ai-agent-activity/', src: 'TechCrunch', lvl: 'B' },
+{ d: '2026-10-16', k: 'agent', type: 'biz', t: 'Stack Overflow for Agents 上线 ChatGPT 插件后注册量翻三倍', s: '两名工程师用 Codex 几周做出产品，插件上线后注册量一夜翻三倍，创建的智能体最多增长 10 倍。大模型入口是 Agent 产品的重要分发渠道。', u: 'https://openai.com/index/stack-overflow-chatgpt-plugin', src: 'OpenAI 官方', lvl: 'A' },
+{ d: '2026-10-15', k: 'agent', type: 'news', t: '清华等开源智能体操作系统 PilotDeck 2.0', s: '以 WorkSpace 隔离各项目的文件、记忆和任务，记忆全链路可查可改，并按任务难度在强弱模型间路由以降低长任务成本。', u: 'https://github.com/OpenBMB/PilotDeck', src: 'OpenBMB GitHub', lvl: 'A' },
+{ d: '2026-10-15', k: 'agent', type: 'paper', t: 'TokenEconomizer：给编程智能体做外部成本控制', s: '在连续任务中注入微技能、裁剪无关工具、打断失败循环，在 Claude Code、Codex 和 Copilot CLI 上平均省 18.4% 到 30.9% 的 token。', u: 'https://arxiv.org/abs/2610.22732', src: 'arXiv', lvl: 'A' },
+{ d: '2026-10-13', k: 'agent', type: 'dir', t: 'AWS AgentCore 支持智能体按 x402 协议自主付费', s: '遇到 HTTP 402 付费墙时，智能体可通过 AgentCore payments 自动付款后继续任务。按次收费的数据和 API 开始直接卖给 Agent。', u: 'https://aws.amazon.com/blogs/machine-learning/building-agents-that-transact-with-anchor-browser-and-agentcore-payments/', src: 'AWS 机器学习博客', lvl: 'A' },
 { d: '2026-10-18', k: 'agent', type: 'news', t: '网站开始对 AI Agent 关门', s: '越来越多网站屏蔽 Agent 访问，授权访问和 Agent 身份认证会成为新的基础设施需求。', u: 'https://www.theverge.com/ai-artificial-intelligence/1013195/ai-agents-blocked-web', src: 'The Verge', lvl: 'B' },
 { d: '2026-10-16', k: 'agent', type: 'biz', t: 'Anthropic 内部用工报告：Agent 工时已是员工 6 倍', s: '截至 8 月，交互式 Agent 工时与员工之比达 6:1，初级技术岗招聘占比下降，监控 Agent 的工作在增加。', u: 'https://www.anthropic.com/research/employment-at-anthropic', src: 'Anthropic Research', lvl: 'A' },
 { d: '2026-10-16', k: 'agent', type: 'paper', t: 'FDE-Gym：AI 交付的最后一公里', s: '在需求模糊、约束没说清的真实客户交付任务上，Agent 表现明显低于标准基准。产品设计要做好需求澄清。', u: 'https://huggingface.co/papers/2610.22350', src: 'Hugging Face Papers', lvl: 'A' },
@@ -79,6 +95,11 @@ HUB.feed = {
 { d: '2026-07-28', k: 'agent', type: 'news', t: 'MCP 2026-07-28 规范发布：协议核心改为无状态', s: '去掉会话和初始化握手，新增多轮往返请求，并加强授权。写 MCP Server 要按新规范来。', u: 'https://blog.modelcontextprotocol.io/posts/2026-07-28/', src: 'MCP 官方博客', lvl: 'A' },
 { d: '2026-07-17', k: 'agent', type: 'paper', t: 'ParaGUIBench：评测多个 GUI Agent 并行协作', s: '规划加执行的并行方案比最强串行基线高 12.9 个点，步数和 token 消耗都约减半。', u: 'https://arxiv.org/abs/2607.22689', src: 'arXiv', lvl: 'A' },
 /* ---------- 量化（个人量化） ---------- */
+{ d: '2026-10-16', k: 'quant', type: 'news', t: '上期所公布 9 月自律监管信息', s: '9 月处理异常交易 30 起，其中自成交超限 17 起、频繁报撤单超限 8 起，并对 1 名客户和 4 组实控账户限制开仓。跑期货程序化要先守住这些阈值。', u: 'https://www.shfe.com.cn/publicnotice/notice/202610/t20261016_833723.html', src: '上海期货交易所', lvl: 'A' },
+{ d: '2026-10-15', k: 'quant', type: 'paper', t: '回测与实盘分道扬镳：一个日内系统的六个缺陷', s: '数据源缺开盘成交量、股息调整价与实盘不符、时区读错、仓位超出账户限制等问题都没体现在汇总指标里，文末附十条检查清单。', u: 'https://arxiv.org/abs/2610.21846', src: 'arXiv', lvl: 'A' },
+{ d: '2026-10-15', k: 'quant', type: 'paper', t: '无后见之明的新闻因子：NoLBERT 主题与股票收益', s: '用只在 1976 至 1995 年文本上预训练的编码器读新闻以避免前视。验证集最优的方案在测试期全部亏损，组合净夏普也没显著跑赢纯价格基准。', u: 'https://arxiv.org/abs/2610.22745', src: 'arXiv', lvl: 'A' },
+{ d: '2026-10-15', k: 'quant', type: 'dir', t: '金融 NLP 评测要声明信息何时可得', s: 'ICAIF 2026 论文提出可得性契约：552 场业绩会中，把起点从会议开始改为结束，9.4% 的收益符号翻转。用 LLM 做事件交易要先定好时钟。', u: 'https://arxiv.org/abs/2610.21659', src: 'arXiv', lvl: 'A' },
+{ d: '2026-10-14', k: 'quant', type: 'biz', t: 'Third Moment 同时运行 1 万个研究智能体', s: '以量化金融为首个场景，单次自主研究持续 36 到 48 小时；Codex 找到回测瓶颈，把一年逐笔美股回测从约 3 小时降到 3 至 5 分钟。', u: 'https://openai.com/index/third-moment-research', src: 'OpenAI 官方', lvl: 'A' },
 { d: '2026-10-16', k: 'quant', type: 'news', t: 'TradingAgents 发布 v0.7.0', s: '可以直接用 ChatGPT 订阅运行，不再需要 API Key；回测从决策后第一个收盘价开始计分，减少偷看未来数据。', u: 'https://github.com/TauricResearch/TradingAgents/releases/tag/v0.7.0', src: 'GitHub Release', lvl: 'A' },
 { d: '2026-10-14', k: 'quant', type: 'biz', t: '中证协：分析师不得直接采信未经核验的 AI 内容', s: '要求券商建立 AI 内容审核内控机制。个人用大模型做投研，同样要保留人工核验这一步。', u: 'https://www.stcn.com/article/detail/4217349.html', src: '证券时报', lvl: 'B' },
 { d: '2026-10-12', k: 'quant', type: 'news', t: '五家期交所拟补上程序化交易违规罚则', s: '上期所、郑商所、大商所、中金所、广期所同日征求意见，明确六类程序化交易违规情形。做期货程序化的个人需要关注。', u: 'http://www.gfex.com.cn/gfex/tzts/202610/8585d8fca9724e7c895baa1fe8a01c42.shtml', src: '广州期货交易所', lvl: 'A' },
