@@ -1,0 +1,38 @@
+name: 部署网站并刷新快照
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 0 * * *"   # 每天 UTC 0 点，即北京时间早上 8 点
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: 抓取官方博客与媒体快照
+        # 个别来源失败不影响部署，脚本会把失败情况写进快照
+        run: python3 tools/fetch_sources.py || echo "部分来源抓取失败"
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4

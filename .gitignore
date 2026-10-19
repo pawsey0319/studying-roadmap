@@ -1,0 +1,6 @@
+.DS_Store
+__pycache__/
+# 快照由 GitHub Actions 每天生成，不进仓库
+data/sources.js
+# 推送用的令牌，绝不能提交
+.deploy-token

@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>学习路线 · 大模型 / 小模型 / 智能体 / 量化</title>
+<style>
+:root{
+  color-scheme: light;
+  --paper:#EEF1F4; --card:#FFFFFF; --ink:#18202C; --muted:#5B6675; --faint:#8A94A3;
+  --line:#D5DBE3; --soft:#F6F8FA;
+  --c:#2F5BD3; /* 当前板块色，由 JS 切换 */
+  --serif:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong",serif;
+  --sans:"PingFang SC","Noto Sans SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.7 var(--sans);font-feature-settings:"tnum"}
+a{color:inherit;text-decoration-color:color-mix(in srgb,var(--c) 55%,transparent);text-underline-offset:3px}
+a:hover{color:var(--c)}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--c);outline-offset:2px;border-radius:4px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+h1,h2,h3{font-family:var(--serif);font-weight:700;line-height:1.3;margin:0}
+
+/* 顶部：26 周总图就是首屏 */
+header.top{padding:36px 0 8px}
+.title-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 32px;justify-content:space-between}
+h1{font-size:34px;letter-spacing:.02em}
+.lede{color:var(--muted);margin:6px 0 0;max-width:62ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;color:var(--muted);font-size:14px}
+.meta label{display:flex;gap:8px;align-items:center}
+.meta input[type=date]{border:1px solid var(--line);background:var(--card);border-radius:6px;padding:3px 8px}
+.weekbig{font-family:var(--serif);font-size:22px;color:var(--ink)}
+
+.gantt{margin:26px 0 0;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px 14px}
+.g-scale,.g-row{display:grid;grid-template-columns:96px 1fr 56px;align-items:center;gap:14px}
+.g-scale .ticks{display:grid;grid-template-columns:repeat(26,1fr);font-size:11px;color:var(--faint)}
+.g-scale .ticks span{text-align:center}
+.g-row{padding:7px 0;border:0;background:none;width:100%;text-align:left;cursor:pointer;border-radius:8px}
+.g-row:hover .g-name{color:var(--rc)}
+.g-row[aria-current=true] .g-name{color:var(--rc)}
+.g-name{font-weight:600;font-size:14px}
+.g-bar{position:relative;display:grid;grid-template-columns:repeat(26,1fr);gap:3px;height:30px}
+.seg{position:relative;border-radius:5px;background:color-mix(in srgb,var(--rc) 14%,#fff);overflow:hidden;
+  display:flex;align-items:center;padding:0 8px;font-size:12px;color:color-mix(in srgb,var(--rc) 70%,#000);white-space:nowrap}
+.seg i{position:absolute;inset:0 auto 0 0;background:color-mix(in srgb,var(--rc) 34%,#fff);width:0}
+.seg b{position:relative;font-weight:500;overflow:hidden;text-overflow:ellipsis}
+.seg.now{box-shadow:inset 0 0 0 2px var(--rc)}
+.g-pct{font-size:13px;color:var(--muted);text-align:right}
+.needle{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--ink);border-radius:2px;pointer-events:none}
+.needle-wrap{position:absolute;left:110px;right:70px;top:0;bottom:0;pointer-events:none}
+.g-body{position:relative}
+.g-foot{display:flex;flex-wrap:wrap;gap:6px 20px;margin-top:10px;font-size:13px;color:var(--muted)}
+.g-foot strong{color:var(--ink);font-weight:600}
+
+/* 板块切换 */
+nav.tabs{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(6px);
+  margin-top:22px;border-bottom:1px solid var(--line)}
+nav.tabs .wrap{display:flex;gap:4px;overflow-x:auto}
+.tab{border:0;background:none;padding:14px 16px 12px;font-size:16px;font-weight:600;color:var(--muted);cursor:pointer;
+  border-bottom:3px solid transparent;white-space:nowrap}
+.tab small{font-weight:400;font-size:12px;margin-left:6px;color:var(--faint)}
+.tab[aria-selected=true]{color:var(--ink);border-bottom-color:var(--tc)}
+.tab:hover{color:var(--ink)}
+/* 板块正文 */
+main{padding:28px 0 64px}
+.panel-head{display:grid;grid-template-columns:1fr auto;gap:8px 28px;align-items:end}
+.panel-head h2{font-size:30px;color:var(--c)}
+.panel-head p{margin:6px 0 0;max-width:70ch;color:var(--muted)}
+.panel-head .stat{text-align:right;font-size:13px;color:var(--muted)}
+.panel-head .stat b{display:block;font-family:var(--serif);font-size:28px;color:var(--ink);font-weight:700}
+.note{margin:16px 0 0;padding:12px 16px;border-left:3px solid var(--c);background:color-mix(in srgb,var(--c) 6%,#fff);border-radius:0 8px 8px 0;font-size:14px;color:var(--muted);max-width:80ch}
+.jump{display:flex;flex-wrap:wrap;gap:6px 18px;margin:20px 0 6px;font-size:14px}
+.jump a{color:var(--muted)}
+section.blk{margin-top:36px;scroll-margin-top:72px}
+nav.tabs{scroll-margin-top:0}
+section.blk>h3{font-size:21px;margin-bottom:4px}
+section.blk>.sub{color:var(--muted);font-size:14px;margin:0 0 14px}
+
+/* 阶段：真实的时间顺序，所以用周次作为标记 */
+.stages{list-style:none;margin:0;padding:0;position:relative}
+.stages:before{content:"";position:absolute;left:104px;top:10px;bottom:10px;width:2px;background:var(--line)}
+.stage{display:grid;grid-template-columns:96px 1fr;gap:0 18px;margin-bottom:14px}
+.wk{position:relative;padding:16px 10px 0 0;text-align:right;font-size:12px;color:var(--faint);line-height:1.3}
+.wk b{display:block;font-size:15px;color:var(--ink);font-weight:600}
+.wk:after{content:"";position:absolute;right:-15px;top:21px;width:12px;height:12px;border-radius:50%;background:var(--paper);border:2px solid var(--line)}
+.stage.done .wk:after{background:var(--c);border-color:var(--c)}
+.stage.now .wk:after{border-color:var(--c);box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 20%,transparent)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px}
+.stage .card{overflow:hidden}
+.stage.now .card{border-color:color-mix(in srgb,var(--c) 55%,var(--line))}
+.s-sum{display:flex;gap:14px;align-items:center;width:100%;border:0;background:none;padding:14px 18px;text-align:left;cursor:pointer}
+.s-sum h4{margin:0;font-family:var(--serif);font-size:17px;flex:1}
+.s-sum .prog{font-size:13px;color:var(--muted);white-space:nowrap}
+.s-sum .chev{transition:transform .2s;color:var(--faint)}
+.stage[data-open=true] .chev{transform:rotate(90deg)}
+.minibar{height:3px;background:var(--soft)}
+.minibar i{display:block;height:100%;background:var(--c);width:0;transition:width .3s}
+.s-body{display:none;padding:4px 18px 18px;border-top:1px solid var(--soft)}
+.stage[data-open=true] .s-body{display:block}
+.s-goal{margin:12px 0 14px;color:var(--muted);max-width:75ch}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.col h5{margin:0 0 6px;font-size:13px;font-weight:600;color:var(--c)}
+.col h5 span{color:var(--faint);font-weight:400;margin-left:6px}
+.task{display:flex;gap:10px;align-items:flex-start;padding:6px 0;font-size:14px;line-height:1.6;cursor:pointer}
+.task input{margin-top:4px;accent-color:var(--c);width:15px;height:15px;flex:none}
+.task.on span{color:var(--faint);text-decoration:line-through;text-decoration-color:var(--line)}
+.res{margin-top:16px}
+.res h5{margin:0 0 6px;font-size:13px;font-weight:600}
+.res ul{margin:0;padding:0;list-style:none;columns:2;column-gap:24px}
+.res li{break-inside:avoid;font-size:14px;padding:3px 0 3px 14px;position:relative}
+.res li:before{content:"";position:absolute;left:0;top:12px;width:5px;height:5px;border-radius:50%;background:color-mix(in srgb,var(--c) 50%,#fff)}
+.res li.nolink{color:var(--muted)}
+.res li.nolink em{font-style:normal;font-size:12px;color:var(--faint);margin-left:4px}
+.out{margin-top:14px;font-size:14px;padding:10px 12px;background:var(--soft);border-radius:8px}
+.out b{font-weight:600;margin-right:6px}
+.notes{margin-top:12px}
+.notes textarea{width:100%;min-height:64px;border:1px dashed var(--line);border-radius:8px;padding:8px 10px;background:#fff;resize:vertical;font-size:14px}
+.notes textarea:focus{border-style:solid;border-color:var(--c);outline:none}
+
+/* 前沿、商机 */
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.item{padding:14px 16px}
+.item h4{margin:0 0 4px;font-size:15px}
+.item p{margin:0;font-size:14px;color:var(--muted)}
+.item .links{margin-top:6px;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 14px}
+.biz{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.biz h4.cap{font-family:var(--serif);font-size:16px;margin:0 0 8px}
+.biz .item{margin-bottom:10px}
+
+/* 资讯 */
+.feedbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:3px 12px;font-size:13px;cursor:pointer;color:var(--muted)}
+.chip[aria-pressed=true]{background:var(--c);border-color:var(--c);color:#fff}
+.feed{list-style:none;margin:0;padding:0}
+.feed li{display:grid;grid-template-columns:86px 1fr;gap:14px;padding:11px 0;border-bottom:1px solid var(--line)}
+.feed time{font-size:12px;color:var(--faint);padding-top:3px}
+.feed .ft{font-weight:600;font-size:15px}
+.feed .fs{font-size:14px;color:var(--muted);margin-top:2px}
+.tag{display:inline-block;font-size:11px;padding:0 6px;border-radius:4px;margin-right:6px;vertical-align:2px;background:var(--soft);color:var(--muted)}
+.live{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.live .card{padding:14px 16px;min-height:120px}
+.live h4{margin:0 0 8px;font-size:14px;display:flex;justify-content:space-between;gap:8px}
+.live h4 button{border:0;background:none;color:var(--faint);font-size:12px;cursor:pointer}
+.live ol{margin:0;padding-left:18px;font-size:13.5px}
+.live li{padding:3px 0}
+.live li small{color:var(--faint);margin-left:4px}
+.live .msg{font-size:13px;color:var(--faint)}
+
+footer{border-top:1px solid var(--line);padding:22px 0 40px;font-size:13px;color:var(--muted)}
+footer .row{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:5px 12px;cursor:pointer;font-size:13px}
+.btn:hover{border-color:var(--ink)}
+.syncrow{margin-top:12px}
+.btn.primary{background:var(--c);border-color:var(--c);color:#fff}
+dialog{border:1px solid var(--line);border-radius:12px;padding:22px 24px;max-width:520px;width:calc(100% - 32px);color:var(--ink)}
+dialog::backdrop{background:rgba(24,32,44,.35)}
+dialog h3{font-size:19px;margin-bottom:6px}
+dialog p,dialog li{font-size:14px;color:var(--muted)}
+dialog ol{padding-left:20px;margin:8px 0 14px}
+dialog label{display:block;font-size:13px;font-weight:600;margin-bottom:4px}
+dialog input{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px}
+dialog .hint{color:#B42318;min-height:1em;margin:6px 0 0}
+dialog .small{font-size:12.5px}
+.dlgbtns{display:flex;justify-content:space-between;gap:8px;margin-top:14px}
+.dlgbtns span{display:flex;gap:8px}
+
+@media (max-width:820px){
+  .cols,.grid2,.biz,.live{grid-template-columns:1fr}
+  .res ul{columns:1}
+  .g-scale,.g-row{grid-template-columns:62px 1fr 40px;gap:8px}
+  .needle-wrap{left:70px;right:48px}
+  .seg b{display:none}
+  .stage{grid-template-columns:60px 1fr;gap:0 14px}
+  .stages:before{left:66px}
+  .wk:after{right:-13px}
+  h1{font-size:27px}
+  .panel-head{grid-template-columns:1fr}
+  .panel-head .stat{text-align:left}
+  .feed li{grid-template-columns:1fr;gap:2px}
+}
+
+/* 实时渠道与来源可信度 */
+.live{grid-template-columns:repeat(3,1fr)}
+.live h4 span{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px}
+.kind{font-style:normal;font-weight:400;font-size:11px;color:var(--faint)}
+.snapcard{margin-top:12px;padding:14px 16px}
+.snaph{margin:0 0 10px;font-size:14px}
+.snapbar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-bottom:6px}
+.snapbar select{border:1px solid var(--line);border-radius:6px;padding:3px 8px;background:#fff;font-size:13px}
+.snap{list-style:none;margin:0 0 10px;padding:0;columns:2;column-gap:28px}
+.snap li{break-inside:avoid;display:grid;grid-template-columns:44px 1fr;gap:8px;padding:5px 0;font-size:13.5px;border-bottom:1px solid var(--soft)}
+.snap time{color:var(--faint);font-size:12px;padding-top:2px}
+.ssrc{color:var(--muted);font-size:12px;margin-right:6px}
+.lvl{display:inline-block;font-size:11px;line-height:17px;padding:0 6px;border-radius:4px;margin-right:6px;vertical-align:1px;white-space:nowrap}
+.lvl-a{background:color-mix(in srgb,#13836B 14%,#fff);color:#0E6653}
+.lvl-b{background:color-mix(in srgb,#2F5BD3 12%,#fff);color:#2A4FB4}
+.fsrc{margin-top:4px;font-size:12px;color:var(--faint)}
+.fgroup{border-top:1px solid var(--line)}
+.fgroup:last-child{border-bottom:1px solid var(--line)}
+.fgroup summary{cursor:pointer;padding:12px 2px;display:flex;gap:10px;align-items:baseline;font-family:var(--serif);font-weight:700;font-size:16px;list-style:none}
+.fgroup summary::-webkit-details-marker{display:none}
+.fgroup summary:before{content:"›";font-family:var(--sans);color:var(--faint);transition:transform .2s;display:inline-block}
+.fgroup[open] summary:before{transform:rotate(90deg)}
+.fgroup summary small{font-family:var(--sans);font-weight:400;font-size:13px;color:var(--faint)}
+.fgroup .feed li:last-child{border-bottom:0}
+.fgroup .feed{margin-bottom:6px}
+code{font-size:12.5px;background:var(--soft);padding:1px 5px;border-radius:4px}
+@media (max-width:1000px){.live{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:820px){.live,.snap{grid-template-columns:1fr;columns:1}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="title-row">
+      <div>
+        <h1>我的 AI 学习路线</h1>
+        <p class="lede">26 周，每周约 10 小时，产品与技术各占一半。从 Python、Transformer、概率论和高等代数出发，走到能跟上前沿、能判断哪里有生意。</p>
+      </div>
+      <div class="meta">
+        <span class="weekbig" id="weekLabel">第 1 周</span>
+        <label>开始日期 <input type="date" id="startDate"></label>
+      </div>
+    </div>
+    <div class="gantt" aria-label="四个方向的 26 周进度总览">
+      <div class="g-scale"><span></span><div class="ticks" id="ticks"></div><span></span></div>
+      <div class="g-body" id="gBody"></div>
+      <div class="g-foot" id="gFoot"></div>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="学习方向"><div class="wrap" role="tablist" id="tabs"></div></nav>
+
+<main><div class="wrap" id="panel" role="tabpanel"></div></main>
+
+<footer>
+  <div class="wrap row">
+    <span id="feedInfo"></span>
+    <span>
+      <button class="btn" id="exportBtn">导出进度和笔记</button>
+      <button class="btn" id="importBtn">导入</button>
+      <input type="file" id="importFile" accept="application/json" hidden>
+    </span>
+  </div>
+  <div class="wrap row syncrow">
+    <span id="syncState" role="status"></span>
+    <button class="btn" id="syncBtn">设置多设备同步</button>
+  </div>
+</footer>
+
+<dialog id="syncDlg" aria-labelledby="syncTitle">
+  <form id="syncForm" method="dialog">
+    <h3 id="syncTitle">多设备同步</h3>
+    <p>进度和笔记会存进你 GitHub 账号下的一个私有 Gist。每台设备填一次同一个令牌就行。</p>
+    <ol>
+      <li>打开 <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub 新建细粒度令牌</a>，名称随意，有效期建议选 1 年。</li>
+      <li>Repository access 选 “Public repositories”，Account permissions 里只把 <b>Gists</b> 设为 “Read and write”，其他都不要开。</li>
+      <li>生成后复制以 github_pat_ 开头的令牌，粘贴到下面。</li>
+    </ol>
+    <label for="syncToken">令牌</label>
+    <input id="syncToken" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_...">
+    <p class="hint" id="syncHint" role="alert"></p>
+    <p class="small">令牌只保存在这台设备的浏览器里，只会发给 api.github.com。设备丢失时去 GitHub 设置里删除这个令牌即可。</p>
+    <div class="dlgbtns">
+      <button class="btn" value="off" formnovalidate>关闭同步</button>
+      <span>
+        <button class="btn" value="cancel" formnovalidate>取消</button>
+        <button class="btn primary" value="save">保存并同步</button>
+      </span>
+    </div>
+  </form>
+</dialog>
+
+<script>window.HUB={tracks:[],track(t){this.tracks.push(t)},feed:{updated:'',items:[]}};</script>
+<script src="data/llm.js"></script>
+<script src="data/slm.js"></script>
+<script src="data/agent.js"></script>
+<script src="data/quant.js"></script>
+<script src="data/feed.js"></script>
+<script src="data/sources.js" onerror="void 0"></script>
+<script src="app.js"></script>
+</body>
+</html>
