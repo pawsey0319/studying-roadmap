@@ -1,0 +1,29 @@
+name: 每周资讯更新提醒
+
+on:
+  schedule:
+    - cron: "0 1 * * 1"   # 每周一 UTC 1 点，即北京时间 9 点
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: 关闭上周未处理的提醒并新开一个
+        run: |
+          gh label create weekly-update --color 2F5BD3 --description "每周资讯更新提醒" --force || true
+          for n in $(gh issue list --label weekly-update --state open --json number -q '.[].number'); do
+            gh issue close "$n" --comment "已有新一周的提醒，关闭这条。" || true
+          done
+          day=$(TZ=Asia/Shanghai date +%F)
+          gh issue create --label weekly-update --title "本周资讯更新 ${day}" --body "在任意一台电脑上，用 AI 助手打开本仓库，发送：
+
+          > 读 UPDATE.md，按其中“每周资讯更新”一节执行。
+
+          完成并推送后关闭这条 issue。官方博客与媒体快照每天由 GitHub Actions 自动更新，不需要手动处理。"

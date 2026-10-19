@@ -9,3 +9,4 @@
 - 官方博客与媒体快照：GitHub Actions 每天北京时间 8 点运行 `tools/fetch_sources.py` 生成，不进仓库
 - 进度与笔记：保存在浏览器里，可在页面底部设置用私有 Gist 在多台设备间同步
 - 发布本地改动：`bash tools/publish.sh "说明"`
+- 每周资讯更新与换电脑的步骤：见 [UPDATE.md](UPDATE.md)，任何电脑上的任何 AI 助手都能照着执行
