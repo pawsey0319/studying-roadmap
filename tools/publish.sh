@@ -20,16 +20,12 @@ if ! git diff --cached --quiet; then
 fi
 
 # 远端已有 main 时先拉取（第一次推送到空仓库时跳过）
-if git "${auth_args[@]}" ls-remote --exit-code --heads origin main >/dev/null 2>&1; then
-  git "${auth_args[@]}" pull -q --rebase origin main
+if git ${auth_args[@]+"${auth_args[@]}"} ls-remote --exit-code --heads origin main >/dev/null 2>&1; then
+  git ${auth_args[@]+"${auth_args[@]}"} pull -q --rebase origin main
   if [ -z "$(git log origin/main..HEAD --oneline)" ]; then
     echo "没有需要发布的改动"
     exit 0
   fi
 fi
-if false; then
-  echo "没有需要发布的改动"
-  exit 0
-fi
-git "${auth_args[@]}" push -q origin HEAD:main
+git ${auth_args[@]+"${auth_args[@]}"} push -q origin HEAD:main
 echo "已推送，网站会在一两分钟后更新"
