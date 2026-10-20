@@ -11,6 +11,7 @@
   - `data/llm.js` `data/slm.js` `data/agent.js` `data/quant.js`：学习路线、前沿方向、商机。资源优先给链接，没有链接的写资源名称。
   - `data/feed.js`：精选资讯与论文，每周更新。
   - `data/sources.js`：官方博客与媒体快照，由 GitHub Actions 每天运行 `tools/fetch_sources.py` 生成，不进仓库。
+  - `data/community.js`：Reddit 与 Hacker News 社区讨论，每周更新时运行 `tools/fetch_community.py` 生成，提交进仓库。
   - `.github/workflows/pages.yml`：推送后自动部署，并每天北京时间 8 点刷新快照。
   - `.github/workflows/weekly-reminder.yml`：每周一在仓库里开一个提醒 issue。
   - `tools/publish.sh`：提交并推送。
@@ -18,6 +19,8 @@
 ## 每周资讯更新（每周一次，任何电脑都可以做）
 
 开始前先在仓库根目录运行 `git pull`，拿到其他电脑上的最新改动。
+
+0. 抓取社区讨论：运行 `python3 tools/fetch_community.py`（Windows 用 `python` 或 `py`），会更新 `data/community.js`（Reddit 每周高票帖和 Hacker News 高分帖，网站上标为“社区讨论”）。这一步要在个人电脑上做，因为 Reddit 经常拦截云服务器。大约需要 1–3 分钟；Reddit 某个分组被限流时会自动重试，仍失败也没关系，其余结果照常写入。如果全部失败，脚本会保留上一周的文件，在总结里说明即可。社区内容只做线索，不要直接当作精选资讯的来源。
 
 1. 读 `data/feed.js`，按链接和标题去重。
 2. 收集过去 7 天的内容，每个板块新增 4–6 条，尽量覆盖四类：`news`（重要模型/产品/框架发布、监管变化）、`paper`（重要论文或技术报告）、`dir`（新方向/趋势）、`biz`（落地案例、收入与融资、商业模式）。量化板块重点关注个人量化：A 股和期货的交易与程序化交易规则、证监会与交易所公告、券商 QMT/PTrade、开源量化工具（Qlib、RD-Agent、vn.py、AKShare、TradingAgents 等）的正式版本、LLM/Agent 用于投研的论文。

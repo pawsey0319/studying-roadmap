@@ -145,11 +145,18 @@
   }
 
   /* ---------- 官方博客与媒体快照（tools/fetch_sources.py 每天生成 data/sources.js） ---------- */
+  // 每日快照（云端抓取）+ 每周社区快照（AI 助手抓取）合并显示
+  function snapAll() {
+    const a = (HUB.sources && HUB.sources.items) || [], c = (HUB.community && HUB.community.items) || [];
+    const seen = new Set();
+    return [...c, ...a].filter(x => !seen.has(x.u) && seen.add(x.u)).sort((x, y) => (x.d < y.d ? 1 : -1));
+  }
   function snapHtml(t) {
     const H = HUB.sources;
-    if (!H || !H.items) return `<p class="msg">还没有快照。在“学习”文件夹运行 <code>python3 learning-hub/tools/fetch_sources.py</code> 生成，或等每日定时任务运行。</p>`;
+    if ((!H || !H.items) && !HUB.community) return `<p class="msg">还没有快照。推送到 GitHub 后每天自动生成；本地预览可在仓库目录运行 <code>python3 tools/fetch_sources.py</code>。</p>`;
     const lvF = S.snapLvl && S.snapLvl[t.id] || 'all';
-    const its = H.items.filter(x => x.k.includes(t.id) && (lvF === 'all' || x.lvl === lvF));
+    const ALL = snapAll();
+    const its = ALL.filter(x => x.k.includes(t.id) && (lvF === 'all' || x.lvl === lvF));
     const srcF = S.snapSrc && S.snapSrc[t.id] || 'all';
     const names = [...new Set(its.map(x => x.src))];
     const shown = its.filter(x => srcF === 'all' || x.src === srcF);
@@ -159,10 +166,11 @@
     const rows = shown.slice(0, limit).map(x => `<li><time>${esc(x.d.slice(5))}</time><div>${lvlBadge(x.lvl)}<span class="ssrc">${esc(x.src)}</span>${link(x.t, x.u)}</div></li>`).join('');
     const more = shown.length > limit ? `<button class="btn" data-snapmore>显示更多（共 ${shown.length} 条）</button>`
       : (limit > 12 && shown.length > 12 ? `<button class="btn" data-snapmore>收起</button>` : '');
-    const base = H.items.filter(x => x.k.includes(t.id));
+    const base = ALL.filter(x => x.k.includes(t.id));
+    const C = HUB.community;
     const lvls = ['all', 'A', 'B', 'C'].map(l => `<button class="chip" data-snaplvl="${l}" aria-pressed="${lvF === l}">${l === 'all' ? '全部' : LVL[l]} ${l === 'all' ? base.length : base.filter(x => x.lvl === l).length}</button>`).join('');
-    return `<div class="snapbar">${lvls}${sel}<span class="msg">快照时间 ${esc(H.updated)}，共 ${H.sources.length} 个来源，只保留近 45 天</span></div>
-      ${rows ? `<ul class="snap">${rows}</ul>` : `<p class="msg snapempty">${lvF === 'C' ? '最近一次抓取没有拿到与本板块相关的社区讨论（Reddit 有时会限流），明天自动重试。' : '这个来源近期没有与本板块相关的内容。'}</p>`}${more}`;
+    return `<div class="snapbar">${lvls}${sel}<span class="msg">${H ? `官方与媒体快照 ${esc(H.updated)}（每天自动）` : ''}${C ? `；Reddit 与 Hacker News ${esc(C.updated)}（每周更新时抓取）` : '；Reddit 与 Hacker News 将在下次每周更新时加入'}</span></div>
+      ${rows ? `<ul class="snap">${rows}</ul>` : `<p class="msg snapempty">${lvF === 'C' ? '这一周没有抓到与本板块相关的社区讨论。Reddit 和 Hacker News 在每周资讯更新时由 AI 助手抓取（Reddit 会拦截 GitHub 的云服务器）。' : '这个来源近期没有与本板块相关的内容。'}</p>`}${more}`;
   }
 
   function renderPanel() {
@@ -179,7 +187,7 @@
       <div class="jump"><a href="#b-route">学习路线</a><a href="#b-live">实时动态</a><a href="#b-feed">精选资讯与论文</a><a href="#b-front">前沿方向</a><a href="#b-biz">落地与商机</a></div>
       <section class="blk" id="b-route"><h3>学习路线</h3><p class="sub">每个阶段分技术和产品两列任务，勾选即记录进度；当前周所在阶段会自动展开。</p>
         <ol class="stages">${t.stages.map((s, si) => stageHtml(t, s, si, w)).join('')}</ol></section>
-      <section class="blk" id="b-live"><h3>实时动态</h3><p class="sub">上面 6 个渠道在打开页面时直接从公开接口拉取（1 小时内用缓存），下面的快照由 GitHub 每天北京时间 8 点抓取，包括官方博客、权威媒体、量化研究博客，以及 Reddit、Hacker News、Lobsters 的高票讨论。标签说明来源类型：一手来源指官方或项目原始发布；社区讨论和社区热度只代表关注度，内容未经核实。</p>
+      <section class="blk" id="b-live"><h3>实时动态</h3><p class="sub">上面 6 个渠道在打开页面时直接从公开接口拉取（1 小时内用缓存），下面的快照里，官方博客、权威媒体、量化研究博客由 GitHub 每天北京时间 8 点抓取；Reddit 和 Hacker News 的高票讨论在每周资讯更新时由 AI 助手抓取（Reddit 会拦截 GitHub 的云服务器）。标签说明来源类型：一手来源指官方或项目原始发布；社区讨论和社区热度只代表关注度，内容未经核实。</p>
         <div class="live">${LIVE.map(c => `<div class="card"><h4><span>${esc(c.name)}<em class="kind">${esc(c.kind)}</em></span><button data-reload="${c.id}" aria-label="刷新${esc(c.name)}">刷新</button></h4><div id="live-${c.id}" class="msg">加载中…</div></div>`).join('')}</div>
         <div class="card snapcard"><h4 class="snaph">官方博客、权威媒体与社区讨论</h4><div id="snap">${snapHtml(t)}</div></div></section>
       <section class="blk" id="b-feed"><h3>精选资讯与论文</h3><p class="sub">逐条打开原文核对过日期和内容，只收一手来源和权威媒体。最近 30 天默认展开，更早的折叠起来。最后更新：${esc(HUB.feed.updated)}。</p>${feedHtml(t)}</section>

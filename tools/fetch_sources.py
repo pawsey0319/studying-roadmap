@@ -67,8 +67,7 @@ SOURCES = [
     ("Alpha Architect", "https://alphaarchitect.com/feed/", "B", ["quant"], False),
     ("Quantocracy（量化博客精选）", "https://quantocracy.com/feed/", "B", ["quant"], False),
     ("QuantInsti 博客", "https://blog.quantinsti.com/rss/", "B", ["quant"], False),
-    # 社区讨论（C 级：只代表关注度，内容未核实）
-    ("Hacker News 高分", "https://hnrss.org/newest?points=150&q=AI+OR+LLM+OR+agent+OR+model", "C", [], True, 20),
+    # 社区讨论（C 级：只代表关注度，内容未核实）。Reddit 和 Hacker News 由 tools/fetch_community.py 每周抓取
     ("Lobsters AI", "https://lobste.rs/t/ai.rss", "C", [], True, 15),
     # 重要开源项目的官方 Release（A 级一手），每个只取最近几个版本
     ("Ollama Release", "https://github.com/ollama/ollama/releases.atom", "A", ["slm"], False, 4),
@@ -100,7 +99,8 @@ AI_RE = re.compile(r"\bAI\b|machine learning|model|LLM|agent|neural|人工智能
 
 UA = {"User-Agent": "Mozilla/5.0 (learning-hub feed fetcher)"}
 
-# Reddit 每周高票帖（C 级社区讨论）。Reddit 限流严格，按顺序抓、每次间隔几秒。
+# Reddit 每周高票帖（C 级社区讨论），由 tools/fetch_community.py 调用，不在每日任务里抓：
+# Reddit 经常拦截云服务器 IP，改为每周更新时在个人电脑上抓。限流严格，按顺序抓、每次间隔几秒。
 # X(Twitter) 没有免费可用的公开接口，不抓取。
 REDDIT = [
     ("Reddit r/LocalLLaMA", "LocalLLaMA", ["slm", "llm"]),
@@ -206,7 +206,7 @@ def fetch_reddit():
             time.sleep(6)
         url = f"https://www.reddit.com/r/{subs}/top/.rss?t=week&limit=25"
         entries, err = None, None
-        for wait in (0, 20, 45):  # 被限流（429）时等一会儿重试
+        for wait in (0, 15, 30):  # 被限流（429）时等一会儿重试
             time.sleep(wait)
             try:
                 req = urllib.request.Request(url, headers=REDDIT_UA)
@@ -247,7 +247,6 @@ def main():
         pass
     with ThreadPoolExecutor(16) as ex:
         results = list(ex.map(fetch, SOURCES))
-    results += fetch_reddit()
     items, report = [], []
     seen = set()
     for name, its, err in results:
@@ -259,7 +258,7 @@ def main():
                 items.append(x)
     items.sort(key=lambda x: x["d"], reverse=True)
     now = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M")
-    names = [{"name": s[0], "lvl": s[2]} for s in SOURCES] + [{"name": r[0], "lvl": "C"} for r in REDDIT]
+    names = [{"name": s[0], "lvl": s[2]} for s in SOURCES]
     data = {"updated": now, "sources": names, "status": report, "items": items, "hf": fetch_hf_daily()}
     OUT.write_text("/* 由 tools/fetch_sources.py 自动生成，请勿手改 */\nHUB.sources = "
                    + json.dumps(data, ensure_ascii=False, indent=0) + ";\n", encoding="utf-8")
