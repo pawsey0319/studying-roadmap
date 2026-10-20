@@ -106,8 +106,8 @@
   const itemHtml = x => `<div class="card item"><h4>${esc(x.t)}</h4><p>${esc(x.d)}</p>${x.l && x.l.length ? `<div class="links">${x.l.map(l => link(l[0], l[1])).join('')}</div>` : ''}</div>`;
 
   const TYPES = { news: '资讯', paper: '论文', dir: '新方向', biz: '商机' };
-  const LVL = { A: '一手来源', B: '权威媒体' };
-  const LVL_TIP = { A: '官方发布、论文原文、监管机构或项目仓库', B: '权威媒体、研究机构或知名研究者' };
+  const LVL = { A: '一手来源', B: '权威媒体', C: '社区讨论' };
+  const LVL_TIP = { A: '官方发布、论文原文、监管机构或项目仓库', B: '权威媒体、研究机构或知名研究者', C: 'Reddit、Lobsters 等社区的高票讨论，只代表关注度，内容未经核实' };
   const daysAgo = d => (today - new Date((d.length === 7 ? d + '-01' : d.length === 4 ? d + '-01-01' : d) + 'T00:00:00')) / 864e5;
   // 时间分组：近 7 天、近 30 天默认展开，其余折叠
   const GROUPS = [
@@ -116,7 +116,7 @@
     { id: 'q', name: '1–3 个月前', max: 92, open: false },
     { id: 'o', name: '3 个月以前', max: Infinity, open: false }
   ];
-  const lvlBadge = l => l ? `<span class="lvl lvl-${l === 'A' ? 'a' : 'b'}" title="${esc(LVL_TIP[l] || '')}">${esc(LVL[l] || l)}</span>` : '';
+  const lvlBadge = l => l ? `<span class="lvl lvl-${String(l).toLowerCase()}" title="${esc(LVL_TIP[l] || '')}">${esc(LVL[l] || l)}</span>` : '';
   function feedRow(x) {
     return `<li><time>${esc(x.d)}</time><div>
         <div class="ft"><span class="tag">${TYPES[x.type] || '资讯'}</span>${link(x.t, x.u)}</div>
@@ -148,7 +148,8 @@
   function snapHtml(t) {
     const H = HUB.sources;
     if (!H || !H.items) return `<p class="msg">还没有快照。在“学习”文件夹运行 <code>python3 learning-hub/tools/fetch_sources.py</code> 生成，或等每日定时任务运行。</p>`;
-    const its = H.items.filter(x => x.k.includes(t.id));
+    const lvF = S.snapLvl && S.snapLvl[t.id] || 'all';
+    const its = H.items.filter(x => x.k.includes(t.id) && (lvF === 'all' || x.lvl === lvF));
     const srcF = S.snapSrc && S.snapSrc[t.id] || 'all';
     const names = [...new Set(its.map(x => x.src))];
     const shown = its.filter(x => srcF === 'all' || x.src === srcF);
@@ -158,8 +159,10 @@
     const rows = shown.slice(0, limit).map(x => `<li><time>${esc(x.d.slice(5))}</time><div>${lvlBadge(x.lvl)}<span class="ssrc">${esc(x.src)}</span>${link(x.t, x.u)}</div></li>`).join('');
     const more = shown.length > limit ? `<button class="btn" data-snapmore>显示更多（共 ${shown.length} 条）</button>`
       : (limit > 12 && shown.length > 12 ? `<button class="btn" data-snapmore>收起</button>` : '');
-    return `<div class="snapbar">${sel}<span class="msg">快照时间 ${esc(H.updated)}，来自 ${H.sources.length} 个官方与权威来源，只保留近 45 天</span></div>
-      <ul class="snap">${rows || '<li class="msg">这个来源近期没有与本板块相关的内容。</li>'}</ul>${more}`;
+    const base = H.items.filter(x => x.k.includes(t.id));
+    const lvls = ['all', 'A', 'B', 'C'].map(l => `<button class="chip" data-snaplvl="${l}" aria-pressed="${lvF === l}">${l === 'all' ? '全部' : LVL[l]} ${l === 'all' ? base.length : base.filter(x => x.lvl === l).length}</button>`).join('');
+    return `<div class="snapbar">${lvls}${sel}<span class="msg">快照时间 ${esc(H.updated)}，共 ${H.sources.length} 个来源，只保留近 45 天</span></div>
+      ${rows ? `<ul class="snap">${rows}</ul>` : `<p class="msg snapempty">${lvF === 'C' ? '最近一次抓取没有拿到与本板块相关的社区讨论（Reddit 有时会限流），明天自动重试。' : '这个来源近期没有与本板块相关的内容。'}</p>`}${more}`;
   }
 
   function renderPanel() {
@@ -176,9 +179,9 @@
       <div class="jump"><a href="#b-route">学习路线</a><a href="#b-live">实时动态</a><a href="#b-feed">精选资讯与论文</a><a href="#b-front">前沿方向</a><a href="#b-biz">落地与商机</a></div>
       <section class="blk" id="b-route"><h3>学习路线</h3><p class="sub">每个阶段分技术和产品两列任务，勾选即记录进度；当前周所在阶段会自动展开。</p>
         <ol class="stages">${t.stages.map((s, si) => stageHtml(t, s, si, w)).join('')}</ol></section>
-      <section class="blk" id="b-live"><h3>实时动态</h3><p class="sub">上面 6 个渠道在打开页面时直接从公开接口拉取（1 小时内用缓存），下面的官方博客与媒体快照由每日定时任务抓取。标签说明来源类型：一手来源指官方或项目原始发布，社区热度只代表关注度，不代表内容已核实。</p>
+      <section class="blk" id="b-live"><h3>实时动态</h3><p class="sub">上面 6 个渠道在打开页面时直接从公开接口拉取（1 小时内用缓存），下面的快照由 GitHub 每天北京时间 8 点抓取，包括官方博客、权威媒体、量化研究博客，以及 Reddit、Hacker News、Lobsters 的高票讨论。标签说明来源类型：一手来源指官方或项目原始发布；社区讨论和社区热度只代表关注度，内容未经核实。</p>
         <div class="live">${LIVE.map(c => `<div class="card"><h4><span>${esc(c.name)}<em class="kind">${esc(c.kind)}</em></span><button data-reload="${c.id}" aria-label="刷新${esc(c.name)}">刷新</button></h4><div id="live-${c.id}" class="msg">加载中…</div></div>`).join('')}</div>
-        <div class="card snapcard"><h4 class="snaph">官方博客与权威媒体</h4><div id="snap">${snapHtml(t)}</div></div></section>
+        <div class="card snapcard"><h4 class="snaph">官方博客、权威媒体与社区讨论</h4><div id="snap">${snapHtml(t)}</div></div></section>
       <section class="blk" id="b-feed"><h3>精选资讯与论文</h3><p class="sub">逐条打开原文核对过日期和内容，只收一手来源和权威媒体。最近 30 天默认展开，更早的折叠起来。最后更新：${esc(HUB.feed.updated)}。</p>${feedHtml(t)}</section>
       <section class="blk" id="b-front"><h3>前沿方向</h3><p class="sub">学完路线后值得继续深入的方向。</p><div class="grid2">${t.frontier.map(itemHtml).join('')}</div></section>
       <section class="blk" id="b-biz"><h3>落地与商机</h3><p class="sub">AI 真正落地的机会：新出现的商机，以及老业务怎么用 AI 改造。</p>
@@ -196,23 +199,49 @@
   const TTL = 3600e3;
   const cacheGet = k => { try { const c = JSON.parse(localStorage.getItem('lh.c.' + k)); return c && Date.now() - c.t < TTL ? c.v : null; } catch (e) { return null; } };
   const cacheSet = (k, v) => { try { localStorage.setItem('lh.c.' + k, JSON.stringify({ t: Date.now(), v })); } catch (e) {} };
-  const getJSON = async u => { const r = await fetch(u); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); };
+  const getJSON = async u => {
+    const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 12000);
+    try {
+      const r = await fetch(u, { signal: ctl.signal });
+      if (r.status === 403 && /api\.github\.com/.test(u)) throw new Error('GitHub 匿名访问次数已用完');
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return await r.json();
+    } catch (e) { throw e.name === 'AbortError' ? new Error('连接超时') : e; }
+    finally { clearTimeout(tm); }
+  };
+  // 部分网络打不开 huggingface.co，先试主站，失败后换 hf-mirror.com（同一份数据的国内镜像），记住能用的那个
+  let HF_BASE = null;
+  async function hfJSON(path) {
+    const order = HF_BASE ? [HF_BASE] : ['https://huggingface.co', 'https://hf-mirror.com'];
+    let err;
+    for (const b of order) {
+      try { const d = await getJSON(b + path); HF_BASE = b; return d; } catch (e) { err = e; }
+    }
+    HF_BASE = null; throw err;
+  }
+  const hfLink = p => (HF_BASE || 'https://huggingface.co') + p;
+  const snap = () => (HUB.sources && HUB.sources.items) || [];
   const ago = d => { const h = Math.round((Date.now() - new Date(d)) / 36e5); return h < 24 ? `${Math.max(h, 1)} 小时前` : `${Math.round(h / 24)} 天前`; };
 
   const SOURCES = {
     async hf(t) {
-      const daily = await getJSON('https://huggingface.co/api/daily_papers?limit=100');
+      let daily, fromSnap = false;
+      try { daily = await hfJSON('/api/daily_papers?limit=100'); }
+      catch (e) {
+        if (!(HUB.sources && HUB.sources.hf && HUB.sources.hf.length)) throw e;
+        daily = HUB.sources.hf.map(x => ({ publishedAt: x.d, paper: { id: x.id, title: x.t, summary: x.s, upvotes: x.v } })); fromSnap = true;
+      }
       const re = KW[t.id];
       let list = daily.filter(x => re.test(x.paper.title + (t.id === 'quant' ? '' : ' ' + (x.paper.summary || '').slice(0, 300))))
         .sort((a, b) => (b.paper.upvotes || 0) - (a.paper.upvotes || 0))
-        .map(x => ({ t: x.paper.title, u: 'https://huggingface.co/papers/' + x.paper.id, m: `${x.paper.upvotes || 0} 赞 · ${ago(x.publishedAt)}` }));
-      if (list.length < 6) {
-        const s = await getJSON('https://huggingface.co/api/papers/search?q=' + encodeURIComponent(t.live.hf));
+        .map(x => ({ t: x.paper.title, u: (fromSnap ? 'https://arxiv.org/abs/' : hfLink('/papers/')) + x.paper.id, m: `${x.paper.upvotes || 0} 赞 · ${ago(x.publishedAt)}${fromSnap ? ' · 来自每日快照' : ''}` }));
+      if (list.length < 6 && !fromSnap) {
+        const s = await hfJSON('/api/papers/search?q=' + encodeURIComponent(t.live.hf)).catch(() => []);
         s.sort((a, b) => new Date(b.paper.publishedAt) - new Date(a.paper.publishedAt));
         for (const x of s) {
           if (list.length >= 6) break;
           if (!list.some(y => y.u.endsWith(x.paper.id)))
-            list.push({ t: x.paper.title, u: 'https://huggingface.co/papers/' + x.paper.id, m: String(x.paper.publishedAt).slice(0, 10) });
+            list.push({ t: x.paper.title, u: hfLink('/papers/') + x.paper.id, m: String(x.paper.publishedAt).slice(0, 10) });
         }
       }
       return list.slice(0, 6);
@@ -236,7 +265,7 @@
     async hfm(t) {
       const ex = '&expand[]=safetensors&expand[]=pipeline_tag&expand[]=trendingScore&expand[]=createdAt';
       const q = HFM[t.id];
-      const lists = await Promise.all(q.urls.map(u => getJSON('https://huggingface.co/api/models?sort=trendingScore&limit=100' + u + ex)));
+      const lists = await Promise.all(q.urls.map(u => hfJSON('/api/models?sort=trendingScore&limit=100' + u + ex)));
       const seen = new Set();
       return lists.flat().sort((a, b) => (b.trendingScore || 0) - (a.trendingScore || 0)).filter(m => {
         if (seen.has(m.id)) return false; seen.add(m.id);
@@ -251,7 +280,7 @@
       }).sort((a, b) => (b.trendingScore || 0) - (a.trendingScore || 0)).slice(0, 6).map(m => {
         const p = (m.safetensors || {}).total;
         const size = !p ? '' : p < 1e9 ? Math.round(p / 1e6) + 'M · ' : (p / 1e9).toFixed(p < 1e10 ? 1 : 0) + 'B · ';
-        return { t: m.id, u: 'https://huggingface.co/' + m.id, m: `${size}热度 ${m.trendingScore || 0} · ${String(m.createdAt || '').slice(0, 10)}` };
+        return { t: m.id, u: hfLink('/') + m.id, m: `${size}热度 ${m.trendingScore || 0} · ${String(m.createdAt || '').slice(0, 10)}` };
       });
     },
     // OpenRouter：各家模型上架到统一 API 的时间与价格，相当于“模型发布与价格”的官方记录
@@ -266,7 +295,13 @@
     // 关键开源项目的正式版本发布（一手来源）
     async rel(t) {
       const repos = REPOS[t.id];
-      const res = await Promise.all(repos.map(r => getJSON(`https://api.github.com/repos/${r}/releases?per_page=3`).catch(() => [])));
+      let failed = 0;
+      const res = await Promise.all(repos.map(r => getJSON(`https://api.github.com/repos/${r}/releases?per_page=3`).catch(() => { failed++; return []; })));
+      if (failed === repos.length) {  // 全部失败（多半是匿名次数用完），改用每日快照
+        const its = snap().filter(x => / Release$/.test(x.src) && x.k.includes(t.id)).slice(0, 7);
+        if (!its.length) throw new Error('GitHub 匿名访问次数已用完，约 1 小时后恢复');
+        return its.map(x => ({ t: `${x.src.replace(/ Release$/, '')} ${x.t}`.slice(0, 80), u: x.u, m: `${x.d} · 来自每日快照` }));
+      }
       return res.flatMap((list, i) => list.filter(x => !x.prerelease && !x.draft).slice(0, 1).map(x => ({ r: repos[i], x })))
         .sort((a, b) => new Date(b.x.published_at) - new Date(a.x.published_at)).slice(0, 7)
         .map(({ r, x }) => ({ t: `${r.split('/')[1]} ${x.tag_name}`, u: x.html_url, m: `${ago(x.published_at)} · ${r}` }));
@@ -310,14 +345,18 @@
     const ck = `${src}.${t.id}`;
     let v = force ? null : cacheGet(ck);
     if (!v) {
-      el.className = 'msg'; el.textContent = '加载中…';
+      const btn = document.querySelector(`[data-reload="${src}"]`);
+      el.className = 'msg'; el.textContent = force ? '正在重新拉取…' : '加载中…';
+      if (btn) { btn.disabled = true; btn.textContent = '拉取中'; }
       try { v = await SOURCES[src](t); cacheSet(ck, v); }
       catch (e) {
         if (S.tab !== t.id) return;
         el.className = 'msg';
-        el.textContent = `没有拉取到数据（${e.message}）。请检查网络后点“刷新”。` + (src === 'gh' || src === 'rel' ? 'GitHub 未登录时每小时最多 60 次请求，过一会儿再试即可。' : '');
+        const why = /Failed to fetch|NetworkError|Load failed|连接超时/.test(e.message) ? '当前网络连不上这个接口' : e.message;
+        el.textContent = `没有拉取到数据：${why}。` + (src === 'gh' || src === 'rel' ? 'GitHub 未登录时每小时最多 60 次请求，过一会儿再点刷新。' : '换个网络或稍后再点刷新。')
+          + `（${new Date().toLocaleTimeString('zh-CN', { hour12: false })} 尝试）`;
         return;
-      }
+      } finally { if (btn) { btn.disabled = false; btn.textContent = '刷新'; } }
     }
     if (S.tab !== t.id) return;
     el.className = '';
@@ -340,6 +379,8 @@
     if (ch) { S.filter[S.tab] = ch.dataset.filter; save(); renderFeedOnly(); return; }
     const rl = e.target.closest('[data-reload]');
     if (rl) { const t = T.find(x => x.id === S.tab); loadOne(t, rl.dataset.reload, true); return; }
+    const sl = e.target.closest('[data-snaplvl]');
+    if (sl) { S.snapLvl = S.snapLvl || {}; S.snapLvl[S.tab] = sl.dataset.snaplvl; S.snapSrc = S.snapSrc || {}; S.snapSrc[S.tab] = 'all'; save(); renderSnap(); return; }
     if (e.target.closest('[data-snapmore]')) {
       S.snapMore = S.snapMore || {}; S.snapMore[S.tab] = !S.snapMore[S.tab]; save(); renderSnap();
     }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""抓取官方博客、权威媒体和 arXiv 的 RSS/Atom，生成 data/sources.js 供网页离线读取。
+"""抓取官方博客、权威媒体、arXiv、项目 Release 和社区高票讨论的 RSS/Atom，生成 data/sources.js 供网页离线读取。
 
 只用标准库。用法：python3 tools/fetch_sources.py
 浏览器不能跨域读取这些 RSS，所以由本脚本（每日定时任务）抓取后写成本地快照。
@@ -9,6 +9,7 @@ import html
 import json
 import re
 import sys
+import time
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -44,6 +45,31 @@ SOURCES = [
     ("Latent Space", "https://www.latent.space/feed", "B", ["llm"], False),
     ("Sebastian Raschka", "https://magazine.sebastianraschka.com/feed", "B", ["llm"], False),
     ("Lilian Weng", "https://lilianweng.github.io/index.xml", "B", ["llm"], False),
+    # 更多官方来源
+    ("Microsoft 官方博客", "https://blogs.microsoft.com/feed/", "A", [], True),
+    ("Salesforce 新闻", "https://www.salesforce.com/news/feed/", "A", ["agent"], True),
+    ("Together AI 博客", "https://www.together.ai/blog/rss.xml", "A", ["llm"], False, 15),
+    ("SEC 新闻稿", "https://www.sec.gov/news/pressreleases.rss", "A", ["quant"], True),
+    # 更多权威媒体与研究者
+    ("Bloomberg 科技", "https://feeds.bloomberg.com/technology/news.rss", "B", [], True),
+    ("Financial Times AI", "https://www.ft.com/artificial-intelligence?format=rss", "B", ["llm"], False),
+    ("CNBC 科技", "https://www.cnbc.com/id/19854910/device/rss/rss.html", "B", [], True),
+    ("The Decoder", "https://the-decoder.com/feed/", "B", ["llm"], False),
+    ("36氪", "https://www.36kr.com/feed", "B", [], True),
+    ("InfoQ 中文", "https://www.infoq.cn/feed", "B", [], True),
+    ("雷锋网", "https://www.leiphone.com/feed", "B", [], True),
+    ("SemiAnalysis", "https://newsletter.semianalysis.com/feed", "B", ["llm"], False),
+    ("Import AI（Jack Clark）", "https://jack-clark.net/feed/", "B", ["llm"], False),
+    ("One Useful Thing（Ethan Mollick）", "https://www.oneusefulthing.org/feed", "B", ["llm"], False),
+    ("AI Snake Oil", "https://www.aisnakeoil.com/feed", "B", ["llm"], False),
+    # 量化专业媒体与研究博客
+    ("Risk.net 前沿研究", "https://www.risk.net/feeds/rss/category/cutting-edge", "B", ["quant"], False, 15),
+    ("Alpha Architect", "https://alphaarchitect.com/feed/", "B", ["quant"], False),
+    ("Quantocracy（量化博客精选）", "https://quantocracy.com/feed/", "B", ["quant"], False),
+    ("QuantInsti 博客", "https://blog.quantinsti.com/rss/", "B", ["quant"], False),
+    # 社区讨论（C 级：只代表关注度，内容未核实）
+    ("Hacker News 高分", "https://hnrss.org/newest?points=150&q=AI+OR+LLM+OR+agent+OR+model", "C", [], True, 20),
+    ("Lobsters AI", "https://lobste.rs/t/ai.rss", "C", [], True, 15),
     # 重要开源项目的官方 Release（A 级一手），每个只取最近几个版本
     ("Ollama Release", "https://github.com/ollama/ollama/releases.atom", "A", ["slm"], False, 4),
     ("vLLM Release", "https://github.com/vllm-project/vllm/releases.atom", "A", ["slm"], False, 4),
@@ -73,6 +99,16 @@ PRE_RE = re.compile(r"rc\d|\b(alpha|beta|dev|nightly)\b", re.I)
 AI_RE = re.compile(r"\bAI\b|machine learning|model|LLM|agent|neural|人工智能|模型", re.I)
 
 UA = {"User-Agent": "Mozilla/5.0 (learning-hub feed fetcher)"}
+
+# Reddit 每周高票帖（C 级社区讨论）。Reddit 限流严格，按顺序抓、每次间隔几秒。
+# X(Twitter) 没有免费可用的公开接口，不抓取。
+REDDIT = [
+    ("Reddit r/LocalLLaMA", "LocalLLaMA", ["slm", "llm"]),
+    ("Reddit 大模型综合", "MachineLearning+singularity+OpenAI+ClaudeAI+Bard", ["llm"]),
+    ("Reddit 智能体", "AI_Agents+mcp+ClaudeCode+AutoGPT", ["agent"]),
+    ("Reddit 量化", "algotrading+quant", ["quant"]),
+]
+REDDIT_UA = {"User-Agent": "linux:learning-hub:v1.0 (by /u/pawsey0319)"}
 
 
 def text(el):
@@ -130,7 +166,7 @@ def fetch(src):
     cap = src[5] if len(src) > 5 else MAX_PER_SOURCE
     try:
         req = urllib.request.Request(url, headers=UA)
-        with urllib.request.urlopen(req, timeout=30) as r:
+        with urllib.request.urlopen(req, timeout=20) as r:
             raw = r.read()
         if raw[:2] == b"\x1f\x8b":  # 有些站点无视请求头直接返回 gzip
             raw = gzip.decompress(raw)
@@ -163,13 +199,55 @@ def fetch(src):
     return name, items, None
 
 
+def fetch_reddit():
+    out = []
+    for i, (name, subs, ks) in enumerate(REDDIT):
+        if i:
+            time.sleep(6)
+        url = f"https://www.reddit.com/r/{subs}/top/.rss?t=week&limit=25"
+        entries, err = None, None
+        for wait in (0, 20, 45):  # 被限流（429）时等一会儿重试
+            time.sleep(wait)
+            try:
+                req = urllib.request.Request(url, headers=REDDIT_UA)
+                with urllib.request.urlopen(req, timeout=30) as r:
+                    entries = parse_feed(r.read())
+                break
+            except Exception as e:
+                err = f"{type(e).__name__}: {e}"
+                if "429" not in err:
+                    break
+        if entries is None:
+            out.append((name, [], err))
+            continue
+        items = [{"d": d.astimezone(timezone(timedelta(hours=8))).strftime("%Y-%m-%d"), "src": name, "lvl": "C",
+                  "k": ks, "t": t[:160], "u": l} for t, l, d, _ in entries if d and l.startswith("https://")][:12]
+        out.append((name, items, None))
+    return out
+
+
+def fetch_hf_daily():
+    """Hugging Face 每日论文，作为网页在打不开 huggingface.co 时的兜底数据。"""
+    for base in ("https://huggingface.co", "https://hf-mirror.com"):
+        try:
+            req = urllib.request.Request(base + "/api/daily_papers?limit=100", headers=UA)
+            with urllib.request.urlopen(req, timeout=30) as r:
+                data = json.loads(r.read())
+            return [{"id": x["paper"]["id"], "t": x["paper"]["title"], "s": (x["paper"].get("summary") or "")[:300],
+                     "v": x["paper"].get("upvotes", 0), "d": x.get("publishedAt", "")[:10]} for x in data]
+        except Exception:
+            continue
+    return []
+
+
 def main():
     try:  # Windows 控制台默认编码不是 UTF-8，避免打印中文时报错
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
         pass
-    with ThreadPoolExecutor(8) as ex:
+    with ThreadPoolExecutor(16) as ex:
         results = list(ex.map(fetch, SOURCES))
+    results += fetch_reddit()
     items, report = [], []
     seen = set()
     for name, its, err in results:
@@ -181,14 +259,14 @@ def main():
                 items.append(x)
     items.sort(key=lambda x: x["d"], reverse=True)
     now = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M")
-    data = {"updated": now, "sources": [{"name": s[0], "lvl": s[2]} for s in SOURCES],
-            "status": report, "items": items}
+    names = [{"name": s[0], "lvl": s[2]} for s in SOURCES] + [{"name": r[0], "lvl": "C"} for r in REDDIT]
+    data = {"updated": now, "sources": names, "status": report, "items": items, "hf": fetch_hf_daily()}
     OUT.write_text("/* 由 tools/fetch_sources.py 自动生成，请勿手改 */\nHUB.sources = "
                    + json.dumps(data, ensure_ascii=False, indent=0) + ";\n", encoding="utf-8")
     print(f"已写入 {OUT}，共 {len(items)} 条，更新时间 {now}")
     print("\n".join(report))
     ok = sum(1 for _, _, e in results if not e)
-    sys.exit(0 if ok >= len(SOURCES) // 2 else 1)
+    sys.exit(0 if ok >= len(results) // 2 else 1)
 
 
 if __name__ == "__main__":
