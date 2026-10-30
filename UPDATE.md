@@ -8,10 +8,14 @@
 - 四个板块：`llm` AI 大模型、`slm` 单领域小模型、`agent` 智能体、`quant` 量化（指个人量化投资/交易，不是模型量化）。
 - 学习者情况：会基础 Python、懂 Transformer 架构、学过概率论和高等代数，量化零基础；每周约 10 小时，产品与技术各占一半，目标是从产品和技术两个角度跟上前沿，并关注 AI 真正落地的机会、新商机和老商机改造。
 - 文件结构：
-  - `data/llm.js` `data/slm.js` `data/agent.js` `data/quant.js`：学习路线、前沿方向、商机。资源优先给链接，没有链接的写资源名称。
-  - `data/feed.js`：精选资讯与论文，每周更新。
-  - `data/sources.js`：官方博客与媒体快照，由 GitHub Actions 每天运行 `tools/fetch_sources.py` 生成，不进仓库。
-  - `data/community.js`：Reddit 与 Hacker News 社区讨论，每周更新时运行 `tools/fetch_community.py` 生成，提交进仓库。
+  - `content/tracks/*.json`：每个方向的学习路线、前沿方向、商机。每个阶段、任务、资源都有固定 ID（如 `agent.s02.i03`），用户进度按 ID 记录。**已有条目的 ID 不能改、不能复用**；新增条目用该阶段下一个未用过的编号。资源优先给链接，没有链接的只写名称。
+  - `content/domains.json`：知识领域和它包含的方向。
+  - `content/feed.json`：精选资讯与论文，每周更新。
+  - `content/legacy-v1.json`：v1 旧进度 ID 到新 ID 的对照表，只用于迁移，不要改。
+  - `data/sources.json`：官方博客与媒体快照，由 GitHub Actions 每天运行 `tools/fetch_sources.py` 生成，不进仓库。
+  - `data/community.json`：Reddit 与 Hacker News 社区讨论，每周更新时运行 `tools/fetch_community.py` 生成，提交进仓库。
+  - `src/`：网页代码（浏览器原生 ES 模块，无需构建）。`src/core/` 是纯逻辑，`src/store/` 是个人数据（IndexedDB + Gist 同步），`tests/` 是单元测试（`node --test tests/*.test.js`）。
+  - 本地预览：网页通过 fetch 读取 JSON，不能直接双击打开。在仓库根目录运行 `python3 -m http.server`（Windows 用 `python -m http.server`），再打开 http://localhost:8000/ 。
   - `.github/workflows/pages.yml`：推送后自动部署，并每天北京时间 8 点刷新快照。
   - `.github/workflows/weekly-reminder.yml`：每周一在仓库里开一个提醒 issue。
   - `tools/publish.sh`：提交并推送。
@@ -20,22 +24,22 @@
 
 开始前先在仓库根目录运行 `git pull`，拿到其他电脑上的最新改动。
 
-0. 抓取社区讨论：运行 `python3 tools/fetch_community.py`（Windows 用 `python` 或 `py`），会更新 `data/community.js`（Reddit 每周高票帖和 Hacker News 高分帖，网站上标为“社区讨论”）。这一步要在个人电脑上做，因为 Reddit 经常拦截云服务器。大约需要 1–3 分钟；Reddit 某个分组被限流时会自动重试，仍失败也没关系，其余结果照常写入。如果全部失败，脚本会保留上一周的文件，在总结里说明即可。社区内容只做线索，不要直接当作精选资讯的来源。
+0. 抓取社区讨论：运行 `python3 tools/fetch_community.py`（Windows 用 `python` 或 `py`），会更新 `data/community.json`（Reddit 每周高票帖和 Hacker News 高分帖，网站上标为“社区讨论”）。这一步要在个人电脑上做，因为 Reddit 经常拦截云服务器。大约需要 1–3 分钟；Reddit 某个分组被限流时会自动重试，仍失败也没关系，其余结果照常写入。如果全部失败，脚本会保留上一周的文件，在总结里说明即可。社区内容只做线索，不要直接当作精选资讯的来源。
 
-1. 读 `data/feed.js`，按链接和标题去重。
+1. 读 `content/feed.json`，按链接和标题去重。
 2. 收集过去 7 天的内容，每个板块新增 4–6 条，尽量覆盖四类：`news`（重要模型/产品/框架发布、监管变化）、`paper`（重要论文或技术报告）、`dir`（新方向/趋势）、`biz`（落地案例、收入与融资、商业模式）。量化板块重点关注个人量化：A 股和期货的交易与程序化交易规则、证监会与交易所公告、券商 QMT/PTrade、开源量化工具（Qlib、RD-Agent、vn.py、AKShare、TradingAgents 等）的正式版本、LLM/Agent 用于投研的论文。
-   线索：运行 `python3 tools/fetch_sources.py` 生成快照后读 `data/sources.js`；`https://huggingface.co/api/daily_papers?limit=100`（按 upvotes 排序）；网页搜索。
+   线索：运行 `python3 tools/fetch_sources.py` 生成快照后读 `data/sources.json`；`https://huggingface.co/api/daily_papers?limit=100`（按 upvotes 排序）；网页搜索。
 3. 来源可信度（最重要）：
    - `lvl: 'A'` 一手来源：官方博客/新闻稿/文档更新日志、官方 GitHub Release、arXiv 或期刊论文、Hugging Face 官方模型页或 Papers 页、政府与监管机构原文（证监会、交易所、中证协、SEC、FINRA、欧盟委员会等）。
    - `lvl: 'B'` 权威媒体与机构：Reuters、Bloomberg、FT、WSJ、CNBC、TechCrunch、The Verge、Ars Technica、MIT Technology Review、The Information、财新、第一财经、证券时报、中国证券报、上海证券报、36氪、机器之心、量子位、Epoch AI、Stanford HAI，以及 Simon Willison、Interconnects 等知名研究者博客。
    - 不要用：内容农场、SEO 评测与排行站、博客园/CSDN/知乎等转载、论坛帖、加密货币站、无署名聚合站、营销软文。有一手来源时给一手链接。
 4. 每条都打开原文核对：链接能打开、日期正确、描述与原文一致。拿不准就不收录，不编造日期、数字或产品名。
-5. 把新条目插到 `HUB.feed.items` 中对应板块注释（如 `/* ---------- 智能体 ---------- */`）下方的最前面，格式与已有条目一致：
-   `{ d: 'YYYY-MM-DD', k: 'llm|slm|agent|quant', type: 'news|paper|dir|biz', t: '中文标题', s: '一句中文说明，30–60 字，点出对产品或落地的意义', u: 'https://原始链接', src: '来源名称', lvl: 'A|B' },`
-   字符串里不要出现单引号。把 `updated` 改成当天日期。
+5. 把新条目加进 `content/feed.json` 的 `items` 数组（顺序不限，网页按日期排序），格式与已有条目一致：
+   `{"d": "YYYY-MM-DD", "k": "llm|slm|agent|quant", "type": "news|paper|dir|biz", "t": "中文标题", "s": "一句中文说明，30–60 字，点出对产品或落地的意义", "u": "https://原始链接", "src": "来源名称", "lvl": "A|B"}`
+   这是 JSON：键和字符串都用英文双引号，字符串里的双引号要写成 `\"`。把 `updated` 改成当天日期。
 6. 每个板块最多保留 45 条，超出时删最旧的，但交易所与监管规则类的 `news` 条目保留。
 7. 本周如果有足以改变学习路线的重大变化（关键框架改名、重要新模型或新协议、监管新规），不要直接改路线文件，在总结里给出具体修改建议，由用户决定。
-8. 运行 `node --check data/feed.js`，报错必须修好。
+8. 运行 `node -e "JSON.parse(require('fs').readFileSync('content/feed.json','utf8'))"` 检查 JSON 格式，再运行 `node --test tests/*.test.js`，报错必须修好。
 9. 发布（任选一种，macOS、Linux、Windows 都适用）：
    - 有 bash 时（macOS 终端、Linux、Windows 的 Git Bash）：`bash tools/publish.sh "每周资讯更新 YYYY-MM-DD"`
    - 没有 bash 时（如 Windows PowerShell），直接运行 git 命令：

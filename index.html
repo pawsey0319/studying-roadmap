@@ -278,14 +278,11 @@ code{font-size:12.5px;background:var(--soft);padding:1px 5px;border-radius:4px}
   </form>
 </dialog>
 
-<script>window.HUB={tracks:[],track(t){this.tracks.push(t)},feed:{updated:'',items:[]}};</script>
-<script src="data/llm.js"></script>
-<script src="data/slm.js"></script>
-<script src="data/agent.js"></script>
-<script src="data/quant.js"></script>
-<script src="data/feed.js"></script>
-<script src="data/sources.js" onerror="void 0"></script>
-<script src="data/community.js" onerror="void 0"></script>
-<script src="app.js"></script>
+<script>
+// 直接双击打开本地文件时，浏览器不允许加载模块和数据文件，这里给出提示
+if (location.protocol === 'file:') document.getElementById('panel').innerHTML =
+  '<p class="note">本地文件不能直接双击打开。请在仓库目录运行 <code>python3 -m http.server</code>（Windows 用 <code>python -m http.server</code>），再打开 http://localhost:8000/ 。线上网址不受影响。</p>';
+</script>
+<script type="module" src="src/main.js"></script>
 </body>
 </html>

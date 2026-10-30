@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""抓取社区讨论（Reddit 每周高票帖、Hacker News 高分帖），写入 data/community.js 并提交进仓库。
+"""抓取社区讨论（Reddit 每周高票帖、Hacker News 高分帖），写入 data/community.json 并提交进仓库。
 
 由 AI 助手在每周资讯更新时、在个人电脑上运行（Reddit 经常拦截云服务器的 IP，个人网络更稳）。
 只用标准库。用法：python3 tools/fetch_community.py（Windows 上用 python 或 py）
@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from fetch_sources import KW, AI_RE, fetch_reddit  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / "data" / "community.js"
+OUT = ROOT / "data" / "community.json"
 CST = timezone(timedelta(hours=8))
 
 AGENT_AI = re.compile(r"\bAI\b|LLM|GPT|Claude|Gemini|OpenAI|Anthropic|\bMCP\b|agentic|coding agent|Codex|Copilot|model", re.I)
@@ -75,13 +75,11 @@ def main():
     items += hn
     if not items:
         print("\n".join(report))
-        print("没有抓到任何社区内容，保留旧的 data/community.js")
+        print("没有抓到任何社区内容，保留旧的 data/community.json")
         sys.exit(1)
     items.sort(key=lambda x: x["d"], reverse=True)
     now = datetime.now(CST).strftime("%Y-%m-%d %H:%M")
-    OUT.write_text("/* 由 tools/fetch_community.py 生成（每周资讯更新时运行），请勿手改 */\nHUB.community = "
-                   + json.dumps({"updated": now, "status": report, "items": items}, ensure_ascii=False, indent=0)
-                   + ";\n", encoding="utf-8")
+    OUT.write_text(json.dumps({"updated": now, "status": report, "items": items}, ensure_ascii=False, indent=0) + "\n", encoding="utf-8")
     print(f"已写入 {OUT}，共 {len(items)} 条，更新时间 {now}")
     print("\n".join(report))
 

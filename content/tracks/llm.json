@@ -1,0 +1,621 @@
+{
+  "id": "llm",
+  "domain": "ai",
+  "name": "AI 大模型",
+  "short": "大模型",
+  "color": "#2F5BD3",
+  "hours": 3,
+  "goal": "从“会用、懂 Transformer”走到能看懂训练/后训练/推理部署的关键取舍，并能把前沿进展翻译成产品判断。",
+  "live": {
+    "hf": "large language model reasoning",
+    "hn": "LLM",
+    "gh": "llm"
+  },
+  "stages": [
+    {
+      "id": "llm.s01",
+      "title": "从 Transformer 到 GPT：亲手搭一遍",
+      "weeks": [
+        1,
+        4
+      ],
+      "goal": "把已知的 Transformer 架构变成能跑的代码，同时建立对 token、上下文、价格的产品直觉。",
+      "items": [
+        {
+          "id": "llm.s01.i01",
+          "kind": "tech",
+          "text": "看完 Karpathy《Let's build GPT》并逐行复现，跑通 nanoGPT 的 Shakespeare 字符级模型"
+        },
+        {
+          "id": "llm.s01.i02",
+          "kind": "tech",
+          "text": "看《Let's build the GPT Tokenizer》，手写一个最小 BPE 分词器"
+        },
+        {
+          "id": "llm.s01.i03",
+          "kind": "tech",
+          "text": "用 3Blue1Brown 第 5–6 集复习注意力机制，补上 Zero to Hero 前几集里不熟的反向传播"
+        },
+        {
+          "id": "llm.s01.i04",
+          "kind": "prod",
+          "text": "同一个任务（如会议纪要生成）分别跑 3 个主流模型，记录质量、首 token 延迟、单次成本"
+        },
+        {
+          "id": "llm.s01.i05",
+          "kind": "prod",
+          "text": "读 Artificial Analysis 的价格/速度榜，搞清楚“输入价、输出价、缓存价”三者对产品成本的影响"
+        },
+        {
+          "id": "llm.s01.i06",
+          "kind": "prod",
+          "text": "写一页《模型选型对比表》：场景、候选模型、选择理由、风险"
+        }
+      ],
+      "resources": [
+        {
+          "id": "llm.s01.r01",
+          "name": "Karpathy · Neural Networks: Zero to Hero",
+          "url": "https://karpathy.ai/zero-to-hero.html"
+        },
+        {
+          "id": "llm.s01.r02",
+          "name": "Let's build GPT: from scratch（视频）",
+          "url": "https://www.youtube.com/watch?v=kCc8FmEb1nY"
+        },
+        {
+          "id": "llm.s01.r03",
+          "name": "nanoGPT",
+          "url": "https://github.com/karpathy/nanoGPT"
+        },
+        {
+          "id": "llm.s01.r04",
+          "name": "3Blue1Brown 神经网络系列",
+          "url": "https://www.3blue1brown.com/topics/neural-networks"
+        },
+        {
+          "id": "llm.s01.r05",
+          "name": "The Illustrated Transformer",
+          "url": "https://jalammar.github.io/illustrated-transformer/"
+        },
+        {
+          "id": "llm.s01.r06",
+          "name": "Build a Large Language Model (From Scratch) 代码库",
+          "url": "https://github.com/rasbt/LLMs-from-scratch"
+        },
+        {
+          "id": "llm.s01.r07",
+          "name": "Datawhale happy-llm（中文，从零理解大模型）",
+          "url": "https://github.com/datawhalechina/happy-llm"
+        },
+        {
+          "id": "llm.s01.r08",
+          "name": "李宏毅 2025 机器学习课程（中文）",
+          "url": "https://speech.ee.ntu.edu.tw/~hylee/ml/2025-spring.php"
+        },
+        {
+          "id": "llm.s01.r09",
+          "name": "Artificial Analysis 模型对比",
+          "url": "https://artificialanalysis.ai/"
+        }
+      ],
+      "output": "跑通的 nanoGPT 仓库 + 一页模型选型对比表"
+    },
+    {
+      "id": "llm.s02",
+      "title": "预训练、Scaling 与后训练",
+      "weeks": [
+        5,
+        9
+      ],
+      "goal": "理解一个模型从预训练到 SFT、RLHF、RL 推理训练的完整流水线，以及每一步在买什么能力。",
+      "items": [
+        {
+          "id": "llm.s02.i01",
+          "kind": "tech",
+          "text": "精读 Scaling Laws 与 Chinchilla，能说清“参数量、数据量、算力”怎么配比"
+        },
+        {
+          "id": "llm.s02.i02",
+          "kind": "tech",
+          "text": "精读 InstructGPT（RLHF）与 DPO，画出两者的流程差异"
+        },
+        {
+          "id": "llm.s02.i03",
+          "kind": "tech",
+          "text": "精读 DeepSeekMath（GRPO）与 DeepSeek-R1，理解可验证奖励的强化学习为什么能训出推理能力"
+        },
+        {
+          "id": "llm.s02.i04",
+          "kind": "tech",
+          "text": "读 nanochat 代码，跟着走一遍 预训练 → 中训练 → SFT → RL 的最小完整流程"
+        },
+        {
+          "id": "llm.s02.i05",
+          "kind": "prod",
+          "text": "读 Test-Time Compute 论文，总结“让模型多想一会儿”对产品延迟、价格、交互设计的影响"
+        },
+        {
+          "id": "llm.s02.i06",
+          "kind": "prod",
+          "text": "写一篇 800 字短文：推理模型出现后，哪些产品形态变了（如深度研究、后台长任务）"
+        }
+      ],
+      "resources": [
+        {
+          "id": "llm.s02.r01",
+          "name": "Scaling Laws for Neural Language Models",
+          "url": "https://arxiv.org/abs/2001.08361"
+        },
+        {
+          "id": "llm.s02.r02",
+          "name": "Chinchilla: Training Compute-Optimal LLMs",
+          "url": "https://arxiv.org/abs/2203.15556"
+        },
+        {
+          "id": "llm.s02.r03",
+          "name": "InstructGPT: Training LMs to follow instructions with human feedback",
+          "url": "https://arxiv.org/abs/2203.02155"
+        },
+        {
+          "id": "llm.s02.r04",
+          "name": "DPO: Direct Preference Optimization",
+          "url": "https://arxiv.org/abs/2305.18290"
+        },
+        {
+          "id": "llm.s02.r05",
+          "name": "DeepSeekMath（提出 GRPO）",
+          "url": "https://arxiv.org/abs/2402.03300"
+        },
+        {
+          "id": "llm.s02.r06",
+          "name": "DeepSeek-R1",
+          "url": "https://arxiv.org/abs/2501.12948"
+        },
+        {
+          "id": "llm.s02.r07",
+          "name": "Scaling LLM Test-Time Compute",
+          "url": "https://arxiv.org/abs/2408.03314"
+        },
+        {
+          "id": "llm.s02.r08",
+          "name": "HF 博客：Illustrating RLHF",
+          "url": "https://huggingface.co/blog/rlhf"
+        },
+        {
+          "id": "llm.s02.r09",
+          "name": "nanochat（Karpathy 全流程最小实现）",
+          "url": "https://github.com/karpathy/nanochat"
+        },
+        {
+          "id": "llm.s02.r10",
+          "name": "Stanford CS336: Language Modeling from Scratch",
+          "url": "https://stanford-cs336.github.io/"
+        },
+        {
+          "id": "llm.s02.r11",
+          "name": "HF Smol Training Playbook",
+          "url": "https://huggingface.co/spaces/HuggingFaceTB/smol-training-playbook"
+        }
+      ],
+      "output": "一张“大模型训练流水线”图（每步：数据、目标、成本、产出能力）+ 推理模型短文"
+    },
+    {
+      "id": "llm.s03",
+      "title": "推理部署与成本：MoE、KV Cache、量化",
+      "weeks": [
+        10,
+        14
+      ],
+      "goal": "搞懂一次 API 调用背后的推理系统，能估算自部署 vs 调 API 的成本。",
+      "items": [
+        {
+          "id": "llm.s03.i01",
+          "kind": "tech",
+          "text": "读 vLLM / PagedAttention 论文，理解 KV Cache、连续批处理为什么决定吞吐"
+        },
+        {
+          "id": "llm.s03.i02",
+          "kind": "tech",
+          "text": "读 DeepSeek-V3 技术报告的 MoE 与 MLA 部分，理解“总参数 vs 激活参数”"
+        },
+        {
+          "id": "llm.s03.i03",
+          "kind": "tech",
+          "text": "本地用 vLLM 或 Ollama 部署一个 7B 级开源模型，压测并记录 tokens/s"
+        },
+        {
+          "id": "llm.s03.i04",
+          "kind": "tech",
+          "text": "浏览 Ultra-Scale Playbook，知道数据/张量/流水线并行各解决什么问题即可"
+        },
+        {
+          "id": "llm.s03.i05",
+          "kind": "prod",
+          "text": "做一个成本模型表格：日活、每次对话 token 数、缓存命中率 → 月成本（API 与自部署两套）"
+        },
+        {
+          "id": "llm.s03.i06",
+          "kind": "prod",
+          "text": "对比开源权重模型的许可证（MIT / Apache / 自定义），列出商用限制"
+        }
+      ],
+      "resources": [
+        {
+          "id": "llm.s03.r01",
+          "name": "vLLM",
+          "url": "https://github.com/vllm-project/vllm"
+        },
+        {
+          "id": "llm.s03.r02",
+          "name": "PagedAttention 论文",
+          "url": "https://arxiv.org/abs/2309.06180"
+        },
+        {
+          "id": "llm.s03.r03",
+          "name": "DeepSeek-V3 Technical Report",
+          "url": "https://arxiv.org/abs/2412.19437"
+        },
+        {
+          "id": "llm.s03.r04",
+          "name": "GLM-4.5 技术报告（Agentic/Reasoning/Coding）",
+          "url": "https://arxiv.org/abs/2508.06471"
+        },
+        {
+          "id": "llm.s03.r05",
+          "name": "Ultra-Scale Playbook（分布式训练）",
+          "url": "https://huggingface.co/spaces/nanotron/ultrascale-playbook"
+        },
+        {
+          "id": "llm.s03.r06",
+          "name": "Ollama",
+          "url": "https://ollama.com/"
+        },
+        {
+          "id": "llm.s03.r07",
+          "name": "开源权重模型许可证清单",
+          "url": "https://github.com/xigh/open-weight-models"
+        },
+        {
+          "id": "llm.s03.r08",
+          "name": "Datawhale self-llm（开源模型部署中文教程）",
+          "url": "https://github.com/datawhalechina/self-llm"
+        }
+      ],
+      "output": "本地部署压测记录 + 成本测算表（可复用到面试）"
+    },
+    {
+      "id": "llm.s04",
+      "title": "评估、RAG 与 AI 产品工程",
+      "weeks": [
+        15,
+        20
+      ],
+      "goal": "把模型变成可靠的产品：会写评估、会做 RAG、会定义质量指标。",
+      "items": [
+        {
+          "id": "llm.s04.i01",
+          "kind": "tech",
+          "text": "读 RAG 原始论文，用 LightRAG 或 RAGFlow 搭一个个人知识库问答"
+        },
+        {
+          "id": "llm.s04.i02",
+          "kind": "tech",
+          "text": "用 promptfoo 给自己的 RAG 写 30 条评估用例，跑出准确率和失败分类"
+        },
+        {
+          "id": "llm.s04.i03",
+          "kind": "tech",
+          "text": "学 Anthropic / OpenAI 官方提示工程文档，整理成自己的提示模板库"
+        },
+        {
+          "id": "llm.s04.i04",
+          "kind": "prod",
+          "text": "精读 Hamel Husain 的评估文章，按“错误分析 → 指标 → 自动评估”给自己的产品设计评估方案"
+        },
+        {
+          "id": "llm.s04.i05",
+          "kind": "prod",
+          "text": "读 Chip Huyen《AI Engineering》对应章节，总结 AI 产品与传统产品在 PRD 上的差异"
+        },
+        {
+          "id": "llm.s04.i06",
+          "kind": "prod",
+          "text": "写一份带评估指标、上线门槛、失败兜底的 AI 功能 PRD"
+        }
+      ],
+      "resources": [
+        {
+          "id": "llm.s04.r01",
+          "name": "RAG: Retrieval-Augmented Generation",
+          "url": "https://arxiv.org/abs/2005.11401"
+        },
+        {
+          "id": "llm.s04.r02",
+          "name": "LightRAG",
+          "url": "https://github.com/HKUDS/LightRAG"
+        },
+        {
+          "id": "llm.s04.r03",
+          "name": "RAGFlow",
+          "url": "https://github.com/infiniflow/ragflow"
+        },
+        {
+          "id": "llm.s04.r04",
+          "name": "MinerU（PDF 解析）",
+          "url": "https://github.com/opendatalab/MinerU"
+        },
+        {
+          "id": "llm.s04.r05",
+          "name": "promptfoo（评估工具）",
+          "url": "https://github.com/promptfoo/promptfoo"
+        },
+        {
+          "id": "llm.s04.r06",
+          "name": "Hamel：Your AI Product Needs Evals",
+          "url": "https://hamel.dev/blog/posts/evals/"
+        },
+        {
+          "id": "llm.s04.r07",
+          "name": "Chip Huyen《AI Engineering》配套仓库",
+          "url": "https://github.com/chiphuyen/aie-book"
+        },
+        {
+          "id": "llm.s04.r08",
+          "name": "Claude 提示工程文档",
+          "url": "https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/overview"
+        },
+        {
+          "id": "llm.s04.r09",
+          "name": "OpenAI Cookbook",
+          "url": "https://cookbook.openai.com/"
+        },
+        {
+          "id": "llm.s04.r10",
+          "name": "提示工程指南（中文）",
+          "url": "https://www.promptingguide.ai/zh"
+        }
+      ],
+      "output": "个人知识库 RAG Demo + 评估报告 + 一份 AI 功能 PRD"
+    },
+    {
+      "id": "llm.s05",
+      "title": "跟上前沿：读论文的固定节奏",
+      "weeks": [
+        21,
+        26
+      ],
+      "goal": "形成每周追踪前沿的习惯，能独立判断一篇新论文/新模型的产品意义。",
+      "items": [
+        {
+          "id": "llm.s05.i01",
+          "kind": "tech",
+          "text": "每周从本站“最新论文”挑 2 篇精读，用固定模板记笔记：问题、方法、结果、局限、对产品的意义"
+        },
+        {
+          "id": "llm.s05.i02",
+          "kind": "tech",
+          "text": "选一个方向深挖：可解释性（Transformer Circuits）、长上下文、多模态、世界模型 中任选一个"
+        },
+        {
+          "id": "llm.s05.i03",
+          "kind": "tech",
+          "text": "复现一篇小论文的核心实验（推荐从 open-r1 的小规模 GRPO 实验开始）"
+        },
+        {
+          "id": "llm.s05.i04",
+          "kind": "prod",
+          "text": "每月写一篇“本月大模型变化 → 产品机会”月报，发布到自己的博客或公众号"
+        },
+        {
+          "id": "llm.s05.i05",
+          "kind": "prod",
+          "text": "订阅并固定阅读 3 个信息源（如 Interconnects、Simon Willison、Latent Space）"
+        }
+      ],
+      "resources": [
+        {
+          "id": "llm.s05.r01",
+          "name": "Hugging Face Daily Papers",
+          "url": "https://huggingface.co/papers"
+        },
+        {
+          "id": "llm.s05.r02",
+          "name": "Transformer Circuits（Anthropic 可解释性）",
+          "url": "https://transformer-circuits.pub/"
+        },
+        {
+          "id": "llm.s05.r03",
+          "name": "open-r1",
+          "url": "https://github.com/huggingface/open-r1"
+        },
+        {
+          "id": "llm.s05.r04",
+          "name": "Lilian Weng 博客",
+          "url": "https://lilianweng.github.io/"
+        },
+        {
+          "id": "llm.s05.r05",
+          "name": "Interconnects（Nathan Lambert）",
+          "url": "https://www.interconnects.ai/"
+        },
+        {
+          "id": "llm.s05.r06",
+          "name": "Simon Willison 博客",
+          "url": "https://simonwillison.net/"
+        },
+        {
+          "id": "llm.s05.r07",
+          "name": "Latent Space",
+          "url": "https://www.latent.space/"
+        },
+        {
+          "id": "llm.s05.r08",
+          "name": "Epoch AI（算力与趋势数据）",
+          "url": "https://epoch.ai/"
+        },
+        {
+          "id": "llm.s05.r09",
+          "name": "Stanford AI Index",
+          "url": "https://hai.stanford.edu/ai-index"
+        },
+        {
+          "id": "llm.s05.r10",
+          "name": "mlabonne LLM Course",
+          "url": "https://github.com/mlabonne/llm-course"
+        }
+      ],
+      "output": "论文笔记 ≥ 10 篇 + 2 篇月报"
+    }
+  ],
+  "frontier": [
+    {
+      "id": "llm.f01",
+      "title": "推理模型与测试时计算",
+      "desc": "前沿模型普遍分出“快/慢”档位，长时间思考与后台长任务成为卖点。看点：思考预算如何定价，怎样把长任务做成可等待的产品体验。",
+      "links": [
+        {
+          "name": "Test-Time Compute 论文",
+          "url": "https://arxiv.org/abs/2408.03314"
+        }
+      ]
+    },
+    {
+      "id": "llm.f02",
+      "title": "后训练与蒸馏",
+      "desc": "强化学习后训练的成果被蒸馏到更小的模型上，例如 2026-10 HF 热榜的 Waypoint-OPD（门控在线策略蒸馏）。这决定了便宜模型能追到多近。",
+      "links": [
+        {
+          "name": "Waypoint-OPD",
+          "url": "https://huggingface.co/papers/2610.21601"
+        }
+      ]
+    },
+    {
+      "id": "llm.f03",
+      "title": "开源权重格局",
+      "desc": "2026 年 10 月，开源一线是 DeepSeek V4/V4.1、GLM-5.3、Kimi K3、Qwen 3.8、Gemma 4、MiniMax M3 等。阿里表示 Qwen 4 仍在训练中，许可证差异是商用的关键。",
+      "links": [
+        {
+          "name": "开源模型与许可证全景（2026-10）",
+          "url": "https://codersera.com/blog/open-source-llms-landscape-2026/"
+        },
+        {
+          "name": "Qwen 4 发布进度",
+          "url": "https://techpilot.ai/qwen-4-release-date/"
+        }
+      ]
+    },
+    {
+      "id": "llm.f04",
+      "title": "闭源前沿与价格战",
+      "desc": "OpenAI GPT-6 系列（Astra / Sol / Luna）、Anthropic Claude Fable 5.1 / Opus 5.5 / Sonnet 5.5、Gemini 3.8 等并行竞争。低档模型每百万 token 只要几毛钱，成本已不再是大多数场景的瓶颈。",
+      "links": [
+        {
+          "name": "2026-10 前沿模型对比",
+          "url": "https://www.teamday.ai/blog/best-ai-models-2026"
+        },
+        {
+          "name": "DeepSeek V4.1 Flash 实测",
+          "url": "https://kingy.ai/blog/deepseek-v4-1-flash-1017-specs-benchmarks-pricing/"
+        },
+        {
+          "name": "大模型排行榜",
+          "url": "https://www.jumohub.com/leaderboards/overall/"
+        }
+      ]
+    },
+    {
+      "id": "llm.f05",
+      "title": "可解释性",
+      "desc": "稀疏自编码器（SAE）与电路分析是安全与可控性的基础研究，HF 热榜上 SAE 相关论文持续出现。",
+      "links": [
+        {
+          "name": "Behavioral Compositionality of SAE",
+          "url": "https://huggingface.co/papers/2610.21261"
+        },
+        {
+          "name": "Transformer Circuits",
+          "url": "https://transformer-circuits.pub/"
+        }
+      ]
+    },
+    {
+      "id": "llm.f06",
+      "title": "世界模型与具身",
+      "desc": "视频生成与动作建模合并训练（world + action），VLA 模型快速迭代，是下一个大赛道。",
+      "links": [
+        {
+          "name": "World and Action Modeling 联合训练",
+          "url": "https://huggingface.co/papers/2610.21095"
+        }
+      ]
+    }
+  ],
+  "biz": {
+    "fresh": [
+      {
+        "id": "llm.bn01",
+        "title": "AI 原生的专业服务（Service-as-Software）",
+        "desc": "不卖软件席位，按结果交付服务：AI 法务初审、AI 财务对账、AI 招聘初筛。护城河在流程设计与质量把控，不在模型。",
+        "links": [
+          {
+            "name": "Foundation Capital: Service as Software",
+            "url": "https://foundationcapital.com/ai-service-as-software/"
+          }
+        ]
+      },
+      {
+        "id": "llm.bn02",
+        "title": "生成式引擎优化（GEO）",
+        "desc": "用户从搜索转向问 AI，品牌需要出现在 AI 的回答里。2026 年国内已经有一批服务商在卖这项服务。",
+        "links": [
+          {
+            "name": "2026-08 GEO 服务商评测",
+            "url": "https://www.cnblogs.com/GrowthUME/p/22373544"
+          }
+        ]
+      },
+      {
+        "id": "llm.bn03",
+        "title": "评估与数据服务",
+        "desc": "每家做 AI 应用的公司都缺评估集和高质量领域数据，“卖铲子”的机会长期存在。",
+        "links": []
+      }
+    ],
+    "old": [
+      {
+        "id": "llm.bo01",
+        "title": "客服与销售",
+        "desc": "最早跑出 ROI 的场景。老业务用大模型做质检、话术推荐、商机评估（参考你的 Dumate-Agent 项目），按节省的人力计价。",
+        "links": [
+          {
+            "name": "a16z：企业实际在哪里采用 AI",
+            "url": "https://a16z.com/where-enterprises-are-actually-adopting-ai/"
+          },
+          {
+            "name": "Dumate-Agent",
+            "url": "https://github.com/yangqxuan-work/Dumate-Agent"
+          }
+        ]
+      },
+      {
+        "id": "llm.bo02",
+        "title": "文档密集型行业",
+        "desc": "保险理赔、银行信贷、政务审批：存量流程里有大量“读文件 → 填表 → 判断”，最适合用大模型改造。",
+        "links": [
+          {
+            "name": "Anthropic Economic Index（AI 实际被用来做什么）",
+            "url": "https://www.anthropic.com/economic-index"
+          }
+        ]
+      },
+      {
+        "id": "llm.bo03",
+        "title": "内容与营销",
+        "desc": "电商详情页、短视频脚本、本地化翻译。规模大但竞争激烈，差异化在于接入客户自己的数据与渠道。",
+        "links": []
+      }
+    ]
+  }
+}

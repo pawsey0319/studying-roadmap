@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""抓取官方博客、权威媒体、arXiv、项目 Release 和社区高票讨论的 RSS/Atom，生成 data/sources.js 供网页离线读取。
+"""抓取官方博客、权威媒体、arXiv、项目 Release 和社区高票讨论的 RSS/Atom，生成 data/sources.json 供网页离线读取。
 
 只用标准库。用法：python3 tools/fetch_sources.py
 浏览器不能跨域读取这些 RSS，所以由本脚本（每日定时任务）抓取后写成本地快照。
@@ -19,7 +19,7 @@ from email.utils import parsedate_to_datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / "data" / "sources.js"
+OUT = ROOT / "data" / "sources.json"
 KEEP_DAYS = 45
 MAX_PER_SOURCE = 40
 
@@ -260,8 +260,7 @@ def main():
     now = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M")
     names = [{"name": s[0], "lvl": s[2]} for s in SOURCES]
     data = {"updated": now, "sources": names, "status": report, "items": items, "hf": fetch_hf_daily()}
-    OUT.write_text("/* 由 tools/fetch_sources.py 自动生成，请勿手改 */\nHUB.sources = "
-                   + json.dumps(data, ensure_ascii=False, indent=0) + ";\n", encoding="utf-8")
+    OUT.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     print(f"已写入 {OUT}，共 {len(items)} 条，更新时间 {now}")
     print("\n".join(report))
     ok = sum(1 for _, _, e in results if not e)

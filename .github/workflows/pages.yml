@@ -27,6 +27,8 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+      - name: 单元测试（失败则不部署，避免把坏数据发布出去）
+        run: node --test tests/*.test.js
       - name: 抓取官方博客与媒体快照
         # 个别来源失败不影响部署，脚本会把失败情况写进快照
         run: python3 tools/fetch_sources.py || echo "部分来源抓取失败"

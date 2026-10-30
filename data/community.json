@@ -1,5 +1,4 @@
-/* 由 tools/fetch_community.py 生成（每周资讯更新时运行），请勿手改 */
-HUB.community = {
+{
 "updated": "2026-10-20 16:04",
 "status": [
 "成功 Reddit r/LocalLLaMA: 12 条",
@@ -555,4 +554,4 @@ HUB.community = {
 "n": 156
 }
 ]
-};
+}
