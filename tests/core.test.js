@@ -4,7 +4,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { newDoc, setKey, delKey, mergeDoc, sameDoc } from '../src/core/doc.js';
 import { migrateV1, validProgress, validNote, ITEM_RE, STAGE_RE } from '../src/store/migrate.js';
-import { pct, curWeek, stageAt, trackItemIds } from '../src/core/progress.js';
+import { pct, trackState, stageStatus } from '../src/core/progress.js';
+const trackItemIds = t => t.stages.flatMap(s => s.items.map(i => i.id));
 import { groupByAge, daysAgo } from '../src/core/feed.js';
 
 const legacy = JSON.parse(fs.readFileSync(new URL('../content/legacy-v1.json', import.meta.url)));
@@ -84,13 +85,24 @@ test('合并：拒绝非法键值', () => {
   assert.deepEqual(Object.keys(a.e), []);
 });
 
-test('进度：完成比例、当前周、当前阶段', () => {
+test('进度：完成比例、当前阶段、已掌握与跳过', () => {
   assert.equal(pct({ a: 1, b: 1 }, ['a', 'b', 'c', 'd']), 0.5);
   assert.equal(pct({}, []), 0);
-  const t0 = new Date('2026-10-12T00:00:00');
-  assert.equal(curWeek('2026-10-12', t0), 1);
-  assert.equal(curWeek('2026-10-12', new Date('2026-10-19T00:00:00')), 2);
-  assert.equal(stageAt(track('agent'), 5).id, 'agent.s02');
+  const t = track('agent');
+  let st = trackState(t, {}, {});
+  assert.equal(st.current, 'agent.s01');
+  assert.equal(st.doneStages, 0);
+  // 第一阶段标为已掌握 → 当前阶段前进到第二阶段
+  st = trackState(t, { 'agent.s01': { mastered: true } }, {});
+  assert.equal(st.current, 'agent.s02');
+  assert.equal(stageStatus(st.stages[0], st.current), 'mastered');
+  assert.equal(stageStatus(st.stages[1], st.current), 'now');
+  // 跳过的任务不计入；其余全部勾完 → 阶段学完
+  const s2 = t.stages[1], [first, ...rest] = s2.items.map(i => i.id);
+  const done = Object.fromEntries(rest.map(id => [id, '2026-11-01']));
+  st = trackState(t, { 'agent.s01': { mastered: true }, 'agent.s02': { skip: [first] } }, done);
+  assert.equal(stageStatus(st.stages[1], st.current), 'done');
+  assert.equal(st.current, 'agent.s03');
 });
 
 test('资讯：按时间分组，支持月份和年份精度', () => {
