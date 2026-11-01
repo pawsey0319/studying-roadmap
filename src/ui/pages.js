@@ -3,7 +3,7 @@ import { esc } from '../util.js';
 import * as M from '../model.js';
 import * as store from '../store/index.js';
 import { act, refresh, toast, newsRow, trackTag, routeTag } from './kit.js';
-import { pendingSuggestions } from './suggest.js';
+import { pendingSuggestions, planCard } from './suggest.js';
 import { sugRow, stageLabel } from './home.js';
 
 export function renderRoute(id) {
@@ -51,10 +51,13 @@ export function renderBiz(q) {
       <div><div class="sh" style="margin-top:0"><h3>老商机改造</h3></div>${items.filter(x => x.kind === 'old').map(card).join('') || '<p class="empty">没有符合筛选的条目。</p>'}</div></div>`;
 }
 
-export function renderSuggestions() {
+export function renderSuggestions(q = {}) {
   const s = pendingSuggestions();
-  return `<div class="ph"><h1>等你确认</h1><span class="mut">每周自动更新和学习 Agent 提出的修改建议，你点“应用”才会改路线</span></div>
-    <div class="card" style="margin-top:14px">${s.map(sugRow).join('') || '<p class="empty">没有待确认的建议。</p>'}</div>`;
+  const one = s => `<div class="card" id="sug-${esc(s.id)}" style="margin-top:12px;padding:12px 14px${q.id === s.id ? ';outline:2px solid var(--sig)' : ''}">
+      <div class="small mut">${s.from === 'weekly' ? `每周自动更新 · ${esc(s.at || '')}` : '学习 Agent 的方案'} ${s.track ? trackTag(s.track) : ''}</div>
+      <b>${esc(s.title)}</b>${s.why ? `<p class="small" style="margin:4px 0 0">${esc(s.why)}</p>` : ''}${planCard(s)}</div>`;
+  return `<div class="ph"><h1>等你确认</h1><span class="mut">每周自动更新和学习 Agent 提出的修改建议，逐条勾选后点“应用”才会改你的路线，随时能恢复原版</span></div>
+    ${s.map(one).join('') || '<div class="card" style="margin-top:14px"><p class="empty">没有待确认的建议。</p></div>'}`;
 }
 
 export function renderLater() {
@@ -74,6 +77,7 @@ act('route-rename', el => {
   const next = { ...m }; if (name.trim()) next.name = name.trim().slice(0, 40); else delete next.name;
   store.put('routes', id, Object.keys(next).length ? next : null); refresh();
 });
+act('sug-view', el => { location.hash = '#/suggestions?id=' + encodeURIComponent(el.dataset.id); });
 act('tl-more', el => { store.ui().tlMore = el.dataset.id; store.saveUi(); refresh(); });
 act('biz-track', el => { store.ui().bizTrack = el.dataset.id; store.saveUi(); refresh(); });
 act('biz-kind', el => { store.ui().bizKind = el.dataset.id; store.saveUi(); refresh(); });

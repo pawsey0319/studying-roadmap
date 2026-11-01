@@ -1,0 +1,4 @@
+{
+  "supabaseUrl": "https://你的项目ID.supabase.co",
+  "supabaseAnonKey": "Supabase 控制台 → Project Settings → API 里的 anon public key（公开的，可以提交）"
+}

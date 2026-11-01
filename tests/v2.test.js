@@ -128,3 +128,21 @@ test('导入：Markdown 按标题分阶段，资源和产出归位，结构不�
   const d = dupStages(tr, { stages: [{ title: '召回 基础' }, { title: '别的' }] });
   assert.equal(d[0].dup.title, '召回 基础');
 });
+
+test('每周自动生成的内容：精选、路线、待确认建议都能被网站正确读取', () => {
+  const feed = read('../content/feed.json'), sugs = read('../content/suggestions.json');
+  const stages = new Map(['llm', 'slm', 'agent', 'quant'].flatMap(id => read(`../content/tracks/${id}.json`).stages.map(s => [s.id, s])));
+  const rids = new Set(ROUTES.map(r => r.id));
+  for (const x of feed.items) {
+    assert.match(x.d, /^\d{4}(-\d{2}){0,2}$/, x.t);
+    assert.ok(['llm', 'slm', 'agent', 'quant'].includes(x.k) && ['news', 'paper', 'dir', 'biz'].includes(x.type), x.t);
+    assert.match(x.u, /^https?:\/\//); assert.ok(['A', 'B'].includes(x.lvl), x.t);
+    for (const r of x.r || []) assert.ok(rids.has(r), `${x.t} 的路线 ${r} 不存在`);
+  }
+  for (const r of ROUTES) if (r.status === 'merged') assert.ok(rids.has(r.into), r.id + ' 合并到了不存在的路线');
+  for (const s of sugs.items) {
+    assert.ok(DOCS.sugs(s.id, 'applied'), '建议 ID 格式不对：' + s.id);
+    const st = stages.get(s.stage); assert.ok(st, s.id + ' 的阶段不存在');
+    assert.equal(cleanOps(s.ops, st).length, s.ops.length, s.id + ' 有无效的修改');
+  }
+});

@@ -6,6 +6,7 @@
 """
 import gzip
 import html
+import html.parser
 import json
 import re
 import sys
@@ -89,11 +90,11 @@ KW = {
     "llm": r"\bLLMs?\b|language model|GPT|Claude|Gemini|DeepSeek|Qwen|Llama|Kimi|GLM|reasoning|frontier model|pre-?train|post-?train|RLHF|inference|大模型|模型发布|推理模型",
     "slm": r"small (language )?model|\bSLMs?\b|on-device|edge AI|local model|fine-?tun|LoRA|distill|quantiz|Gemma|Phi-|SmolLM|MiniCPM|llama\.cpp|Ollama|\bMLX\b|embedding|端侧|小模型|微调|蒸馏",
     "agent": r"\bagents?\b|agentic|\bMCP\b|\bA2A\b|tool use|computer use|browser use|Codex|Claude Code|copilot|智能体|Agent",
-    "quant": r"financ|trading|\bstocks?\b|stock market|portfolio|hedge fund|asset pric|backtest|\bquant(itative)?\b|量化|金融|证券|股票|基金|投研",
+    "quant": r"financ|trading|\bstocks?\b|stock market|portfolio|hedge fund|asset pric|backtest|\bquant(itative)?\b|量化|金融|证券|股票|基金(?!会)|投研",
 }
 KW = {k: re.compile(v, re.I) for k, v in KW.items()}
 # 非量化专门来源的条目，标题必须明确涉及交易/投资才归入量化板块
-QUANT_STRICT = re.compile(r"\bquant(itative)?\b|trading|hedge fund|stock market|\bstocks?\b|asset manag|investment research|portfolio|量化|证券|股票|投研|基金|券商", re.I)
+QUANT_STRICT = re.compile(r"\bquant(itative)?\b|trading|hedge fund|stock market|\bstocks?\b|asset manag|investment research|portfolio|量化|证券|股票|投研|基金(?!会)|券商", re.I)
 PRE_RE = re.compile(r"rc\d|\b(alpha|beta|dev|nightly)\b", re.I)
 AI_RE = re.compile(r"\bAI\b|machine learning|model|LLM|agent|neural|人工智能|模型", re.I)
 
@@ -226,6 +227,131 @@ def fetch_reddit():
     return out
 
 
+# AI 资讯日报（hex2077.dev，何夕2077）：每天一页的聚合日报。它是二手来源，所以每条的可信度按它引用的原始链接的域名算，
+# 并标注“经 AI 资讯日报”。只存标题、原始链接和一句摘要。
+DAILY_BASE = "https://hex2077.dev/zh-CN/docs/{ym}/{ymd}/"
+DAILY_RSS = "https://hex2077.dev/rss.xml"
+DAILY_DAYS = 3   # 收最近 3 期；日报偶尔延迟或周末停更，最多往前找 7 天
+DOMAIN_A = ("openai.com", "anthropic.com", "claude.com", "deepmind.google", "blog.google", "ai.google.dev", "googleblog.com", "ai.meta.com",
+            "about.fb.com", "microsoft.com", "nvidia.com", "huggingface.co", "arxiv.org", "mistral.ai", "deepseek.com",
+            "x.ai", "modelcontextprotocol.io", "apple.com", "amazon.com", "aboutamazon.com", "qwen.ai", "qwenlm.github.io", "alibabacloud.com",
+            "moonshot.cn", "kimi.com", "bigmodel.cn", "zhipuai.cn", "minimax.io", "z.ai", "cursor.com", "sec.gov", "csrc.gov.cn")
+DOMAIN_B = ("the-decoder.com", "theverge.com", "techcrunch.com", "arstechnica.com", "technologyreview.com", "bloomberg.com", "reuters.com",
+            "ft.com", "wsj.com", "cnbc.com", "nytimes.com", "theinformation.com", "wired.com", "venturebeat.com", "axios.com",
+            "qbitai.com", "36kr.com", "infoq.cn", "leiphone.com", "jiqizhixin.com", "semianalysis.com", "simonwillison.net",
+            "latent.space", "interconnects.ai", "sebastianraschka.com", "theregister.com", "caixin.com", "jiemian.com")
+
+
+# 官方账号在 X 上的发布算一手（A）；其他个人账号、GitHub 热门项目、Reddit 都算社区（C）
+X_OFFICIAL = {"openai", "anthropicai", "claudeai", "googledeepmind", "googleai", "geminiapp", "deepseek_ai", "alibaba_qwen", "kimi_moonshot",
+              "zai_org", "minimax__ai", "mistralai", "aiatmeta", "xai", "nvidiaai", "huggingface", "github", "cursor_ai", "openaidevs"}
+
+
+def domain_level(url):
+    u = urllib.parse.urlparse(url)
+    if (u.hostname or "").endswith(("x.com", "twitter.com")):
+        return "A" if u.path.strip("/").split("/")[0].lower() in X_OFFICIAL else "C"
+    host = u.hostname or ""
+    host = host[4:] if host.startswith("www.") else host
+    hit = lambda ds: any(host == d or host.endswith("." + d) for d in ds)
+    return "A" if hit(DOMAIN_A) else "B" if hit(DOMAIN_B) else "C"
+
+
+class DailyParser(html.parser.HTMLParser):
+    """日报页面结构：h3 分节，ol > li > p，p 里 <strong> 是标题，第一个外链是原始来源。"""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.section, self.in_h3, self.in_li, self.in_strong = "", False, 0, False
+        self.cur, self.items = None, []
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        if tag == "h3":
+            self.in_h3, self.section = True, ""
+        elif tag == "li" and self.section:
+            self.in_li += 1
+            if self.in_li == 1:
+                self.cur = {"sec": self.section, "title": "", "text": "", "url": ""}
+        elif self.cur is not None:
+            if tag == "strong" and not self.cur["title"]:
+                self.in_strong = True
+            elif tag == "a" and not self.cur["url"]:
+                href = a.get("href") or ""
+                if href.startswith(("http://", "https://")) and "hex2077.dev" not in href:
+                    self.cur["url"] = href
+
+    def handle_endtag(self, tag):
+        if tag == "h3":
+            self.in_h3 = False
+        elif tag == "strong":
+            self.in_strong = False
+        elif tag == "li" and self.in_li:
+            self.in_li -= 1
+            if not self.in_li and self.cur:
+                self.items.append(self.cur)
+                self.cur = None
+        elif tag == "h2":
+            self.section = ""  # 第二个 h2 之后是“多渠道”说明，不是资讯
+
+    def handle_data(self, data):
+        if self.in_h3:
+            self.section += data.strip()
+        elif self.cur is not None:
+            if self.in_strong and not self.cur["text"].strip():
+                self.cur["title"] += data
+            else:
+                self.cur["text"] += data
+
+
+def classify(blob):
+    ks = [k for k, r in KW.items() if r.search(blob)]
+    if "quant" in ks and not QUANT_STRICT.search(blob):
+        ks.remove("quant")
+    return ks or ["llm"]  # 日报本身全是 AI 资讯，没命中细分方向的归到大模型
+
+
+def fetch_ai_daily():
+    """返回 (items, 状态说明)。抓最近几天的日报页面 + 周报 RSS。"""
+    tz8 = timezone(timedelta(hours=8))
+    today = datetime.now(tz8).date()
+    items, got, errs = [], 0, []
+    for i in range(7):
+        if got >= DAILY_DAYS:
+            break
+        d = today - timedelta(days=i)
+        url = DAILY_BASE.format(ym=d.strftime("%Y-%m"), ymd=d.isoformat())
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=30) as r:
+                raw = r.read().decode("utf-8", "replace")
+        except Exception:  # 当天的日报可能还没发布
+            continue
+        p = DailyParser()
+        p.feed(raw)
+        got += 1
+        for x in p.items:
+            title = re.sub(r"\s+", " ", x["title"]).strip().rstrip("。.")
+            if not title or not x["url"]:
+                continue
+            summ = re.sub(r"\s+", " ", x["text"]).strip()
+            summ = summ[:120] + ("…" if len(summ) > 120 else "")
+            ks = classify(f"{title} {summ}")
+            if not ks:
+                continue
+            items.append({"d": d.isoformat(), "src": f"AI 资讯日报 · {x['sec']}", "lvl": domain_level(x["url"]), "k": ks,
+                          "t": title[:160], "s": summ, "u": x["url"], "via": "AI 资讯日报"})
+    try:  # 周报：整篇作为一条，属于聚合解读（C 级）
+        with urllib.request.urlopen(urllib.request.Request(DAILY_RSS, headers=UA), timeout=30) as r:
+            for title, link, d, summ in parse_feed(r.read())[:2]:
+                if d and d > datetime.now(timezone.utc) - timedelta(days=14):
+                    items.append({"d": d.astimezone(tz8).strftime("%Y-%m-%d"), "src": "AI 深度信号周报", "lvl": "C",
+                                  "k": classify(f"{title} {summ}") or ["llm"], "t": title[:160], "s": summ[:120], "u": link})
+    except Exception as e:
+        errs.append(f"周报 {type(e).__name__}")
+    note = f"{'成功' if got else '失败'} AI 资讯日报: {got} 天 {len(items)} 条" + (f"（{'；'.join(errs)}）" if errs else "")
+    return items, note
+
+
 def fetch_hf_daily():
     """Hugging Face 每日论文，作为网页在打不开 huggingface.co 时的兜底数据。"""
     for base in ("https://huggingface.co", "https://hf-mirror.com"):
@@ -249,8 +375,10 @@ def main():
         results = list(ex.map(fetch, SOURCES))
     items, report = [], []
     seen = set()
+    daily, note = fetch_ai_daily()
+    results.append(("AI 资讯日报", daily, None if daily else "没有抓到"))
     for name, its, err in results:
-        report.append(f"{'失败' if err else '成功'} {name}: {len(its)} 条" + (f"（{err}）" if err else ""))
+        report.append(note if name == "AI 资讯日报" else f"{'失败' if err else '成功'} {name}: {len(its)} 条" + (f"（{err}）" if err else ""))
         for x in its:
             key = x["u"].split("?")[0].rstrip("/")
             if key not in seen:
@@ -258,7 +386,7 @@ def main():
                 items.append(x)
     items.sort(key=lambda x: x["d"], reverse=True)
     now = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M")
-    names = [{"name": s[0], "lvl": s[2]} for s in SOURCES]
+    names = [{"name": s[0], "lvl": s[2]} for s in SOURCES] + [{"name": "AI 资讯日报（何夕2077，按原始链接定级）", "lvl": "B"}]
     data = {"updated": now, "sources": names, "status": report, "items": items, "hf": fetch_hf_daily()}
     OUT.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     print(f"已写入 {OUT}，共 {len(items)} 条，更新时间 {now}")

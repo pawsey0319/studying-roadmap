@@ -1,0 +1,82 @@
+name: 每周自动更新
+
+# 每周一北京时间 9 点：抓社区讨论 → 核验链接 → 免费模型整理精选、精修前沿路线、生成待确认建议 → 提交 → 重新部署。
+# 需要在仓库 Settings → Secrets and variables → Actions 里至少配置一个模型 Key：
+#   MODELSCOPE_KEY（魔搭，首选）、SILICONFLOW_KEY、ZHIPU_KEY，或 LLM_BASE + LLM_KEY + LLM_MODEL
+# 可选：SUPABASE_URL + SUPABASE_SERVICE_KEY（读取内测用户的“分错了”标记）。
+on:
+  schedule:
+    - cron: "0 1 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+concurrency:
+  group: weekly
+  cancel-in-progress: false
+
+jobs:
+  weekly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: 抓取一周的快照
+        run: python3 tools/fetch_sources.py || echo "部分来源抓取失败"
+      - name: 每周整理
+        env:
+          MODELSCOPE_KEY: ${{ secrets.MODELSCOPE_KEY }}
+          SILICONFLOW_KEY: ${{ secrets.SILICONFLOW_KEY }}
+          ZHIPU_KEY: ${{ secrets.ZHIPU_KEY }}
+          LLM_BASE: ${{ secrets.LLM_BASE }}
+          LLM_KEY: ${{ secrets.LLM_KEY }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python3 tools/weekly.py
+      - name: 检查结果（测试不过就不提交）
+        if: always()
+        run: node --test tests/*.test.js
+      - name: 提交并重新部署
+        if: success()
+        run: |
+          git add content/feed.json content/routes.json content/suggestions.json data/community.json
+          if git diff --cached --quiet; then echo "没有变化"; exit 0; fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -q -m "每周自动更新 $(TZ=Asia/Shanghai date +%F)"
+          git push -q origin HEAD:main
+          # 用 GITHUB_TOKEN 推送不会触发其他工作流，手动触发一次部署
+          gh workflow run pages.yml --ref main
+      - name: 关闭上周的失败通知
+        if: success()
+        run: |
+          for n in $(gh issue list --label weekly-failed --state open --json number -q '.[].number'); do
+            gh issue close "$n" --comment "本周自动更新已成功，关闭。" || true
+          done
+      - name: 失败时开 issue 通知
+        if: failure()
+        run: |
+          gh label create weekly-failed --color D93F0B --description "每周自动更新失败" --force || true
+          day=$(TZ=Asia/Shanghai date +%F)
+          report=$(cat data/weekly-report.txt 2>/dev/null || echo "没有生成报告")
+          gh issue create --label weekly-failed --title "每周自动更新失败 ${day}" --body "网站继续显示上周的内容。
+
+          运行记录：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          \`\`\`
+          ${report}
+          \`\`\`
+
+          常见原因：模型 Key 失效或额度用完（换一个 Key 填进仓库 Secrets）、免费模型下线（在 Secrets 里设置 MODELSCOPE_MODEL 换模型）。
+          也可以在任何电脑上用 AI 助手按 UPDATE.md 的“手动补跑”一节执行。"

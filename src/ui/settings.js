@@ -42,7 +42,7 @@ export async function renderSettings() {
     <section class="card set"><h3>账号与云端同步</h3>
       ${cloud.available() ? (cloud.signedIn() ? `<p class="small">已登录：${esc(cloud.email())}。${cloud.error ? `<span class="err">同步失败：${esc(cloud.error)}</span>` : cloud.lastSync() ? '最后同步 ' + new Date(cloud.lastSync()).toLocaleString('zh-CN', { hour12: false }) : ''}</p>
           <div class="sa"><button class="btn" data-act="cloud-sync">立即同步</button><button class="btn gh" data-act="cloud-out">退出登录</button></div>`
-        : `<p class="hint">用邮箱验证码登录后，进度、调整、笔记、导入的路线会保存到云端，任何设备登录都能看到。内测期间需要先被邀请。</p>
+        : `<p class="hint">用邮箱登录后，进度、调整、笔记、导入的路线会保存到云端，任何设备登录都能看到。内测期间需要先被邀请。邮件里有 6 位验证码就填到下面；只有登录链接的话，在这台设备上点开链接即可。AI 的 Key 和对话不会上传。</p>
           <form id="cloudForm" class="addit"><input id="cloudEmail" type="email" placeholder="邮箱" required><button class="btn sm">发验证码</button></form>
           <form id="cloudVerify" class="addit"${cloud.email() || localStorage.getItem('learning-hub.cloud')?.includes('pending') ? '' : ' hidden'}><input id="cloudCode" inputmode="numeric" placeholder="邮件里的 6 位验证码"><button class="btn sm pri">登录</button></form>
           <p id="cloudMsg" class="small"></p>`)

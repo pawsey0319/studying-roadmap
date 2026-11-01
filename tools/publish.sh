@@ -12,7 +12,7 @@ if [ -f .deploy-token ]; then
   auth_args=(-c "http.extraHeader=Authorization: Basic ${auth}")
 fi
 
-git add -A -- index.html src content data tools tests package.json .github .gitignore .gitattributes README.md UPDATE.md AGENTS.md CLAUDE.md
+git add -A -- index.html manifest.webmanifest sw.js icons vendor src content data tools tests supabase package.json .github .gitignore .gitattributes README.md UPDATE.md AGENTS.md CLAUDE.md config.example.json 内测说明.md $( [ -f config.json ] && echo config.json )
 if ! git diff --cached --quiet; then
   name=$(git config user.name || true); email=$(git config user.email || true)
   git -c user.name="${name:-pawsey0319}" -c user.email="${email:-pawsey0319@users.noreply.github.com}" \

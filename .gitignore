@@ -4,3 +4,7 @@ __pycache__/
 data/sources.json
 # 推送用的令牌，绝不能提交
 .deploy-token
+# 每周任务的运行报告，只在本次运行里用
+data/weekly-report.txt
+# 云端公开配置可以提交；本地测试用的配置不要提交
+config.local.json

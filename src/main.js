@@ -37,7 +37,7 @@ async function render(opts = {}) {
     else if (page === 'notes') html = renderNotes(seg[1], { id: seg.slice(2).join('/') });
     else if (page === 'biz') html = renderBiz(q);
     else if (page === 'later') html = renderLater();
-    else if (page === 'suggestions') html = renderSuggestions();
+    else if (page === 'suggestions') { html = renderSuggestions(q); if (q.id) after = () => { const el = document.getElementById('sug-' + q.id); if (el) setTimeout(() => el.scrollIntoView({ block: 'center' }), 30); }; }
     else if (page === 'import') { html = renderImport(); after = afterImport; }
     else if (page === 'settings') { html = await renderSettings(); after = afterSettings; }
     else if (page === 'more') html = renderMore();
@@ -57,7 +57,6 @@ setRender(render);
 function renderNav(page, seg) {
   const tid = page === 't' ? seg[1] : page === 'r' ? (M.route(seg[1]) || {}).track : null;
   const cur = (p, id) => ((p === page && (!id || id === tid)) ? 'page' : 'false');
-  const sugN = document.querySelectorAll ? 0 : 0;
   $('#side').innerHTML = `<div class="brand"><i></i>我的学习路线</div>
     <a class="nav" href="#/" aria-current="${cur('home')}">工作台</a>
     <a class="nav" href="#/notes" aria-current="${cur('notes')}">笔记</a>
@@ -133,6 +132,7 @@ async function boot() {
   M.setContent(C);
   await store.init({ legacyMap: C.legacy, defaultTab: C.tracks[0].id, today: iso(new Date()) });
   cloud.setup(C.config);
+  const linked = await cloud.consumeLink();
   setupLive(C, () => parse().seg[1]);
   bindActs();
   store.onChange(what => {
@@ -145,6 +145,7 @@ async function boot() {
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncNow(); });
   await render();
   syncNow();
+  if (linked) toast('已登录，正在同步');
   // 第一次使用：开局规划（可以跳过）
   if (!store.get('meta', 'onboarded') && !store.ui().obSeen && !location.hash.includes('settings')) setTimeout(() => openOnboard(), 400);
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});

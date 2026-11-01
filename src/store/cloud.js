@@ -31,7 +31,7 @@ async function call(path, opt = {}, auth = true) {
 
 // 1. 发验证码。create_user:false = 只有被邀请过的邮箱能登录（内测邀请制）
 export async function sendCode(addr) {
-  await call('/auth/v1/otp', { method: 'POST', body: JSON.stringify({ email: addr, create_user: false }) }, false)
+  await call('/auth/v1/otp?redirect_to=' + encodeURIComponent(location.origin + location.pathname), { method: 'POST', body: JSON.stringify({ email: addr, create_user: false }) }, false)
     .catch(e => { throw new Error(/signup|not allowed|not found/i.test(e.message) ? '这个邮箱还没有被邀请。内测期间需要管理员先在后台邀请。' : '发送失败：' + e.message); });
   S.pending = addr; save();
 }
@@ -41,6 +41,18 @@ export async function verify(code) {
     .catch(e => { throw new Error('验证码不对或已过期：' + e.message); });
   S = { access: j.access_token, refresh: j.refresh_token, exp: Date.now() + (j.expires_in || 3600) * 1000, uid: j.user && j.user.id, email: j.user && j.user.email };
   save();
+}
+// 3. 邮件里点的是登录链接（默认模板只有链接、没有验证码）时，Supabase 会跳回网站并在地址 # 后面带上凭证
+export async function consumeLink() {
+  if (!CFG) return false;
+  const h = location.hash.replace(/^#\/?/, '');
+  if (!/(^|&)(access_token|error_description)=/.test(h)) return false;
+  const q = new URLSearchParams(h);
+  history.replaceState(null, '', location.pathname + location.search + '#/settings');
+  if (q.get('error_description')) { error = '登录链接无效或已过期：' + q.get('error_description'); status(); return false; }
+  S = { access: q.get('access_token'), refresh: q.get('refresh_token'), exp: Date.now() + (+q.get('expires_in') || 3600) * 1000 };
+  try { const u = await call('/auth/v1/user'); S.uid = u.id; S.email = u.email; save(); return true; }
+  catch (e) { S = {}; save(); error = '登录失败：' + e.message; status(); return false; }
 }
 export function signOut() { S = {}; save(); status(); }
 
