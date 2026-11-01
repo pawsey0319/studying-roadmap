@@ -124,6 +124,9 @@ body.qn-open .fab{display:none}
   .main{padding:10px 14px calc(84px + env(safe-area-inset-bottom))}
   .mtop{display:flex;align-items:center;gap:8px;padding:10px 14px 0;position:sticky;top:0;z-index:20;background:var(--paper)}
   .mtop b{font-weight:800}
+  .mtop:empty{display:none}
+  .mtop:empty+.wrap{padding-top:10px}
+  .mnav b svg{display:block;margin:0 auto}
   .mtop .chips{flex-wrap:nowrap;overflow-x:auto;margin-left:auto}
   .mnav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:35;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);height:calc(62px + env(safe-area-inset-bottom))}
   .mnav a,.mnav button{border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10.5px;color:var(--faint);text-decoration:none;gap:1px}

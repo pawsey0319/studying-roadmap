@@ -32,14 +32,14 @@ export function applyToStage(stageId, ops) {
 
 const OPN = { goal: '改目标', skip: '建议跳过', unskip: '恢复', add: '新增', edit: '改写', res: '加资源', mastered: '建议标为已掌握', unmastered: '取消已掌握' };
 const OPC = { goal: 'c', skip: 's', unskip: 'a', add: 'a', edit: 'c', res: 'a', mastered: 's', unmastered: 'a' };
-function opText(op, stage) {
+function opText(op, stage, weekly) {
   const it = id => { const x = stage && stage.items.find(i => i.id === id); return x ? x.text : id; };
   switch (op.op) {
     case 'goal': return op.text;
     case 'skip': case 'unskip': return it(op.id);
     case 'edit': return `${it(op.id)} → ${op.text}`;
     case 'add': return `${op.mode === 'practice' ? '实践验证：' : ''}${op.text}`;
-    case 'res': return `${op.name}${op.url ? ` <span class="tag ai">AI 推荐，未核实</span>` : ''}`;
+    case 'res': return `${esc(op.name)}${op.url ? (weekly ? ' <span class="tag">链接来自本周精选，已核验</span>' : ' <span class="tag ai">AI 推荐，未核实</span>') : ''}`;
     default: return '';
   }
 }
@@ -48,7 +48,7 @@ function opText(op, stage) {
 export function planCard(plan, opts = {}) {
   const f = plan.stage ? M.findStage(plan.stage) : null;
   const rows = (plan.ops || []).map((op, i) => `<label class="drow"><input type="checkbox" data-op="${i}"${needsManualConfirm(op) ? '' : ' checked'}>
-    <div><span class="op ${OPC[op.op] || 'c'}">${OPN[op.op] || op.op}</span>${op.op === 'res' ? opText(op, f && f.s) : esc(opText(op, f && f.s))}
+    <div><span class="op ${OPC[op.op] || 'c'}">${OPN[op.op] || op.op}</span>${op.op === 'res' ? opText(op, f && f.s, plan.from === 'weekly') : esc(opText(op, f && f.s))}
     ${op.why ? `<span class="why">${esc(op.why)}</span>` : ''}${needsManualConfirm(op) ? '<span class="why">跳过只能由你决定，需要的话勾上这一项</span>' : ''}</div></label>`).join('');
   return `<div class="plan" data-plan="${esc(plan.id)}"><div class="ph2">修改方案 · ${esc(f ? f.s.title : plan.title)}<span>${plan.ops.length} 项</span></div>
     ${rows || '<p class="empty">这份方案没有具体修改。</p>'}

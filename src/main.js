@@ -67,9 +67,9 @@ function renderNav(page, seg) {
     <a class="nav" href="#/import" aria-current="${cur('import')}" style="margin-top:4px"><span class="dot" style="background:none;border:1.5px dashed var(--faint)"></span>导入文档</a>
     <div class="ft"><a class="nav" href="#/settings" aria-current="${cur('settings')}">设置</a><p class="fnt small" id="syncState" style="padding:4px 10px"></p></div>`;
   const mt = page === 't' || page === 'r';
-  $('#mtop').innerHTML = mt ? `<div class="chips">${M.tracks().map(t => `<a class="chip" href="#/t/${t.id}" aria-pressed="${tid === t.id}" style="text-decoration:none${tid === t.id ? `;background:${t.color};border-color:${t.color}` : ''}">${esc(t.short || t.name)}</a>`).join('')}</div>` : `<b>${{ home: '今天', notes: '笔记', biz: '落地与商机', later: '稍后读', settings: '设置', import: '导入文档', more: '我的', suggestions: '等你确认' }[page] || ''}</b>`;
+  $('#mtop').innerHTML = mt ? `<div class="chips">${M.tracks().map(t => `<a class="chip" href="#/t/${t.id}" aria-pressed="${tid === t.id}" style="text-decoration:none${tid === t.id ? `;background:${t.color};border-color:${t.color}` : ''}">${esc(t.short || t.name)}</a>`).join('')}</div>` : ({ home: '<b>今天</b>', more: '<b>我的</b>' }[page] || '');
   $('#mnav').innerHTML = `<a href="#/" aria-current="${cur('home')}"><b>◉</b>今天</a>
-    <a href="#/t/${tid || UI().lastTrack || M.tracks()[0].id}" aria-current="${mt ? 'page' : 'false'}"><b>⌗</b>方向</a>
+    <a href="#/t/${tid || UI().lastTrack || M.tracks()[0].id}" aria-current="${mt ? 'page' : 'false'}"><b><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 4h12M3 9h7M3 14h10"/><circle cx="13" cy="9" r="1.6" fill="currentColor"/></svg></b>方向</a>
     <button class="plus" data-act="quick-note" aria-label="随手记"><b>＋</b></button>
     <button data-act="agent-open"><b>✦</b>Agent</button>
     <a href="#/more" aria-current="${['more', 'notes', 'biz', 'later', 'settings', 'import'].includes(page) ? 'page' : 'false'}"><b>☰</b>我的</a>`;
