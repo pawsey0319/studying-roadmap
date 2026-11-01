@@ -77,8 +77,11 @@ export function related(n) {
     return st && st.current === r.from;
   });
 }
+// 未读只统计最近 30 天：更早的资讯默认归档，不再提醒（仍然可以在资讯动态里看到）
+// 第一次打开时，7 天以前的资讯都算已读（readBase），免得一上来就有几百条未读
+export const isFresh = n => { const base = store.ui().readBase || ''; return n.d && n.d.length === 10 && n.d >= base && (today - new Date(n.d + 'T00:00:00')) / 864e5 <= 30; };
 export function unread(trackId) {
-  return news().filter(n => !isRead(n.id) && !isHidden(n.id) && (!trackId || n.k.includes(trackId)));
+  return news().filter(n => isFresh(n) && !isRead(n.id) && !isHidden(n.id) && (!trackId || n.k.includes(trackId)));
 }
 export const routeHasNew = rid => hasNew(rid, news(), today);
 export const routeNews = rid => news().filter(n => n.r.includes(rid));

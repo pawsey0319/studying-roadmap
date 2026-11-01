@@ -41,7 +41,7 @@ export const routeTag = rid => `<a class="tag fr" href="#/r/${encodeURIComponent
 
 // 一条资讯。opts：showTrack 显示方向标签；compact 精简
 export function newsRow(n, opts = {}) {
-  const read = M.isRead(n.id), later = !!store.get('later', n.id);
+  const read = M.isRead(n.id) || !M.isFresh(n), later = !!store.get('later', n.id);
   const tags = [
     opts.showTrack ? n.k.map(trackTag).join('') : '',
     n.type ? `<span class="tag">${TYPES[n.type] || '资讯'}</span>` : '',
@@ -55,7 +55,7 @@ export function newsRow(n, opts = {}) {
     <div><div class="tt"><a href="${esc(n.u)}" target="_blank" rel="noopener" data-act="read" data-id="${n.id}">${esc(n.t)}</a></div>
       ${n.s && !opts.compact ? `<div class="ts">${esc(n.s)}</div>` : ''}
       <div class="meta">${tags}<span>${esc(n.src || '')}${n.d ? ' · ' + esc(n.d.length > 5 ? n.d.slice(n.d.length === 10 ? 5 : 0) : n.d) : ''}</span></div></div>
-    <div class="na"><button type="button" data-act="toggle-read" data-id="${n.id}">${read ? '标为未读' : '标为已读'}</button>
+    <div class="na">${M.isFresh(n) ? `<button type="button" data-act="toggle-read" data-id="${n.id}">${read ? '标为未读' : '标为已读'}</button>` : ''}
       ${opts.compact ? '' : `<button type="button" data-act="later" data-id="${n.id}">${later ? '已在待读' : '稍后读'}</button><button type="button" data-act="agent-news" data-id="${n.id}">问 Agent</button>`}
       ${n.ai && !opts.compact ? `<button type="button" data-act="mark-wrong" data-id="${n.id}" title="下周的自动整理会参考你的标记">分错了</button>` : ''}</div></li>`;
 }

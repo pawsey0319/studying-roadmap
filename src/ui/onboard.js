@@ -122,7 +122,7 @@ async function generate() {
 }
 
 const PALETTE = ['#3C6E71', '#B5446E', '#5B7F1F', '#AF6E1A', '#2E6FA7', '#7A4E9C'];
-act('ob-close', () => $('#obDlg').close());
+act('ob-close', () => { store.ui().obSeen = true; store.saveUi(); $('#obDlg').close(); });
 act('ob-gen', () => generate());
 act('ob-default', async () => { store.put('meta', 'onboarded', new Date().toISOString().slice(0, 10)); S = null; await store.localSet('onboard', null); $('#obDlg').close(); toast('已使用默认路线。随时可以在工作台点“和 Agent 规划我的路线”。'); });
 act('ob-restart', async () => { S = { msgs: [], summary: S.summary, round: 0, step: 'talk', plans: [], drafts: [] }; await save(); render(); });

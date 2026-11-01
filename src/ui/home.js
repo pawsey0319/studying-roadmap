@@ -59,6 +59,7 @@ export function renderHome() {
   }).join('');
   return `<div class="ph"><h1>现在学什么</h1><span class="mut">${doing.length} 项在学，${sugs.length} 条建议等你确认，${un.length} 条资讯未读</span>
       <span class="r"><button class="btn" data-act="onboard">和 Agent 规划我的路线</button></span></div>
+    <div class="mrings">${ringsHtml(T)}</div>
     <div class="card metro">${metroSvg(T)}
       <div class="legend"><span><i class="f"></i>已学完</span><span><i></i>未学</span><span><i class="d"></i>你标为已掌握</span><span>虚线支线：自动整理出的前沿路线</span><span><i class="y"></i>7 天内有新进展</span></div></div>
     <div class="sh"><h3>在学</h3><span class="fnt small">每个方向的当前理论阶段，以及你在跟踪学习的前沿路线</span></div>
@@ -74,6 +75,18 @@ export function renderHome() {
         <div class="card"><ul class="nlist compact">${un.slice(0, 7).map(n => newsRow(n, { showTrack: true, compact: true })).join('') || '<li><span></span><div class="fnt">都读完了。资讯每天早上 8 点更新。</div><span></span></li>'}</ul>
         ${per.length ? `<div class="chips" style="padding:8px 12px;border-top:1px solid var(--soft)">${per.map(([t, n]) => `<a class="chip" href="#/t/${t.id}/news" style="text-decoration:none">${esc(t.short || t.name)} ${n}</a>`).join('')}</div>` : ''}</div></div>
     </div>`;
+}
+
+// 手机：每个方向一个圆环，圆环 = 理论进度，黄点 = 前沿有新进展
+export function ringsHtml(tracks) {
+  return tracks.map(t => {
+    const st = M.state(t.id), p = st.stages.length ? st.doneStages / st.stages.length : 0, C = 2 * Math.PI * 22;
+    const nw = M.routes(t.id).some(r => !r.stopped && M.routeHasNew(r.id)), un = M.unread(t.id).length;
+    return `<a href="#/t/${t.id}"><svg width="58" height="58" viewBox="0 0 58 58" aria-hidden="true"><circle cx="29" cy="29" r="22" fill="none" stroke="#DDE2E8" stroke-width="6"/>
+      <circle cx="29" cy="29" r="22" fill="none" stroke="${t.color}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${C * p} ${C}" transform="rotate(-90 29 29)"/>
+      ${nw ? '<circle cx="49" cy="9" r="5" fill="#F0B429" stroke="#fff" stroke-width="2"/>' : ''}<text x="29" y="34" text-anchor="middle" font-size="13" font-weight="700" fill="#1B2430">${st.doneStages}/${st.stages.length}</text></svg>
+      ${esc(t.short || t.name)}<br><span class="fnt">${un} 未读</span></a>`;
+  }).join('');
 }
 
 export function stageLabel(id) {

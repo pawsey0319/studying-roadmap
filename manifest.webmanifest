@@ -1,0 +1,17 @@
+{
+  "name": "我的学习路线",
+  "short_name": "学习路线",
+  "description": "理论路线 + 持续生长的前沿路线、经过核验的资讯、笔记和学习 Agent",
+  "start_url": "./#/",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ECEFF2",
+  "theme_color": "#ECEFF2",
+  "lang": "zh-CN",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

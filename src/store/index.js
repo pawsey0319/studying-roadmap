@@ -17,9 +17,11 @@ const emit = what => listeners.forEach(fn => { try { fn(what); } catch (e) { con
 
 export async function init({ legacyMap, defaultTab, today }) {
   legacy = legacyMap;
-  const meta = await kvGet('meta');
-  if (meta && meta.v === 2) {
-    for (const n of DOC_NAMES) D[n] = (await kvGet(n)) || newDoc();
+  // 版本信息存在 _ver；M0 版本把它存在 meta 键里，和“meta”文档同名，这里兼容迁移
+  let ver = await kvGet('_ver');
+  if (!ver) { const old = await kvGet('meta'); if (old && old.v === 2 && !old.e) { ver = old; await kvSet('_ver', old); await kvSet('meta', newDoc()); } }
+  if (ver && ver.v === 2) {
+    for (const n of DOC_NAMES) { const d = await kvGet(n); D[n] = d && d.e && d.mt ? d : newDoc(); }
     UI = (await kvGet('ui')) || {};
   } else {
     // 第一次打开 v2：从 v1 的 localStorage 迁移；v1 数据原样保留，另存一份备份
@@ -32,9 +34,10 @@ export async function init({ legacyMap, defaultTab, today }) {
       try { localStorage.setItem(V1_KEY + '.backup-' + today, localStorage.getItem(V1_KEY)); } catch (e) {}
     }
     for (const n of DOC_NAMES) await kvSet(n, D[n]);
-    await kvSet('meta', { v: 2, migratedAt: Date.now(), fromV1: !!v1 });
+    await kvSet('_ver', { v: 2, migratedAt: Date.now(), fromV1: !!v1 });
   }
   if (!D.progress.e.start) setKey(D.progress, 'start', today, 1);
+  if (!UI.readBase) { const d = new Date(Date.now() - 7 * 864e5); UI.readBase = d.toISOString().slice(0, 10); }
   UI = Object.assign({ tab: defaultTab, open: {}, filter: {}, snapLvl: {}, snapSrc: {}, snapMore: {} }, UI);
   await kvSet('ui', UI);
 }

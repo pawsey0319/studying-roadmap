@@ -123,18 +123,20 @@ export function afterTrack(id, sub, q) {
 }
 
 /* ---------- 动作 ---------- */
+// 在阶段里操作后保持它展开，免得当前阶段变化时卡片突然收起
+const keepOpen = id => { store.ui().open[id] = true; store.saveUi(); };
 const curTrack = () => (location.hash.match(/^#\/t\/([^/?]+)/) || [])[1];
 act('toggle-stage', el => {
   const li = el.closest('.stg'), open = li.dataset.open !== 'true';
   li.dataset.open = open; el.setAttribute('aria-expanded', open);
   store.ui().open[el.dataset.id] = open; store.saveUi();
 });
-act('skip', el => { const undo = applyToStage(el.dataset.s, [{ op: 'skip', id: el.dataset.id }]); refresh(); toast('已跳过，不计入进度', undo); });
-act('unskip', el => { applyToStage(el.dataset.s, [{ op: 'unskip', id: el.dataset.id }]); refresh(); toast('已恢复'); });
-act('remove-item', el => { const undo = applyToStage(el.dataset.s, [{ op: 'remove', id: el.dataset.id }]); refresh(); toast('已删除', undo); });
-act('master', el => { const undo = applyToStage(el.dataset.id, [{ op: 'mastered' }]); refresh(); toast('已标为已掌握', undo); });
-act('unmaster', el => { applyToStage(el.dataset.id, [{ op: 'unmastered' }]); refresh(); toast('已恢复为未掌握'); });
-act('reset-stage', el => {
+act('skip', el => { keepOpen(el.dataset.s); const undo = applyToStage(el.dataset.s, [{ op: 'skip', id: el.dataset.id }]); refresh(); toast('已跳过，不计入进度', undo); });
+act('unskip', el => { keepOpen(el.dataset.s); applyToStage(el.dataset.s, [{ op: 'unskip', id: el.dataset.id }]); refresh(); toast('已恢复'); });
+act('remove-item', el => { keepOpen(el.dataset.s); const undo = applyToStage(el.dataset.s, [{ op: 'remove', id: el.dataset.id }]); refresh(); toast('已删除', undo); });
+act('master', el => { keepOpen(el.dataset.id); const undo = applyToStage(el.dataset.id, [{ op: 'mastered' }]); refresh(); toast('已标为已掌握', undo); });
+act('unmaster', el => { keepOpen(el.dataset.id); applyToStage(el.dataset.id, [{ op: 'unmastered' }]); refresh(); toast('已恢复为未掌握'); });
+act('reset-stage', el => { keepOpen(el.dataset.id);
   const before = store.get('overlay', el.dataset.id);
   store.put('overlay', el.dataset.id, null); refresh();
   toast('已恢复原版', () => { store.put('overlay', el.dataset.id, before); refresh(); });
@@ -148,6 +150,7 @@ document.addEventListener('submit', e => {
   const f = e.target.closest('form[data-addfor]'); if (!f) return;
   e.preventDefault();
   const text = f.t.value.trim(); if (!text) return;
+  keepOpen(f.dataset.addfor);
   applyToStage(f.dataset.addfor, [{ op: 'add', text }]); refresh(); toast('已添加');
 });
 document.addEventListener('change', e => {
