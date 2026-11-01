@@ -4,13 +4,11 @@
 // legacy：content/legacy-v1.json 里的旧 ID → 新 ID 对照表。
 import { newDoc } from '../core/doc.js';
 
-export const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-export const ITEM_RE = /^[a-z][a-z0-9-]*\.s\d{2}\.i\d{2}$/;
-export const STAGE_RE = /^[a-z][a-z0-9-]*\.s\d{2}$/;
-
+import { DATE_RE, ITEM_RE, STAGE_RE, DOCS } from '../core/schema.js';
+export { DATE_RE, ITEM_RE, STAGE_RE };
 // 来自同步文件或导入文件的数据，写入前都要过这两个检查
-export const validProgress = (k, v) => (k === 'start' ? DATE_RE.test(v) : ITEM_RE.test(k) && typeof v === 'string' && v.length <= 20);
-export const validNote = (k, v) => STAGE_RE.test(k) && typeof v === 'string' && v.length <= 200000;
+export const validProgress = DOCS.progress;
+export const validNote = DOCS.notes;
 
 // 没有时间戳的旧数据记为 1：任何一台设备上真实的修改都比它新
 export function migrateV1(v1, legacy) {

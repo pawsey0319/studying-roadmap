@@ -1,0 +1,80 @@
+// 前沿路线详情、落地与商机、待确认列表、稍后读
+import { esc } from '../util.js';
+import * as M from '../model.js';
+import * as store from '../store/index.js';
+import { act, refresh, toast, newsRow, trackTag, routeTag } from './kit.js';
+import { pendingSuggestions } from './suggest.js';
+import { sugRow, stageLabel } from './home.js';
+
+export function renderRoute(id) {
+  const r = M.routes().find(x => x.id === id);
+  if (!r) return `<p class="empty">没有这条前沿路线，可能已被合并。<a href="#/">回到工作台</a></p>`;
+  const t = M.track(r.track), mine = store.get('routes', id) || {};
+  document.documentElement.style.setProperty('--c', t ? t.color : '#8C63C8');
+  const news = M.routeNews(id), cut = new Date(M.today.getTime() - 7 * 864e5).toISOString().slice(0, 10);
+  const from = M.findStage(r.from);
+  const cards = Object.entries(store.all('cards')).filter(([, c]) => c.at === id).sort((a, b) => b[1].c - a[1].c);
+  const learn = r.learn || [];
+  const lim = store.ui().tlMore === id ? 200 : 12;
+  return `<div class="fnt small"><a href="#/t/${r.track}">${esc(t ? t.name : '')}</a> / 前沿路线</div>
+    <div class="ph"><h1>${esc(mine.name || r.title)}</h1>${mine.name ? `<span class="fnt small">原名：${esc(r.title)}</span>` : ''}
+      <span class="mut">${from ? `从理论阶段“${esc(from.s.title)}”分出 · ` : ''}${news.length} 条进展</span>
+      <span class="r"><button class="btn ${mine.follow ? '' : 'acc'}" data-act="route-follow" data-id="${id}">${mine.follow ? '取消跟踪学习' : '跟踪学习'}</button>
+        <button class="btn gh" data-act="route-rename" data-id="${id}">改名</button>
+        <button class="btn gh" data-act="route-stop" data-id="${id}">${mine.stopped ? '恢复跟踪' : '停止跟踪'}</button></span></div>
+    <p class="lede">${esc(r.desc)}</p>
+    <div class="dual" style="grid-template-columns:minmax(0,1fr) minmax(0,1.05fr)">
+      <div><div class="colh"><b>进展时间线</b>每天自动追加，每周由 AI 整理</div>
+        <div class="card" style="padding:14px 16px 4px">${news.length ? `<ul class="tline">${news.slice(0, lim).map(n => `<li class="${n.d >= cut ? 'nw' : ''}">
+          <time>${esc(n.d)}${n.d >= cut ? ' · 新' : ''}${M.isRead(n.id) ? ' · 已读' : ''}</time><a href="${esc(n.u)}" target="_blank" rel="noopener" data-act="read" data-id="${n.id}">${esc(n.t)}</a>
+          <div class="meta">${n.lvl ? `<span class="tag ${n.lvl.toLowerCase()}">${{ A: '一手来源', B: '权威媒体', C: '社区讨论' }[n.lvl]}</span>` : ''}${esc(n.src || '')}${n.rAuto ? '<span class="tag" title="按关键词自动归类，每周一会由 AI 复核">自动归类</span>' : ''}</div></li>`).join('')}</ul>
+          ${news.length > lim ? `<button class="btn gh" style="margin:0 0 10px" data-act="tl-more" data-id="${id}">还有 ${news.length - lim} 条更早的进展</button>` : ''}` : '<p class="empty">还没有进展。新资讯命中这条路线的关键词后会出现在这里。</p>'}</div></div>
+      <div><div class="colh"><b>跟踪学习</b>根据进展整理的学习清单，打勾记录进度</div>
+        <div class="card" style="padding:12px 14px">
+          <div class="items">${learn.map(i => `<div class="it ${store.isDone(i.id) ? 'on' : ''}"><input type="checkbox" data-done="${i.id}"${store.isDone(i.id) ? ' checked' : ''}><span class="tx">${i.mode === 'practice' ? '<span class="tag">实践验证</span> ' : ''}${i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.text)}</a>` : esc(i.text)}</span></div>`).join('') || '<p class="fnt small">还没有学习清单，每周一的自动更新会补上。</p>'}</div>
+          <div class="sa"><button class="btn sm acc" data-act="agent-route" data-id="${id}">让 Agent 根据最新进展更新清单</button><button class="btn sm gh" data-act="quick-note" data-id="${id}">随手记</button></div></div>
+        <div class="sh"><h3>这条路线上的笔记</h3></div>
+        <div class="card"><ul class="lst">${cards.map(([cid, c]) => `<li><a href="#/notes/${cid}" style="text-decoration:none">${esc(c.t.slice(0, 120))}</a><div class="meta">${new Date(c.c).toLocaleDateString('zh-CN')}</div></li>`).join('') || '<li class="fnt">还没有笔记。</li>'}</ul></div></div>
+    </div>`;
+}
+
+export function renderBiz(q) {
+  document.documentElement.style.setProperty('--c', '#1B2430');
+  const U = store.ui(), tf = U.bizTrack || 'all', kf = U.bizKind || 'all';
+  const items = M.C.biz.items.filter(x => (tf === 'all' || x.track === tf) && (kf === 'all' || x.kind === kf) && M.track(x.track));
+  const card = x => `<div class="card mcard"><h4>${esc(x.title)}</h4><p>${esc(x.desc)}</p>
+    <div class="meta">${trackTag(x.track)}${(x.r || []).filter(rid => M.route(rid)).map(routeTag).join('')}${(x.links || []).map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name)}</a>`).join(' · ')}</div></div>`;
+  return `<div class="ph"><h1>落地与商机</h1><span class="mut">AI 真正落地的机会：新出现的商机，以及老业务怎么用 AI 改造</span></div>
+    <div class="chips" style="margin:14px 0">${[['all', '全部方向'], ...M.tracks().map(t => [t.id, t.short || t.name])].map(([k, v]) => `<button class="chip" data-act="biz-track" data-id="${k}" aria-pressed="${tf === k}">${esc(v)}</button>`).join('')}
+      <span style="width:12px"></span>${[['all', '全部'], ['new', '新商机'], ['old', '老商机改造']].map(([k, v]) => `<button class="chip" data-act="biz-kind" data-id="${k}" aria-pressed="${kf === k}">${v}</button>`).join('')}</div>
+    <div class="g2"><div><div class="sh" style="margin-top:0"><h3>新商机</h3></div>${items.filter(x => x.kind === 'new').map(card).join('') || '<p class="empty">没有符合筛选的条目。</p>'}</div>
+      <div><div class="sh" style="margin-top:0"><h3>老商机改造</h3></div>${items.filter(x => x.kind === 'old').map(card).join('') || '<p class="empty">没有符合筛选的条目。</p>'}</div></div>`;
+}
+
+export function renderSuggestions() {
+  const s = pendingSuggestions();
+  return `<div class="ph"><h1>等你确认</h1><span class="mut">每周自动更新和学习 Agent 提出的修改建议，你点“应用”才会改路线</span></div>
+    <div class="card" style="margin-top:14px">${s.map(sugRow).join('') || '<p class="empty">没有待确认的建议。</p>'}</div>`;
+}
+
+export function renderLater() {
+  const L = Object.entries(store.all('later')).sort((a, b) => (b[1].at || 0) - (a[1].at || 0));
+  return `<div class="ph"><h1>稍后读</h1><span class="mut">在手机上标记的长文和论文，回到电脑上再读</span></div>
+    <div class="card" style="margin-top:14px"><ul class="lst">${L.map(([id, x]) => `<li class="${M.isRead(id) ? 'is-read' : ''}"><a href="${esc(x.u)}" target="_blank" rel="noopener" data-act="read" data-id="${id}">${esc(x.t)}</a>
+      <div class="meta">${new Date(x.at).toLocaleDateString('zh-CN')}<span class="act"><button data-act="later" data-id="${id}">移出</button></span></div></li>`).join('') || '<li class="fnt">没有待读内容。资讯旁的“稍后读”会把它放到这里。</li>'}</ul></div>`;
+}
+
+/* ---------- 动作 ---------- */
+act('route-follow', el => { const id = el.dataset.id, m = store.get('routes', id) || {}; store.put('routes', id, { ...m, follow: !m.follow, stopped: false }); refresh(); toast(m.follow ? '已取消跟踪学习' : '已加入“在学”'); });
+act('route-stop', el => { const id = el.dataset.id, m = store.get('routes', id) || {}; store.put('routes', id, { ...m, stopped: !m.stopped, follow: false }); refresh(); });
+act('route-rename', el => {
+  const id = el.dataset.id, m = store.get('routes', id) || {};
+  const name = prompt('给这条前沿路线起个名字（留空恢复原名）', m.name || M.routeName(id));
+  if (name === null) return;
+  const next = { ...m }; if (name.trim()) next.name = name.trim().slice(0, 40); else delete next.name;
+  store.put('routes', id, Object.keys(next).length ? next : null); refresh();
+});
+act('tl-more', el => { store.ui().tlMore = el.dataset.id; store.saveUi(); refresh(); });
+act('biz-track', el => { store.ui().bizTrack = el.dataset.id; store.saveUi(); refresh(); });
+act('biz-kind', el => { store.ui().bizKind = el.dataset.id; store.saveUi(); refresh(); });
+export const _stageLabel = stageLabel;

@@ -1,0 +1,253 @@
+{
+ "updated": "2026-11-01",
+ "items": [
+  {
+   "id": "llm.bn01",
+   "title": "AI 原生的专业服务（Service-as-Software）",
+   "desc": "不卖软件席位，按结果交付服务：AI 法务初审、AI 财务对账、AI 招聘初筛。护城河在流程设计与质量把控，不在模型。",
+   "links": [
+    {
+     "name": "Foundation Capital: Service as Software",
+     "url": "https://foundationcapital.com/ai-service-as-software/"
+    }
+   ],
+   "track": "llm",
+   "kind": "new",
+   "r": []
+  },
+  {
+   "id": "llm.bn02",
+   "title": "生成式引擎优化（GEO）",
+   "desc": "用户从搜索转向问 AI，品牌需要出现在 AI 的回答里。2026 年国内已经有一批服务商在卖这项服务。",
+   "links": [
+    {
+     "name": "2026-08 GEO 服务商评测",
+     "url": "https://www.cnblogs.com/GrowthUME/p/22373544"
+    }
+   ],
+   "track": "llm",
+   "kind": "new",
+   "r": []
+  },
+  {
+   "id": "llm.bn03",
+   "title": "评估与数据服务",
+   "desc": "每家做 AI 应用的公司都缺评估集和高质量领域数据，“卖铲子”的机会长期存在。",
+   "links": [],
+   "track": "llm",
+   "kind": "new",
+   "r": []
+  },
+  {
+   "id": "llm.bo01",
+   "title": "客服与销售",
+   "desc": "最早跑出 ROI 的场景。老业务用大模型做质检、话术推荐、商机评估（参考你的 Dumate-Agent 项目），按节省的人力计价。",
+   "links": [
+    {
+     "name": "a16z：企业实际在哪里采用 AI",
+     "url": "https://a16z.com/where-enterprises-are-actually-adopting-ai/"
+    },
+    {
+     "name": "Dumate-Agent",
+     "url": "https://github.com/yangqxuan-work/Dumate-Agent"
+    }
+   ],
+   "track": "llm",
+   "kind": "old",
+   "r": [
+    "agent.r05"
+   ]
+  },
+  {
+   "id": "llm.bo02",
+   "title": "文档密集型行业",
+   "desc": "保险理赔、银行信贷、政务审批：存量流程里有大量“读文件 → 填表 → 判断”，最适合用大模型改造。",
+   "links": [
+    {
+     "name": "Anthropic Economic Index（AI 实际被用来做什么）",
+     "url": "https://www.anthropic.com/economic-index"
+    }
+   ],
+   "track": "llm",
+   "kind": "old",
+   "r": []
+  },
+  {
+   "id": "llm.bo03",
+   "title": "内容与营销",
+   "desc": "电商详情页、短视频脚本、本地化翻译。规模大但竞争激烈，差异化在于接入客户自己的数据与渠道。",
+   "links": [],
+   "track": "llm",
+   "kind": "old",
+   "r": []
+  },
+  {
+   "id": "slm.bn01",
+   "title": "私有化行业小模型",
+   "desc": "给医院、律所、券商、制造企业做“数据不出域”的专用模型 + 一体机。客户为合规和隐私买单。",
+   "links": [
+    {
+     "name": "领域小模型构建流水线（MDPI 2026）",
+     "url": "https://www.mdpi.com/2076-3417/16/13/6630"
+    }
+   ],
+   "track": "slm",
+   "kind": "new",
+   "r": [
+    "slm.r04"
+   ]
+  },
+  {
+   "id": "slm.bn02",
+   "title": "端侧 AI 硬件",
+   "desc": "录音卡片、学习机、车机、工业质检终端，本地小模型带来零延迟与零云成本。",
+   "links": [],
+   "track": "slm",
+   "kind": "new",
+   "r": [
+    "slm.r02"
+   ]
+  },
+  {
+   "id": "slm.bn03",
+   "title": "模型定制服务",
+   "desc": "“数据整理 + 微调 + 评估 + 部署”打包服务，适合中小企业。",
+   "links": [],
+   "track": "slm",
+   "kind": "new",
+   "r": []
+  },
+  {
+   "id": "slm.bo01",
+   "title": "传统 NLP 流程替换",
+   "desc": "工单分类、合同要素抽取、舆情监控，过去靠规则 + BERT。用微调小模型重做，准确率更高、维护成本更低。",
+   "links": [],
+   "track": "slm",
+   "kind": "old",
+   "r": []
+  },
+  {
+   "id": "slm.bo02",
+   "title": "老软件加 AI 能力",
+   "desc": "ERP、OA、CRM 内嵌本地小模型做搜索、填表和摘要，卖“AI 增值模块”。",
+   "links": [],
+   "track": "slm",
+   "kind": "old",
+   "r": []
+  },
+  {
+   "id": "agent.bn01",
+   "title": "垂直行业 Agent",
+   "desc": "Agentforce 约 18 个月做到 12 亿美元 ARR，证明“嵌入工作流 + 按结果收费”可行。垂直机会：税务、报关、招投标、医保审核。",
+   "links": [
+    {
+     "name": "AI Agent 市场趋势",
+     "url": "https://www.precedenceresearch.com/insights/ai-agent-market-trends-key-players-report"
+    }
+   ],
+   "track": "agent",
+   "kind": "new",
+   "r": [
+    "agent.r02"
+   ]
+  },
+  {
+   "id": "agent.bn02",
+   "title": "Agent 基础设施",
+   "desc": "可观测、评估、权限、沙箱、Agent 身份与支付。企业治理缺口大，这里是“卖铲子”的机会。",
+   "links": [],
+   "track": "agent",
+   "kind": "new",
+   "r": [
+    "agent.r06"
+   ]
+  },
+  {
+   "id": "agent.bn03",
+   "title": "一人公司工具链",
+   "desc": "编程 Agent + 浏览器 Agent 让个人能完成以前一个团队的工作，面向超级个体的工具和服务正在兴起。",
+   "links": [],
+   "track": "agent",
+   "kind": "new",
+   "r": []
+  },
+  {
+   "id": "agent.bo01",
+   "title": "RPA 升级",
+   "desc": "传统 RPA 脚本脆弱，Computer Use Agent 能处理界面变化与非结构化输入。存量 RPA 客户是现成的升级市场。",
+   "links": [],
+   "track": "agent",
+   "kind": "old",
+   "r": [
+    "agent.r03"
+   ]
+  },
+  {
+   "id": "agent.bo02",
+   "title": "SaaS 加 Agent",
+   "desc": "老 SaaS 从“卖席位”转向“卖完成的任务”。销售 CRM 里的商机评估 Agent 就是典型（参考 Dumate-Agent）。",
+   "links": [
+    {
+     "name": "Dumate-Agent",
+     "url": "https://github.com/yangqxuan-work/Dumate-Agent"
+    }
+   ],
+   "track": "agent",
+   "kind": "old",
+   "r": [
+    "agent.r05"
+   ]
+  },
+  {
+   "id": "agent.bo03",
+   "title": "外包与 BPO",
+   "desc": "客服、数据标注、财务外包公司用 Agent 改造交付，利润率提升最直接。",
+   "links": [],
+   "track": "agent",
+   "kind": "old",
+   "r": []
+  },
+  {
+   "id": "quant.bn01",
+   "title": "个人量化工具与社区",
+   "desc": "自然语言写策略（vibe trading）、一键回测、策略体检。个人量化人群在增长，但工具门槛仍然高。",
+   "links": [],
+   "track": "quant",
+   "kind": "new",
+   "r": [
+    "quant.r01"
+   ]
+  },
+  {
+   "id": "quant.bn02",
+   "title": "AI 投研信息服务",
+   "desc": "公告/研报/新闻的摘要、事件提醒、情绪指标，卖给个人投资者和小型私募。注意不能变成荐股。",
+   "links": [],
+   "track": "quant",
+   "kind": "new",
+   "r": [
+    "quant.r01"
+   ]
+  },
+  {
+   "id": "quant.bo01",
+   "title": "券商投顾与 App 升级",
+   "desc": "券商 App 内嵌 AI 投研助手、智能条件单、QMT 策略模板市场，提升活跃度和交易量。",
+   "links": [],
+   "track": "quant",
+   "kind": "old",
+   "r": [
+    "quant.r01"
+   ]
+  },
+  {
+   "id": "quant.bo02",
+   "title": "小型私募投研提效",
+   "desc": "用 RD-Agent 类工具替代部分研究员的因子挖掘与报告撰写工作。",
+   "links": [],
+   "track": "quant",
+   "kind": "old",
+   "r": []
+  }
+ ]
+}

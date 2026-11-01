@@ -3,8 +3,7 @@
   "domain": "ai",
   "name": "量化",
   "short": "量化",
-  "color": "#7A3FB8",
-  "hours": 2,
+  "color": "#7B3FC0",
   "goal": "从零开始，做到能用 Python 获取数据、回测策略、小资金合规实盘，并能用大模型和智能体辅助投研。重点是个人量化：小资金、免费数据、本地回测、券商接口。",
   "note": "风险提示：本板块只用于学习，不构成投资建议。回测收益不代表实盘收益，个人量化先跑模拟盘，再用亏得起的小资金试。监管规则以证监会和交易所官网原文为准。",
   "live": {
@@ -16,36 +15,37 @@
     {
       "id": "quant.s01",
       "title": "金融市场与指标常识",
-      "weeks": [
-        1,
-        4
-      ],
       "goal": "零基础补齐“交易什么、怎么交易、怎么衡量好坏”。",
       "items": [
         {
           "id": "quant.s01.i01",
           "kind": "tech",
-          "text": "搞懂 A 股规则：T+1、涨跌停、集合竞价、佣金与印花税、复权（前复权/后复权）"
+          "text": "搞懂 A 股规则：T+1、涨跌停、集合竞价、佣金与印花税、复权（前复权/后复权）",
+          "mode": "theory"
         },
         {
           "id": "quant.s01.i02",
           "kind": "tech",
-          "text": "用概率论知识理解收益率、波动率、相关性，手算一遍夏普比率与最大回撤"
+          "text": "用概率论知识理解收益率、波动率、相关性，手算一遍夏普比率与最大回撤",
+          "mode": "theory"
         },
         {
           "id": "quant.s01.i03",
           "kind": "tech",
-          "text": "学 Datawhale whale-quant 前几章，建立量化交易的整体框架"
+          "text": "学 Datawhale whale-quant 前几章，建立量化交易的整体框架",
+          "mode": "theory"
         },
         {
           "id": "quant.s01.i04",
           "kind": "prod",
-          "text": "画出个人量化的“用户旅程”：学习 → 选平台 → 拿数据 → 回测 → 模拟 → 实盘，标出每一步的痛点"
+          "text": "画出个人量化的“用户旅程”：学习 → 选平台 → 拿数据 → 回测 → 模拟 → 实盘，标出每一步的痛点",
+          "mode": "practice"
         },
         {
           "id": "quant.s01.i05",
           "kind": "prod",
-          "text": "对比 聚宽 / 米筐 / BigQuant / 果仁 等平台：面向谁、怎么收费、门槛在哪"
+          "text": "对比 聚宽 / 米筐 / BigQuant / 果仁 等平台：面向谁、怎么收费、门槛在哪",
+          "mode": "theory"
         }
       ],
       "resources": [
@@ -108,31 +108,31 @@
     {
       "id": "quant.s02",
       "title": "Python 数据分析与行情数据",
-      "weeks": [
-        5,
-        8
-      ],
       "goal": "把基础 Python 升级到 pandas 数据分析，能稳定拿到免费行情数据。",
       "items": [
         {
           "id": "quant.s02.i01",
           "kind": "tech",
-          "text": "读《Python for Data Analysis》的 pandas 与时间序列章节"
+          "text": "读《Python for Data Analysis》的 pandas 与时间序列章节",
+          "mode": "theory"
         },
         {
           "id": "quant.s02.i02",
           "kind": "tech",
-          "text": "用 AKShare / BaoStock 拉取沪深 300 成分股日线，存成本地 Parquet 或 SQLite"
+          "text": "用 AKShare / BaoStock 拉取沪深 300 成分股日线，存成本地 Parquet 或 SQLite",
+          "mode": "practice"
         },
         {
           "id": "quant.s02.i03",
           "kind": "tech",
-          "text": "计算并画出均线、MACD、RSI、布林带，理解每个指标在描述什么"
+          "text": "计算并画出均线、MACD、RSI、布林带，理解每个指标在描述什么",
+          "mode": "practice"
         },
         {
           "id": "quant.s02.i04",
           "kind": "prod",
-          "text": "评估免费数据源：覆盖范围、更新时间、稳定性、是否允许商用，写一页数据源选型说明"
+          "text": "评估免费数据源：覆盖范围、更新时间、稳定性、是否允许商用，写一页数据源选型说明",
+          "mode": "practice"
         }
       ],
       "resources": [
@@ -177,36 +177,37 @@
     {
       "id": "quant.s03",
       "title": "回测与第一个策略",
-      "weeks": [
-        9,
-        13
-      ],
       "goal": "写出并正确回测第一个策略，学会识别“看起来赚钱其实是假的”回测。",
       "items": [
         {
           "id": "quant.s03.i01",
           "kind": "tech",
-          "text": "用 backtesting.py 或 Backtrader 实现双均线策略，再用 vectorbt 做参数扫描"
+          "text": "用 backtesting.py 或 Backtrader 实现双均线策略，再用 vectorbt 做参数扫描",
+          "mode": "practice"
         },
         {
           "id": "quant.s03.i02",
           "kind": "tech",
-          "text": "实现一个 ETF 动量轮动策略（个人量化最常见、门槛最低的策略类型）"
+          "text": "实现一个 ETF 动量轮动策略（个人量化最常见、门槛最低的策略类型）",
+          "mode": "practice"
         },
         {
           "id": "quant.s03.i03",
           "kind": "tech",
-          "text": "专门检查四个坑：未来函数、幸存者偏差、交易成本与滑点、过拟合（样本内外切分）"
+          "text": "专门检查四个坑：未来函数、幸存者偏差、交易成本与滑点、过拟合（样本内外切分）",
+          "mode": "theory"
         },
         {
           "id": "quant.s03.i04",
           "kind": "prod",
-          "text": "设计一份标准回测报告模板：年化收益、波动率、夏普、最大回撤、换手、与基准对比"
+          "text": "设计一份标准回测报告模板：年化收益、波动率、夏普、最大回撤、换手、与基准对比",
+          "mode": "practice"
         },
         {
           "id": "quant.s03.i05",
           "kind": "prod",
-          "text": "写一篇《为什么 90% 的回测曲线不可信》短文"
+          "text": "写一篇《为什么 90% 的回测曲线不可信》短文",
+          "mode": "practice"
         }
       ],
       "resources": [
@@ -250,36 +251,37 @@
     {
       "id": "quant.s04",
       "title": "多因子与机器学习选股",
-      "weeks": [
-        14,
-        19
-      ],
       "goal": "理解机构主流的多因子框架，用机器学习做截面选股。",
       "items": [
         {
           "id": "quant.s04.i01",
           "kind": "tech",
-          "text": "学因子三件套：IC/IR、分层回测、因子中性化；用 Fama-French 数据理解经典因子"
+          "text": "学因子三件套：IC/IR、分层回测、因子中性化；用 Fama-French 数据理解经典因子",
+          "mode": "theory"
         },
         {
           "id": "quant.s04.i02",
           "kind": "tech",
-          "text": "读《101 Formulaic Alphas》，挑 5 个因子在 A 股上复现"
+          "text": "读《101 Formulaic Alphas》，挑 5 个因子在 A 股上复现",
+          "mode": "practice"
         },
         {
           "id": "quant.s04.i03",
           "kind": "tech",
-          "text": "跑通微软 Qlib 的 LightGBM 基线（Alpha158 因子 + 沪深 300）"
+          "text": "跑通微软 Qlib 的 LightGBM 基线（Alpha158 因子 + 沪深 300）",
+          "mode": "practice"
         },
         {
           "id": "quant.s04.i04",
           "kind": "tech",
-          "text": "读《An Introduction to Statistical Learning》的回归、树模型章节补统计学习基础"
+          "text": "读《An Introduction to Statistical Learning》的回归、树模型章节补统计学习基础",
+          "mode": "theory"
         },
         {
           "id": "quant.s04.i05",
           "kind": "prod",
-          "text": "思考：因子在公开后会衰减，个人投资者的优势和劣势各在哪里（资金小、灵活 vs 数据和算力弱）"
+          "text": "思考：因子在公开后会衰减，个人投资者的优势和劣势各在哪里（资金小、灵活 vs 数据和算力弱）",
+          "mode": "theory"
         }
       ],
       "resources": [
@@ -337,36 +339,37 @@
     {
       "id": "quant.s05",
       "title": "个人实盘：券商接口与合规",
-      "weeks": [
-        20,
-        23
-      ],
       "goal": "用合规的方式把策略接上真实账户，从模拟盘到小资金实盘。",
       "items": [
         {
           "id": "quant.s05.i01",
           "kind": "tech",
-          "text": "了解个人量化的三条路：券商 QMT / miniQMT、PTrade、vn.py；弄清开通门槛（各券商对资产要求不同，需逐一咨询）"
+          "text": "了解个人量化的三条路：券商 QMT / miniQMT、PTrade、vn.py；弄清开通门槛（各券商对资产要求不同，需逐一咨询）",
+          "mode": "theory"
         },
         {
           "id": "quant.s05.i02",
           "kind": "tech",
-          "text": "在 QMT 模拟盘跑通“行情订阅 → 信号 → 下单 → 成交回报 → 日志”全流程"
+          "text": "在 QMT 模拟盘跑通“行情订阅 → 信号 → 下单 → 成交回报 → 日志”全流程",
+          "mode": "practice"
         },
         {
           "id": "quant.s05.i03",
           "kind": "tech",
-          "text": "写风控模块：单票仓位上限、单日亏损熔断、断线重连、异常下单拦截"
+          "text": "写风控模块：单票仓位上限、单日亏损熔断、断线重连、异常下单拦截",
+          "mode": "practice"
         },
         {
           "id": "quant.s05.i04",
           "kind": "prod",
-          "text": "学习程序化交易监管：2025 年 7 月 7 日起施行的沪深北《程序化交易管理实施细则》要求程序化交易先报告，并对高频交易（如单账户每秒申报撤单达 300 笔以上或单日达 2 万笔以上）有额外要求。个人低频策略也要先向券商报告"
+          "text": "学习程序化交易监管：2025 年 7 月 7 日起施行的沪深北《程序化交易管理实施细则》要求程序化交易先报告，并对高频交易（如单账户每秒申报撤单达 300 笔以上或单日达 2 万笔以上）有额外要求。个人低频策略也要先向券商报告",
+          "mode": "theory"
         },
         {
           "id": "quant.s05.i05",
           "kind": "prod",
-          "text": "设计一个“个人量化工具”的产品方案：目标用户、核心功能、合规边界、收费方式"
+          "text": "设计一个“个人量化工具”的产品方案：目标用户、核心功能、合规边界、收费方式",
+          "mode": "practice"
         }
       ],
       "resources": [
@@ -415,41 +418,43 @@
     {
       "id": "quant.s06",
       "title": "AI + 量化：大模型与智能体投研",
-      "weeks": [
-        24,
-        26
-      ],
       "goal": "把前三个板块学到的东西用到量化上，这是你的差异化方向。",
       "items": [
         {
           "id": "quant.s06.i01",
           "kind": "tech",
-          "text": "跑通 TradingAgents（多智能体：分析师、研究员、交易员、风控），换成国产模型对比决策质量"
+          "text": "跑通 TradingAgents（多智能体：分析师、研究员、交易员、风控），换成国产模型对比决策质量",
+          "mode": "practice"
         },
         {
           "id": "quant.s06.i02",
           "kind": "tech",
-          "text": "跑通 RD-Agent(Q)：用 Agent 自动挖因子、调模型"
+          "text": "跑通 RD-Agent(Q)：用 Agent 自动挖因子、调模型",
+          "mode": "practice"
         },
         {
           "id": "quant.s06.i03",
           "kind": "tech",
-          "text": "用大模型做研报/公告情绪因子，接入 Qlib 检验 IC"
+          "text": "用大模型做研报/公告情绪因子，接入 Qlib 检验 IC",
+          "mode": "practice"
         },
         {
           "id": "quant.s06.i04",
           "kind": "tech",
-          "text": "试用 Kronos 做 K 线预测，和传统模型对比"
+          "text": "试用 Kronos 做 K 线预测，和传统模型对比",
+          "mode": "practice"
         },
         {
           "id": "quant.s06.i05",
           "kind": "prod",
-          "text": "批判性评估：LLM 选股回测常有数据泄漏（模型训练时已见过未来新闻），写出你的检验方法"
+          "text": "批判性评估：LLM 选股回测常有数据泄漏（模型训练时已见过未来新闻），写出你的检验方法",
+          "mode": "theory"
         },
         {
           "id": "quant.s06.i06",
           "kind": "prod",
-          "text": "设计一个“AI 投研助手”产品：给个人投资者的是信息整理与纪律提醒，而不是荐股（合规红线）"
+          "text": "设计一个“AI 投研助手”产品：给个人投资者的是信息整理与纪律提醒，而不是荐股（合规红线）",
+          "mode": "practice"
         }
       ],
       "resources": [
@@ -501,85 +506,5 @@
       ],
       "output": "一个 AI 投研 Demo + 产品方案"
     }
-  ],
-  "frontier": [
-    {
-      "id": "quant.f01",
-      "title": "多智能体交易框架",
-      "desc": "TradingAgents 2026-10 发布 v0.6.0，支持按角色分配不同档位模型、HTML 报告与决策复盘。",
-      "links": [
-        {
-          "name": "TradingAgents",
-          "url": "https://github.com/TauricResearch/TradingAgents"
-        }
-      ]
-    },
-    {
-      "id": "quant.f02",
-      "title": "Agent 自动化投研",
-      "desc": "RD-Agent(Q) 用多智能体联合优化因子与模型，论文报告以更少因子获得更高年化收益。",
-      "links": [
-        {
-          "name": "R&D-Agent-Quant",
-          "url": "https://arxiv.org/abs/2505.15155"
-        }
-      ]
-    },
-    {
-      "id": "quant.f03",
-      "title": "金融基础模型",
-      "desc": "Kronos 等 K 线基础模型把“预训练 + 微调”带进时间序列预测。",
-      "links": [
-        {
-          "name": "Kronos",
-          "url": "https://github.com/shiyu-coder/Kronos"
-        }
-      ]
-    },
-    {
-      "id": "quant.f04",
-      "title": "市场规则变化",
-      "desc": "2026-07-06 起沪深北实施新版交易规则（风险警示股涨跌幅放宽到 10%，沪市基金收盘集合竞价，盘后固定价格交易扩容）。纳斯达克计划 2026-12 起实行每天 23 小时交易。规则变化会让旧策略的历史数据失效。",
-      "links": [
-        {
-          "name": "A 股新规讨论",
-          "url": "https://linux.do/t/topic/2508684"
-        },
-        {
-          "name": "纳斯达克 23/5 交易",
-          "url": "https://www.okx.com/pt/orbit/insight/84151002578784"
-        }
-      ]
-    }
-  ],
-  "biz": {
-    "fresh": [
-      {
-        "id": "quant.bn01",
-        "title": "个人量化工具与社区",
-        "desc": "自然语言写策略（vibe trading）、一键回测、策略体检。个人量化人群在增长，但工具门槛仍然高。",
-        "links": []
-      },
-      {
-        "id": "quant.bn02",
-        "title": "AI 投研信息服务",
-        "desc": "公告/研报/新闻的摘要、事件提醒、情绪指标，卖给个人投资者和小型私募。注意不能变成荐股。",
-        "links": []
-      }
-    ],
-    "old": [
-      {
-        "id": "quant.bo01",
-        "title": "券商投顾与 App 升级",
-        "desc": "券商 App 内嵌 AI 投研助手、智能条件单、QMT 策略模板市场，提升活跃度和交易量。",
-        "links": []
-      },
-      {
-        "id": "quant.bo02",
-        "title": "小型私募投研提效",
-        "desc": "用 RD-Agent 类工具替代部分研究员的因子挖掘与报告撰写工作。",
-        "links": []
-      }
-    ]
-  }
+  ]
 }

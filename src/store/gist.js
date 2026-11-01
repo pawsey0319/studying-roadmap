@@ -1,6 +1,5 @@
 // 私有 GitHub Gist 同步。令牌只存在本设备，只发给 api.github.com。
-// v2 把个人数据分成多个文件，避免单个文件过大被截断：
-//   lh2-progress.json（进度）、lh2-notes.json（笔记）。
+// v2 把个人数据分成多个文件（每份文档一个 lh2-<名称>.json），避免单个文件过大被截断。
 // 如果 Gist 里只有 v1 的 learning-hub-progress.json，会先迁移再合并，v1 文件原样保留。
 import * as store from './index.js';
 import { migrateV1 } from './migrate.js';
@@ -8,7 +7,8 @@ import { sameDoc } from '../core/doc.js';
 
 const SKEY = 'learning-hub.sync';
 const V1_FILE = 'learning-hub-progress.json';
-const FILES = { progress: 'lh2-progress.json', notes: 'lh2-notes.json' };
+import { DOC_NAMES } from '../core/schema.js';
+const FILES = Object.fromEntries(DOC_NAMES.map(n => [n, `lh2-${n}.json`]));
 
 let Y;
 try { Y = JSON.parse(localStorage.getItem(SKEY)) || {}; } catch (e) { Y = {}; }
@@ -45,7 +45,7 @@ export async function syncNow() {
       const g = list.find(x => x.files && (x.files[FILES.progress] || x.files[V1_FILE]));
       Y.gist = g ? g.id : (await gh('/gists', { method: 'POST', body: JSON.stringify({
         description: '学习路线网站的进度与笔记（自动同步，勿手改）', public: false,
-        files: Object.fromEntries(Object.entries(FILES).map(([k, f]) => [f, { content: JSON.stringify(store.docs()[k]) }]))
+        files: Object.fromEntries(Object.entries(FILES).map(([k, f]) => [f, { content: JSON.stringify(store.docs()[k]) }]).filter(([f]) => f !== FILES.ui))
       }) })).id;
       saveY();
     }
@@ -60,7 +60,10 @@ export async function syncNow() {
     for (const k of Object.keys(FILES)) if (remote[k]) store.mergeRemote(k, remote[k]);
     const upd = {};
     const mine = store.docs();
-    for (const [k, f] of Object.entries(FILES)) if (!files[f] || !sameDoc(mine[k], remote[k])) upd[f] = { content: JSON.stringify(mine[k]) };
+    for (const [k, f] of Object.entries(FILES)) {
+      const empty = !Object.keys(mine[k].mt).length;
+      if ((!files[f] && !empty) || (files[f] && !sameDoc(mine[k], remote[k]))) upd[f] = { content: JSON.stringify(mine[k]) };
+    }
     if (Object.keys(upd).length) await gh('/gists/' + Y.gist, { method: 'PATCH', body: JSON.stringify({ files: upd }) });
     Y.last = Date.now(); error = ''; saveY();
   } catch (e) { error = e.message || String(e); }

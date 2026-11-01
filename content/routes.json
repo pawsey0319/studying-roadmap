@@ -1,0 +1,725 @@
+{
+ "updated": "2026-11-01",
+ "routes": [
+  {
+   "id": "llm.r01",
+   "track": "llm",
+   "title": "推理模型与测试时计算",
+   "from": "llm.s02",
+   "desc": "前沿模型分出快慢档位，长时间思考与后台长任务成为卖点。看点：思考预算怎么定价，长任务怎么做成可等待的体验。",
+   "kw": [
+    "test-time compute",
+    "reasoning model",
+    "推理模型",
+    "思考预算",
+    "thinking",
+    "long-horizon reasoning",
+    "RLVR",
+    "reasoning effort"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "llm.r01.l01",
+     "text": "精读 Scaling LLM Test-Time Compute，理解“多想一会儿”什么时候比换大模型划算",
+     "mode": "theory",
+     "url": "https://arxiv.org/abs/2408.03314"
+    },
+    {
+     "id": "llm.r01.l02",
+     "text": "对比同一题在快档和慢档下的质量、延迟、价格，写成一页产品取舍",
+     "mode": "practice"
+    }
+   ]
+  },
+  {
+   "id": "llm.r02",
+   "track": "llm",
+   "title": "后训练与蒸馏",
+   "from": "llm.s02",
+   "desc": "强化学习后训练的成果被蒸馏到更小的模型上，决定便宜模型能追到多近。",
+   "kw": [
+    "distill",
+    "蒸馏",
+    "on-policy",
+    "OPD",
+    "post-training",
+    "后训练",
+    "GRPO",
+    "DPO",
+    "RLHF"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "llm.r02.l01",
+     "text": "读 Waypoint-OPD 与同族模型 OPD 缩放规律两篇",
+     "mode": "theory",
+     "url": "https://huggingface.co/papers/2610.21601"
+    },
+    {
+     "id": "llm.r02.l02",
+     "text": "用 open-r1 跑一次小规模 GRPO，记录奖励曲线",
+     "mode": "practice",
+     "url": "https://github.com/huggingface/open-r1"
+    }
+   ]
+  },
+  {
+   "id": "llm.r03",
+   "track": "llm",
+   "title": "开源权重格局与许可证",
+   "from": "llm.s03",
+   "desc": "DeepSeek、Qwen、GLM、Kimi、MiMo、Meta Muse 等开放权重模型轮番发布，许可证差异决定能否商用。",
+   "kw": [
+    "open-weight",
+    "open weight",
+    "开源",
+    "开放权重",
+    "DeepSeek",
+    "Qwen",
+    "GLM",
+    "Kimi",
+    "MiMo",
+    "Muse Spark",
+    "Llama",
+    "Gemma",
+    "license"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "llm.r03.l01",
+     "text": "整理一张主流开放权重模型的许可证与商用限制表，每月更新",
+     "mode": "practice"
+    }
+   ]
+  },
+  {
+   "id": "llm.r04",
+   "track": "llm",
+   "title": "闭源前沿与价格战",
+   "from": "llm.s01",
+   "desc": "GPT-6、Claude 5.5、Gemini 4 等旗舰持续降价，推理价格每年降约一个数量级。",
+   "kw": [
+    "GPT-6",
+    "Claude",
+    "Gemini",
+    "Grok",
+    "frontier model",
+    "price",
+    "pricing",
+    "降价",
+    "价格",
+    "revenue",
+    "收入"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "llm.r04.l01",
+     "text": "读 Epoch AI《The plunging price of thought》，给自己的产品做一张三年成本曲线",
+     "mode": "theory",
+     "url": "https://epoch.ai/publications/the-plunging-price-of-thought"
+    }
+   ]
+  },
+  {
+   "id": "llm.r05",
+   "track": "llm",
+   "title": "可解释性",
+   "from": "llm.s05",
+   "desc": "稀疏自编码器与电路分析，是安全、审计与可控性的基础研究。",
+   "kw": [
+    "interpretab",
+    "可解释",
+    "sparse autoencoder",
+    "SAE",
+    "circuits",
+    "feature",
+    "mechanistic"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "llm.r05.l01",
+     "text": "读 Transformer Circuits 的全局工作空间一文",
+     "mode": "theory",
+     "url": "https://transformer-circuits.pub/2026/workspace/index.html"
+    }
+   ]
+  },
+  {
+   "id": "llm.r06",
+   "track": "llm",
+   "title": "世界模型与具身",
+   "from": "llm.s05",
+   "desc": "视频生成与动作建模合并训练，VLA 模型快速迭代。",
+   "kw": [
+    "world model",
+    "世界模型",
+    "VLA",
+    "embodied",
+    "具身",
+    "robot",
+    "机器人",
+    "action model"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "llm.r06.l01",
+     "text": "读 World and Action Modeling 联合训练一文，写下它对机器人产品的意义",
+     "mode": "theory",
+     "url": "https://huggingface.co/papers/2610.21095"
+    }
+   ]
+  },
+  {
+   "id": "llm.r07",
+   "track": "llm",
+   "title": "AI 监管与合规",
+   "from": "llm.s04",
+   "desc": "欧盟 AI 法案执法、国内技术出口目录、独立评估机构，影响模型发布与出海。",
+   "kw": [
+    "AI Act",
+    "监管",
+    "regulation",
+    "合规",
+    "出口",
+    "export control",
+    "policy",
+    "safety bill",
+    "评估方"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "llm.r07.l01",
+     "text": "整理一页“面向国内/欧盟上线 AI 功能要过的合规清单”",
+     "mode": "practice"
+    }
+   ]
+  },
+  {
+   "id": "slm.r01",
+   "track": "slm",
+   "title": "决策模型与大小模型路由",
+   "from": "slm.s04",
+   "desc": "决策模型直接输出选项概率，配合不确定性路由，让小模型处理大部分调用、只在必要时升级到大模型。",
+   "kw": [
+    "decision model",
+    "决策模型",
+    "routing",
+    "路由",
+    "escalation",
+    "weak-to-strong",
+    "Clef",
+    "systemone",
+    "cascade"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "slm.r01.l01",
+     "text": "读 Cloudflare Clef 与 LEASH，画出你自己产品的大小模型路由图",
+     "mode": "theory",
+     "url": "https://blog.cloudflare.com/clef-decision-models/"
+    },
+    {
+     "id": "slm.r01.l02",
+     "text": "用 vLLM 或 llama.cpp 的决策模型接口跑一个工单分类小实验",
+     "mode": "practice",
+     "url": "https://github.com/vllm-project/vllm/releases/tag/v0.32.0"
+    }
+   ]
+  },
+  {
+   "id": "slm.r02",
+   "track": "slm",
+   "title": "端侧模型与硬件",
+   "from": "slm.s05",
+   "desc": "三值/低比特量化、手机上跑 MoE、新一代端侧芯片，让离线 Agent 变得可用。",
+   "kw": [
+    "on-device",
+    "端侧",
+    "edge",
+    "手机",
+    "iPhone",
+    "Snapdragon",
+    "骁龙",
+    "ternary",
+    "三值",
+    "quantiz",
+    "量化",
+    "GGUF",
+    "MLX",
+    "llama.cpp",
+    "Ollama",
+    "LFM",
+    "MiniCPM",
+    "Bonsai"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "slm.r02.l01",
+     "text": "在自己电脑上用 Ollama 或 MLX 跑一个 2–4B 的最新端侧模型，记录速度和内存",
+     "mode": "practice",
+     "url": "https://ollama.com/"
+    }
+   ]
+  },
+  {
+   "id": "slm.r03",
+   "track": "slm",
+   "title": "合成数据与环境合成",
+   "from": "slm.s03",
+   "desc": "用多智能体自动合成训练数据和任务环境，小团队也能训出强的专用模型。",
+   "kw": [
+    "synthetic data",
+    "合成数据",
+    "environment synthesis",
+    "环境合成",
+    "data engine",
+    "Data World",
+    "Cowork-Gym",
+    "EnvCraft"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "slm.r03.l01",
+     "text": "读 Data World 与 EnvCraft，总结合成数据的验证方法",
+     "mode": "theory",
+     "url": "https://huggingface.co/papers/2610.21656"
+    }
+   ]
+  },
+  {
+   "id": "slm.r04",
+   "track": "slm",
+   "title": "行业专用模型",
+   "from": "slm.s03",
+   "desc": "医疗、法律、金融、工业的领域模型开始按真实工作流训练，私有化部署是主要卖点。",
+   "kw": [
+    "domain-specific",
+    "领域",
+    "legal",
+    "法律",
+    "medical",
+    "医疗",
+    "clinical",
+    "临床",
+    "finance",
+    "金融",
+    "industrial",
+    "工业",
+    "vertical",
+    "垂直"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "slm.r04.l01",
+     "text": "挑一个行业专用模型案例，拆解它的数据来源、评估方式和收费模式",
+     "mode": "theory"
+    }
+   ]
+  },
+  {
+   "id": "slm.r05",
+   "track": "slm",
+   "title": "嵌入与重排模型",
+   "from": "slm.s04",
+   "desc": "多模态嵌入、小尺寸重排模型让本地 RAG 和检索精度持续提升。",
+   "kw": [
+    "embedding",
+    "嵌入",
+    "rerank",
+    "重排",
+    "retrieval",
+    "检索",
+    "MTEB",
+    "EmbeddingGemma",
+    "BGE"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "slm.r05.l01",
+     "text": "用 EmbeddingGemma 2 和 BGE 对同一批中文文档做检索对比",
+     "mode": "practice"
+    }
+   ]
+  },
+  {
+   "id": "agent.r01",
+   "track": "agent",
+   "title": "Agentic RL 与环境合成",
+   "from": "agent.s04",
+   "desc": "用可验证的训练环境做强化学习，让 Agent 学会长程任务。",
+   "kw": [
+    "agentic RL",
+    "agentic reinforcement",
+    "long-horizon",
+    "长程",
+    "environment",
+    "环境",
+    "RL for agents",
+    "terminal",
+    "T1",
+    "SERO",
+    "EnvCraft"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "agent.r01.l01",
+     "text": "读 EnvCraft，理解为什么环境合成是 Agentic RL 的瓶颈",
+     "mode": "theory",
+     "url": "https://arxiv.org/abs/2609.05576"
+    },
+    {
+     "id": "agent.r01.l02",
+     "text": "对比 T1 和本周新论文两种训练配方的取舍",
+     "mode": "theory",
+     "url": "https://arxiv.org/abs/2609.11042"
+    },
+    {
+     "id": "agent.r01.l03",
+     "text": "用 τ-bench 的一个领域，给自己的 Agent 搭一个可验证的评测环境",
+     "mode": "practice",
+     "url": "https://github.com/sierra-research/tau-bench"
+    }
+   ]
+  },
+  {
+   "id": "agent.r02",
+   "track": "agent",
+   "title": "Agent 身份与支付",
+   "from": "agent.s02",
+   "desc": "MCP 授权、Know Your Agent、Agent 支付协议，决定 Agent 能不能代你办事。",
+   "kw": [
+    "agent identity",
+    "Agent 身份",
+    "KYA",
+    "Know Your Agent",
+    "payment",
+    "支付",
+    "authorization",
+    "授权",
+    "DPoP",
+    "OAuth",
+    "commerce",
+    "agentic commerce"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "agent.r02.l01",
+     "text": "读 MCP 新路线图里 Agent 身份与委托授权部分",
+     "mode": "theory",
+     "url": "https://blog.modelcontextprotocol.io/posts/mcp-roadmap/"
+    },
+    {
+     "id": "agent.r02.l02",
+     "text": "给你的 MCP Server 加一个需要用户确认的授权步骤",
+     "mode": "practice"
+    }
+   ]
+  },
+  {
+   "id": "agent.r03",
+   "track": "agent",
+   "title": "Computer Use 与浏览器 Agent",
+   "from": "agent.s04",
+   "desc": "开放 GUI Agent 栈与 RL 训练平台让小模型也能操作电脑，网站开始屏蔽或接纳 Agent。",
+   "kw": [
+    "computer use",
+    "computer-use",
+    "GUI",
+    "browser",
+    "浏览器",
+    "OSWorld",
+    "OpenGCUA",
+    "MAI-Gym",
+    "browser-use",
+    "web agent",
+    "websites"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "agent.r03.l01",
+     "text": "读 OpenGCUA，总结视觉界面与程序接口结合的思路",
+     "mode": "theory",
+     "url": "https://huggingface.co/papers/2610.22200"
+    }
+   ]
+  },
+  {
+   "id": "agent.r04",
+   "track": "agent",
+   "title": "协议栈：MCP 与 A2A",
+   "from": "agent.s02",
+   "desc": "MCP 改为无状态核心，A2A 并入同一基金会，工具接入与 Agent 协作的标准正在定型。",
+   "kw": [
+    "MCP",
+    "Model Context Protocol",
+    "A2A",
+    "Agent2Agent",
+    "AAIF",
+    "Agentic AI Foundation",
+    "protocol",
+    "协议",
+    "Skills"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "agent.r04.l01",
+     "text": "按 2026-07-28 规范重写一遍你的 MCP Server",
+     "mode": "practice",
+     "url": "https://blog.modelcontextprotocol.io/posts/2026-07-28/"
+    }
+   ]
+  },
+  {
+   "id": "agent.r05",
+   "track": "agent",
+   "title": "常驻 Agent 与长程任务",
+   "from": "agent.s03",
+   "desc": "Copilot Autopilot、OpenAI Dots、Claude 动态工作流：Agent 从对话变成在后台持续工作。",
+   "kw": [
+    "autopilot",
+    "常驻",
+    "background agent",
+    "后台",
+    "Dots",
+    "dynamic workflow",
+    "动态工作流",
+    "managed agents",
+    "AgentCore",
+    "runtime"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "agent.r05.l01",
+     "text": "对比三家常驻 Agent 的身份、权限、计费设计，写一页产品分析",
+     "mode": "practice"
+    }
+   ]
+  },
+  {
+   "id": "agent.r06",
+   "track": "agent",
+   "title": "Agent 安全与治理",
+   "from": "agent.s05",
+   "desc": "越界行为、提示注入、权限隔离与审计，是企业规模化部署的前提。",
+   "kw": [
+    "safety",
+    "安全",
+    "prompt injection",
+    "注入",
+    "governance",
+    "治理",
+    "guardrail",
+    "越界",
+    "unintended",
+    "audit",
+    "审计",
+    "rogue",
+    "insider"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "agent.r06.l01",
+     "text": "读 Anthropic 关于 Agent 越界行为的报告，列出你自己 Agent 的权限清单",
+     "mode": "theory",
+     "url": "https://www.anthropic.com/research/investigating-unintended-model-actions"
+    }
+   ]
+  },
+  {
+   "id": "agent.r07",
+   "track": "agent",
+   "title": "编程 Agent",
+   "from": "agent.s04",
+   "desc": "Codex、Claude Code 与各类编程 Agent 的能力与评测基准持续刷新。",
+   "kw": [
+    "coding agent",
+    "编程 Agent",
+    "Codex",
+    "Claude Code",
+    "Copilot",
+    "SWE-bench",
+    "code review",
+    "OpenHands",
+    "Cursor"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "agent.r07.l01",
+     "text": "读 SWE-Bench Pro Verified，理解为什么只看榜单分数会选错",
+     "mode": "theory",
+     "url": "https://arxiv.org/abs/2609.08149"
+    }
+   ]
+  },
+  {
+   "id": "quant.r01",
+   "track": "quant",
+   "title": "多智能体交易与投研",
+   "from": "quant.s06",
+   "desc": "TradingAgents、RD-Agent 等多智能体框架快速迭代，自动挖因子与投研报告进入实用。",
+   "kw": [
+    "TradingAgents",
+    "RD-Agent",
+    "trading agent",
+    "交易智能体",
+    "multi-agent",
+    "多智能体",
+    "factor mining",
+    "因子挖掘",
+    "alpha",
+    "AlphaPilot",
+    "FactorBench"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "quant.r01.l01",
+     "text": "跑通 TradingAgents v0.7 的一次完整决策，记录 token 成本",
+     "mode": "practice",
+     "url": "https://github.com/TauricResearch/TradingAgents"
+    },
+    {
+     "id": "quant.r01.l02",
+     "text": "读 SoK 那篇，列出自建交易智能体必须有的熔断机制",
+     "mode": "theory",
+     "url": "https://arxiv.org/abs/2609.19705"
+    }
+   ]
+  },
+  {
+   "id": "quant.r02",
+   "track": "quant",
+   "title": "前视偏差与回测可信度",
+   "from": "quant.s03",
+   "desc": "用 LLM 或预训练模型做回测时，模型“见过未来”会让结果失真，时点对齐成为新的检验标准。",
+   "kw": [
+    "look-ahead",
+    "前视",
+    "lookahead",
+    "leakage",
+    "泄漏",
+    "point-in-time",
+    "时点",
+    "backtest",
+    "回测",
+    "overfit",
+    "过拟合",
+    "honest evaluation"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "quant.r02.l01",
+     "text": "读“什么能通过诚实评估”一文，整理你的回测检验清单",
+     "mode": "theory",
+     "url": "https://arxiv.org/abs/2608.27734"
+    }
+   ]
+  },
+  {
+   "id": "quant.r03",
+   "track": "quant",
+   "title": "金融时序基础模型",
+   "from": "quant.s04",
+   "desc": "Kronos、Timestral、TimesFM 等时序基础模型，以及它们在收益率预测上的局限。",
+   "kw": [
+    "time series",
+    "时序",
+    "foundation model",
+    "基础模型",
+    "Kronos",
+    "Timestral",
+    "TimesFM",
+    "Chronos",
+    "forecast",
+    "预测"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "quant.r03.l01",
+     "text": "用 Kronos 或 TimesFM 对一只 ETF 做预测，并和横截面排序指标一起评估",
+     "mode": "practice",
+     "url": "https://github.com/shiyu-coder/Kronos"
+    }
+   ]
+  },
+  {
+   "id": "quant.r04",
+   "track": "quant",
+   "title": "交易规则与程序化监管",
+   "from": "quant.s05",
+   "desc": "交易所规则调整、程序化交易报告与罚则、海外日内交易规则变化，直接影响个人策略能否运行。",
+   "kw": [
+    "程序化",
+    "交易所",
+    "证监会",
+    "期交所",
+    "监管",
+    "罚则",
+    "规则",
+    "FINRA",
+    "SEC",
+    "exchange",
+    "regulation",
+    "交易规则",
+    "中证协"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "quant.r04.l01",
+     "text": "读上交所《程序化交易管理实施细则》原文，确认你的策略是否需要报告",
+     "mode": "theory",
+     "url": "https://www.sse.com.cn/lawandrules/sselawsrules2025/trade/universal/c/c_20250612_10781696.shtml"
+    }
+   ]
+  },
+  {
+   "id": "quant.r05",
+   "track": "quant",
+   "title": "开源量化工具更新",
+   "from": "quant.s02",
+   "desc": "Qlib、vn.py、AKShare、vectorbt 等工具的正式版本更新，常带来不兼容变化。",
+   "kw": [
+    "Qlib",
+    "vn.py",
+    "vnpy",
+    "AKShare",
+    "vectorbt",
+    "backtrader",
+    "QMT",
+    "PTrade",
+    "Release"
+   ],
+   "status": "active",
+   "learn": [
+    {
+     "id": "quant.r05.l01",
+     "text": "升级前读一遍 Qlib v0.9.8 的迁移说明，在本地跑通基线",
+     "mode": "practice",
+     "url": "https://github.com/microsoft/qlib/releases/tag/v0.9.8"
+    }
+   ]
+  }
+ ]
+}
