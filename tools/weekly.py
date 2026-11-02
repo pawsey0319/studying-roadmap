@@ -112,11 +112,43 @@ def providers():
         out.append(("智谱", "https://open.bigmodel.cn/api/paas/v4", env("ZHIPU_KEY"), env("ZHIPU_MODEL") or "glm-4-flash"))
     if env("LLM_BASE") and env("LLM_KEY") and env("LLM_MODEL"):
         # 聚合接口一个 Key 能调多个模型：LLM_MODEL 可以写多个，用逗号分隔，前一个失败就换下一个
-        base = re.sub(r"/chat/completions/?$", "", env("LLM_BASE").strip()).rstrip("/")
+        base = clean_base(env("LLM_BASE"))
         for m in env("LLM_MODEL").split(","):
             if m.strip():
                 out.append(("自定义 " + m.strip(), base, env("LLM_KEY").strip(), m.strip()))
     return out
+
+
+def clean_base(u):
+    """容错：去掉首尾空白、引号、结尾的 /chat/completions；没写 https:// 的补上。"""
+    u = str(u or "").strip().strip("'\"").strip()
+    if u and not re.match(r"^https?://", u, re.I):
+        u = "https://" + u
+    return re.sub(r"/chat/completions/?$", "", u).rstrip("/")
+
+
+def check_base(name, base):
+    """调用前先确认地址能连上。日志是公开的，所以不打印地址本身，只说明问题在哪。"""
+    import ipaddress
+    import socket
+    host = urllib.parse.urlsplit(base).hostname or ""
+    if not host:
+        return f"{name}：接口地址格式不对（解析不出域名）。应该像 https://api.example.com/v1"
+    hint = []
+    if "." not in host:
+        hint.append("域名里没有点，像是内网主机名")
+    elif re.search(r"\.(local|lan|internal|intranet|corp|home)$", host, re.I):
+        hint.append("域名后缀像是公司或家庭内网")
+    try:
+        ips = {a[4][0] for a in socket.getaddrinfo(host, 443)}
+    except socket.gaierror:
+        return (f"{name}：GitHub 的服务器查不到这个接口地址的域名（DNS 解析失败）。"
+                + ("".join("可能原因：" + h + "。" for h in hint))
+                + "请检查：1) LLM_BASE 有没有拼错，复制时有没有多带空格或换行；"
+                "2) 这个地址是不是只能在公司内网或特定网络里访问——GitHub Actions 在海外公网上运行，访问不到内网地址，这种情况要换成公网可用的接口。")
+    if any(ipaddress.ip_address(ip).is_private for ip in ips):
+        return f"{name}：接口域名解析到的是内网 IP，GitHub Actions 访问不到。请换成公网可用的接口地址。"
+    return ""
 
 
 class LLM:
@@ -551,6 +583,12 @@ def main():
         log("按 --no-ai 跳过 AI 整理")
         return finish(0)
     llm = LLM()
+    bad = [m for m in (check_base(n, b) for n, b, _, _ in llm.list) if m]
+    for m in dict.fromkeys(bad):
+        log(m)
+    if llm.list and len(bad) == len(llm.list):
+        log("所有模型接口的地址都连不上，本周只更新了社区讨论。")
+        return finish(1)
     if not llm.ok():
         log("没有配置任何模型 Key（MODELSCOPE_KEY / SILICONFLOW_KEY / ZHIPU_KEY / LLM_KEY），本周只更新了社区讨论。")
         return finish(1)
