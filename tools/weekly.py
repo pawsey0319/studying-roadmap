@@ -111,7 +111,11 @@ def providers():
     if env("ZHIPU_KEY"):
         out.append(("智谱", "https://open.bigmodel.cn/api/paas/v4", env("ZHIPU_KEY"), env("ZHIPU_MODEL") or "glm-4-flash"))
     if env("LLM_BASE") and env("LLM_KEY") and env("LLM_MODEL"):
-        out.append(("自定义", env("LLM_BASE").rstrip("/"), env("LLM_KEY"), env("LLM_MODEL")))
+        # 聚合接口一个 Key 能调多个模型：LLM_MODEL 可以写多个，用逗号分隔，前一个失败就换下一个
+        base = re.sub(r"/chat/completions/?$", "", env("LLM_BASE").strip()).rstrip("/")
+        for m in env("LLM_MODEL").split(","):
+            if m.strip():
+                out.append(("自定义 " + m.strip(), base, env("LLM_KEY").strip(), m.strip()))
     return out
 
 

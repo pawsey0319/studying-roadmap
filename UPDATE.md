@@ -35,7 +35,7 @@
 | 每次推送到 main、每天北京时间 8 点 | `.github/workflows/pages.yml` | 跑测试 → 抓每日快照（含 AI 资讯日报）→ 访问一次云端数据库防暂停 → 部署 |
 | 每周一北京时间 9 点 | `.github/workflows/weekly.yml` | 抓社区讨论 → 核验候选链接 → 免费模型写精选、精修前沿路线、生成待确认建议 → 跑测试 → 提交 → 触发部署。失败时开一个 `weekly-failed` issue，网站保留上周内容 |
 
-每周任务需要仓库 Secrets 里至少有一个模型 Key，按顺序轮换：`MODELSCOPE_KEY`（魔搭，首选，可用 `MODELSCOPE_MODEL` 改模型，逗号分隔多个）→ `SILICONFLOW_KEY` → `ZHIPU_KEY` → `LLM_BASE` + `LLM_KEY` + `LLM_MODEL`。
+每周任务需要仓库 Secrets 里至少有一个模型 Key，按顺序轮换：`MODELSCOPE_KEY`（魔搭，首选，可用 `MODELSCOPE_MODEL` 改模型，逗号分隔多个）→ `SILICONFLOW_KEY` → `ZHIPU_KEY` → `LLM_BASE` + `LLM_KEY` + `LLM_MODEL`（聚合接口用这一组：`LLM_BASE` 填到 `/v1` 为止，`LLM_MODEL` 可以写多个模型、逗号分隔，按顺序备用）。
 可选 `SUPABASE_URL` + `SUPABASE_SERVICE_KEY`：读取内测用户对 AI 整理条目的“分错了”标记，被标记的条目下架，并作为反例告诉模型。
 
 每日快照里的 AI 资讯日报（hex2077.dev）是二手聚合：每条按它引用的原始链接的域名定可信度，标“经 AI 资讯日报”，只存标题、原始链接和一句摘要。
