@@ -21,7 +21,7 @@ export async function renderSettings() {
   <div class="g2" style="margin-top:14px;align-items:start">
     <section class="card set"><h3>AI 服务</h3>
       <p class="hint">${hosted ? '内测期间学习 Agent 用管理员提供的模型，登录后就能用，不需要自己的 Key。也可以换成自己的服务商。' : 'Key 只保存在这台设备的浏览器里，不会同步到其他设备，只发给你选的服务商。公用电脑上不要填。'}</p>
-      <label class="field"><span>服务商</span><select id="aiProv">${Object.entries(PROVIDERS).filter(([k, v]) => !v.hosted || cloud.available()).map(([k, v]) => `<option value="${k}"${k === c.provider ? ' selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>
+      <label class="field"><span>服务商</span><select id="aiProv">${Object.entries(PROVIDERS).filter(([k, v]) => !v.hosted || cloud.hostedAI()).map(([k, v]) => `<option value="${k}"${k === c.provider ? ' selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>
       <p class="hint">${esc(p.help || '')}</p>
       ${hosted ? hostedHtml(c) : ''}
       <div${hosted ? ' hidden' : ''}>

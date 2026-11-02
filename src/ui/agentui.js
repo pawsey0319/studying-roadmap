@@ -14,13 +14,15 @@ import { stageLabel } from './home.js';
 /* ---------- 设置与花费（只存本设备） ---------- */
 // 网站接了云端时，默认用管理员提供的内测模型；否则默认魔搭
 export async function aiCfg() {
-  const c = (await store.localGet('ai')) || (cloud.available() ? { provider: 'hosted', model: '', key: '', budget: 0 } : { provider: 'modelscope', model: PROVIDERS.modelscope.model, key: '', budget: 30 });
+  let c = await store.localGet('ai');
+  if (c && c.provider === 'hosted' && !cloud.hostedAI()) c = null;
+  c = c || (cloud.hostedAI() ? { provider: 'hosted', model: '', key: '', budget: 0 } : { provider: 'modelscope', model: PROVIDERS.modelscope.model, key: '', budget: 30 });
   return c.provider === 'hosted' ? { ...c, endpoint: cloud.aiEndpoint } : c;
 }
 export const saveCfg = c => { const { endpoint, ...rest } = c; return store.localSet('ai', rest); };
 // 能不能调用；不能时返回原因
 export function aiBlock(cfg) {
-  if (cfg.provider === 'hosted') return !cloud.available() ? '这个网站没有接云端，请在设置里换一个服务商' : !cloud.signedIn() ? '内测模型需要先登录：设置 → 账号与云端同步' : '';
+  if (cfg.provider === 'hosted') return !cloud.hostedAI() ? '这个网站没有接云端，请在设置里换一个服务商' : !cloud.signedIn() ? '内测模型需要先登录：设置 → 账号与云端同步' : '';
   return cfg.key || cfg.provider === 'custom' ? '' : '还没有设置 AI 服务。去“设置”选一个服务商并填 Key';
 }
 const month = () => new Date().toISOString().slice(0, 7);
