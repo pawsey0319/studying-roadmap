@@ -16,6 +16,7 @@ import { renderImport, afterImport } from './ui/importui.js';
 import { openAgent, closeAgent } from './ui/agentui.js';
 import { openOnboard } from './ui/onboard.js';
 import './ui/suggest.js';
+import './ui/dragask.js';
 
 /* ---------- 路由：#/  #/t/<方向>[/news][?s=阶段]  #/r/<路线>  #/notes[/<卡片>|/s/<阶段>]  #/biz  #/import  #/settings  #/later  #/suggestions ---------- */
 function parse() {
@@ -64,7 +65,7 @@ function renderNav(page, seg) {
     <a class="nav" href="#/biz" aria-current="${cur('biz')}">落地与商机</a>
     <a class="nav" href="#/later" aria-current="${cur('later')}">稍后读<span class="n">${Object.keys(store.all('later')).filter(id => !M.isRead(id)).length || ''}</span></a>
     <div class="gh">学习方向</div>
-    ${M.tracks().map(t => { const un = M.unread(t.id).length, st = M.state(t.id); return `<a class="nav" href="#/t/${t.id}" aria-current="${tid === t.id ? 'page' : 'false'}"><span class="dot" style="background:${t.color}"></span>${esc(t.name)}<span class="n">${un ? un + ' 未读' : st.doneStages + '/' + st.stages.length}</span></a>`; }).join('')}
+    ${M.tracks().map(t => { const st = M.state(t.id); return `<a class="nav" href="#/t/${t.id}" aria-current="${tid === t.id ? 'page' : 'false'}"><span class="dot" style="background:${t.color}"></span>${esc(t.name)}<span class="n">${st.doneStages}/${st.stages.length}</span></a>`; }).join('')}
     <a class="nav" href="#/import" aria-current="${cur('import')}" style="margin-top:4px"><span class="dot" style="background:none;border:1.5px dashed var(--faint)"></span>导入文档</a>
     <div class="ft"><a class="nav" href="#/settings" aria-current="${cur('settings')}">设置</a><p class="fnt small" id="syncState" style="padding:4px 10px"></p></div>`;
   const mt = page === 't' || page === 'r';
@@ -88,7 +89,12 @@ function renderMore() {
 }
 
 /* ---------- 全局动作 ---------- */
-act('read', el => { if (!M.isRead(el.dataset.id)) { store.put('read', el.dataset.id, iso(new Date())); setTimeout(refresh, 50); } });
+act('read', el => {
+  const id = el.dataset.id; if (M.isRead(id)) return;
+  store.put('read', id, iso(new Date()));
+  const li = el.closest('li'); if (li) li.classList.add('is-read');
+  const b = li && li.querySelector('[data-act=toggle-read]'); if (b) b.textContent = '标为未读';
+});
 act('toggle-read', el => { const id = el.dataset.id; store.put('read', id, M.isRead(id) ? null : iso(new Date())); refresh(); });
 act('read-all', el => {
   const list = M.unread(el.dataset.id || null); if (!list.length) return;
@@ -149,7 +155,12 @@ async function boot() {
   if (linked) toast('已登录，正在同步');
   // 第一次使用：开局规划（可以跳过）
   if (!store.get('meta', 'onboarded') && !store.ui().obSeen && !location.hash.includes('settings')) setTimeout(() => openOnboard(), 400);
-  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    // 旧版缓存规则会让发布后的第一次打开仍是旧代码：新的缓存程序接管时自动刷新一次
+    const had = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (had && !window.__swReloaded) { window.__swReloaded = true; location.reload(); } });
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(r => r.update()).catch(() => {});
+  }
 }
 boot();
 export { closeAgent, openAgent };

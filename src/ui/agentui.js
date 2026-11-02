@@ -98,6 +98,33 @@ const EXPLAIN_MANY = `这几条资讯我觉得有关联，但没看懂它们之�
 ${EXPLAIN_RULE}
 最后把结论整理成一张笔记，放在 note 代码块里：{"text":"Markdown 内容，列出各条标题和链接","at":"最相关的阶段或前沿路线 ID，没有就留空"}。`;
 
+/* ---------- 附带的资讯（拖进来或右键询问） ---------- */
+// item：{ id?, t 标题, u 链接, src?, quote? 选中的文字 }
+let ATT = [];
+const attKey = x => x.id || x.u || x.quote;
+function attText(list) {
+  return list.map((x, i) => {
+    const n = x.id && M.news().find(y => y.id === x.id);
+    if (n) return `【${i + 1}】` + newsBlock(n);
+    if (x.quote) return `【${i + 1}】用户选中的一段文字：「${x.quote.slice(0, 2000)}」${x.t ? `\n（出自：${x.t}${x.u ? '，' + x.u : ''}）` : ''}`;
+    return `【${i + 1}】标题：${x.t}\n来源：${x.src || '实时动态'}\n链接：${x.u}`;
+  }).join('\n\n');
+}
+// 把资讯放进对话框（不发送）；抽屉没开就先打开
+export async function attach(items) {
+  if (!dw() || dw().hidden) await openAgent('free');
+  for (const x of items) if (x && (x.t || x.quote) && !ATT.some(y => attKey(y) === attKey(x))) ATT.push(x);
+  ATT = ATT.slice(0, MAX_PICK);
+  await renderDrawer();
+  const ta = $('#agentIn'); if (ta) ta.focus();
+}
+// 带着资讯直接提问（右键菜单）
+export async function askWith(items, question) {
+  if (!dw() || dw().hidden) await openAgent('free');
+  ATT = items.slice(0, MAX_PICK);
+  await send(question || '');
+}
+
 /* ---------- 抽屉状态 ---------- */
 let CUR = null, MSGS = [], busy = false, ctl = null, mode = 'quick';
 const ckey = c => 'chat.' + c.kind + '.' + (c.kind === 'multi' ? hash(String(c.id)) : (c.id || ''));
@@ -126,19 +153,24 @@ async function renderDrawer() {
       ${CUR.first && !MSGS.length ? `<div class="ai md">${md(CUR.first)}</div>` : ''}
       ${MSGS.map(msgHtml).join('')}</div>
     <div class="quick">${['出 3 道自测题检验我', '讲简单点', '这对产品意味着什么', '把上面的回答存进笔记'].map(q => `<button data-act="agent-quick">${q}</button>`).join('')}</div>
-    <form class="inb" id="agentForm"><textarea id="agentIn" rows="2" placeholder="说说你的情况，或者问一个问题。Enter 发送，Shift+Enter 换行"${ready ? '' : ' disabled'}></textarea>
+    <form class="inb" id="agentForm">${ATT.length ? `<div class="att">${ATT.map((x, i) => `<span class="attc" title="${esc(x.u || '')}">${x.quote ? '“' + esc(x.quote.slice(0, 24)) + '…”' : esc(x.t.slice(0, 40))}<button type="button" data-act="att-rm" data-i="${i}" aria-label="移除">×</button></span>`).join('')}</div>` : ''}
+      <textarea id="agentIn" rows="2" placeholder="${ATT.length ? '想问什么？直接按 Enter 就是让 Agent 解析' : '说说你的情况，或者问一个问题。可以把资讯拖进来。Enter 发送，Shift+Enter 换行'}"${ready ? '' : ' disabled'}></textarea>
       <div class="inb-r"><div class="chips"><button type="button" class="chip" data-act="agent-mode" data-id="quick" aria-pressed="${mode === 'quick'}" title="一次调用，便宜快速">快速回答</button><button type="button" class="chip" data-act="agent-mode" data-id="agent" aria-pressed="${mode === 'agent'}" title="允许 Agent 多步查资讯、读笔记，最多 6 步，更费 token">让 Agent 处理</button></div>
       <button class="btn pri" id="agentSend"${ready ? '' : ' disabled'}>${busy ? '停止' : '发送'}</button></div>
       <div class="cost">${cfg.provider === 'hosted' ? `内测模型${cfg.model ? ' · ' + esc(cfg.model) : ''} · 本月 ${u.calls} 次` : `${esc(p.name)} · ${esc(cfg.model || p.model)} · 本月 ¥${u.cny.toFixed(2)}${cfg.budget ? ` / 上限 ¥${cfg.budget}` : ''} · ${u.calls} 次`}</div></form>`;
   const box = $('#msgs'); box.scrollTop = box.scrollHeight;
   const ta = $('#agentIn');
   ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); $('#agentForm').requestSubmit(); } });
-  $('#agentForm').addEventListener('submit', e => { e.preventDefault(); if (busy) { ctl && ctl.abort(); return; } const v = ta.value.trim(); if (v) { ta.value = ''; send(v); } });
+  $('#agentForm').addEventListener('submit', e => { e.preventDefault(); if (busy) { ctl && ctl.abort(); return; } const v = ta.value.trim(); if (v || ATT.length) { ta.value = ''; send(v); } });
   if (ready && matchMedia('(min-width: 821px)').matches) setTimeout(() => ta.focus(), 30);
 }
 
 function msgHtml(m, i) {
-  if (m.role === 'user') return m.auto ? `<div class="me auto">${esc(m.label || m.content.slice(0, 60) + '…')}</div>` : `<div class="me">${esc(m.content)}</div>`;
+  if (m.role === 'user') {
+    if (m.auto) return `<div class="me auto">${esc(m.label || m.content.slice(0, 60) + '…')}</div>`;
+    const att = (m.att || []).map(x => `<span class="attc">${x.u ? `<a href="${esc(x.u)}" target="_blank" rel="noopener">${esc(x.t.slice(0, 50))}</a>` : esc(x.t.slice(0, 50))}</span>`).join('');
+    return `<div class="me">${esc(m.show ?? m.content)}${att ? `<div class="att in">${att}</div>` : ''}</div>`;
+  }
   if (m.role === 'tool') return `<div class="tool">${esc(m.content)}</div>`;
   if (m.role === 'err') return `<div class="ai err">${esc(m.content)}</div>`;
   const { text, blocks } = extractBlocks(m.content);
@@ -190,7 +222,13 @@ async function send(text, opts = {}) {
   const u = await usage();
   if (cfg.budget && u.cny >= cfg.budget && !confirm(`本月已经用了 ¥${u.cny.toFixed(2)}，超过你设的上限 ¥${cfg.budget}。还要继续调用吗？`)) return;
   if (cfg.budget && u.cny >= cfg.budget * 0.8 && u.cny < cfg.budget && !opts.warned) toast(`本月花费已到上限的 ${Math.round(u.cny / cfg.budget * 100)}%`);
-  MSGS.push({ role: 'user', content: text, ...(opts.auto ? { auto: true, label: opts.label } : {}) });
+  if (ATT.length && !opts.auto) {
+    const list = ATT; ATT = [];
+    const q = text || (list.length > 1 ? `解析这 ${list.length} 条之间的关联` : list[0].quote ? '解释一下这段话' : '解析这条资讯');
+    const rule = !text ? '\n\n' + (list.length > 1 ? EXPLAIN_MANY : EXPLAIN_ONE).replace(/^[^\n]*\n/, '按下面的结构回答：\n') : '\n\n' + EXPLAIN_RULE;
+    MSGS.push({ role: 'user', show: q, att: list.map(x => ({ t: x.quote ? '“' + x.quote.slice(0, 40) + '…”' : x.t, u: x.u || '' })),
+      content: `${q}\n\n附带的内容：\n${attText(list)}${rule}` });
+  } else MSGS.push({ role: 'user', content: text, ...(opts.auto ? { auto: true, label: opts.label } : {}) });
   busy = true; await renderDrawer();
   const box = $('#msgs');
   const sys = systemPrompt({ profile: store.get('meta', 'profile') || M.C.domains[0].profile, memory: store.get('meta', 'memory'), mode, recent: recentChanges() });
@@ -230,6 +268,7 @@ function recentChanges() {
 
 /* ---------- 动作 ---------- */
 act('agent-close', () => closeAgent());
+act('att-rm', el => { ATT.splice(+el.dataset.i, 1); renderDrawer(); });
 act('agent-clear', async () => { MSGS = []; await store.localSet(ckey(CUR), []); renderDrawer(); });
 act('agent-mode', el => { mode = el.dataset.id; renderDrawer(); });
 act('agent-quick', el => {

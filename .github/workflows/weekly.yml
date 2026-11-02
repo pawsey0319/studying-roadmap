@@ -1,6 +1,7 @@
 name: 每周自动更新
 
-# 每周一北京时间 9 点：抓社区讨论 → 核验链接 → 免费模型整理精选、精修前沿路线、生成待确认建议 → 提交 → 重新部署。
+# 每周一北京时间 9 点：抓社区讨论 → 核验链接、写出候选（data/weekly-candidates.json）→ 模型接口连得上就接着整理 → 提交 → 重新部署。
+# 模型接口在公司内网、Actions 连不上时，这里只采集候选并提交；整理由公司电脑上的 tools/weekly_local.sh 完成并推送。
 # 需要在仓库 Settings → Secrets and variables → Actions 里至少配置一个模型 Key：
 #   MODELSCOPE_KEY（魔搭，首选）、SILICONFLOW_KEY、ZHIPU_KEY，或 LLM_BASE + LLM_KEY + LLM_MODEL
 # 可选：SUPABASE_URL + SUPABASE_SERVICE_KEY（读取内测用户的“分错了”标记）。
@@ -44,14 +45,14 @@ jobs:
           LLM_MODEL: ${{ secrets.LLM_MODEL }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: python3 tools/weekly.py
+        run: python3 tools/weekly.py --stage auto
       - name: 检查结果（测试不过就不提交）
         if: always()
         run: node --test tests/*.test.js
       - name: 提交并重新部署
         if: success()
         run: |
-          git add content/feed.json content/routes.json content/suggestions.json data/community.json
+          git add content/feed.json content/routes.json content/suggestions.json data/community.json data/weekly-candidates.json
           if git diff --cached --quiet; then echo "没有变化"; exit 0; fi
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
             commit -q -m "每周自动更新 $(TZ=Asia/Shanghai date +%F)"

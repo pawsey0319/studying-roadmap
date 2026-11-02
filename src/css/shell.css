@@ -37,6 +37,25 @@
 .pf{display:flex;gap:6px;padding:7px 10px;border-top:1px solid #F3E3CF;background:#fff;justify-content:flex-end;flex-wrap:wrap}
 .blk .pf{border:0;padding:6px 0 0;background:none}
 
+/* 拖进 Agent 的资讯、右键“问 Agent” */
+.att{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
+.attc{display:inline-flex;align-items:center;gap:4px;max-width:100%;background:var(--soft);border:1px solid var(--line);border-radius:7px;padding:2px 4px 2px 8px;font-size:12px;color:var(--ink)}
+.attc button{border:0;background:none;color:var(--faint);font-size:15px;line-height:1;padding:0 2px}
+.att.in{margin:6px 0 0}
+.att.in .attc{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.25);color:#fff;padding-right:8px}
+.att.in .attc a{color:#fff}
+body.dragging-news #dw,body.dragging-news .fab [data-act=agent-open]{outline:2px dashed var(--sig);outline-offset:-4px}
+body.drop-over #dw,body.drop-over .fab [data-act=agent-open]{outline-style:solid;background:#FFFBEA}
+.askm{position:fixed;z-index:95;width:340px;padding:10px 12px;box-shadow:0 14px 40px rgba(24,32,44,.22)}
+.askm[hidden]{display:none}
+.askm-h{font-weight:700;font-size:13.5px}
+.askm-t{font-size:12.5px;color:var(--muted);margin:3px 0 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.askm form{display:flex;gap:6px}
+.askm input{flex:1;min-width:0;border:1px solid var(--line);border-radius:7px;padding:4px 8px;font-size:13.5px}
+.askm-q{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.askm p{margin:6px 0 0}
+.live li a[href]{cursor:grab}
+
 /* 一键解析与多选 */
 .nlist .na button.ex{color:var(--ink);font-weight:600}
 .nlist .pick{margin:5px 0 0;width:15px;height:15px;accent-color:var(--ink)}

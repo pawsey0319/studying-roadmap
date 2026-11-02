@@ -42,6 +42,21 @@
 
 每日快照里的 AI 资讯日报（hex2077.dev）是二手聚合：每条按它引用的原始链接的域名定可信度，标“经 AI 资讯日报”，只存标题、原始链接和一句摘要。
 
+## 公司内网模型（当前用法）
+
+模型接口在公司内网，GitHub Actions 连不上，所以每周任务分两段：
+
+1. **每周一，云端采集**：`weekly.yml` 运行 `weekly.py --stage auto`，抓社区讨论、核验候选链接，写出 `data/weekly-candidates.json` 并提交。连不上模型接口时到这里就停，任务显示成功，不开失败 issue。
+2. **公司电脑，整理**：运行 `bash tools/weekly_local.sh`。它会拉取最新仓库，用内网模型整理精选、精修前沿路线、生成待确认建议，跑测试后推送，网站自动重新部署。同一周的候选只整理一次，所以可以每天跑，没有新候选时几秒就结束。
+
+第一次在公司电脑上配置：
+
+- 建一个文件 `~/.config/learning-hub/llm.env`（在仓库之外，不会被提交），内容三行：`LLM_BASE=内网地址/v1`、`LLM_KEY=…`、`LLM_MODEL=模型1,模型2`。脚本会把它的权限设成只有自己能读。
+- 想让它每天自动跑：macOS 终端运行 `crontab -e`，加一行 `30 10 * * * cd ~/Desktop/学习/learning-hub && bash tools/weekly_local.sh`（每天 10:30）。电脑关机或没连内网的那天跳过，第二天补上；候选超过 10 天就不再整理，等下周的新候选。运行记录在 `~/.config/learning-hub/weekly.log`。
+- 学习 Agent 也可以直接用内网模型：在公司电脑的网站设置 → AI 服务 → 自定义，填同一个地址。
+
+以后换成公网能访问的接口（独立产品）时，不用改代码：把 Key 填进仓库 Secrets（`LLM_BASE`/`LLM_KEY`/`LLM_MODEL` 或 `MODELSCOPE_KEY` 等），云端那一段会自动接着整理，`weekly_local.sh` 就不用再跑了。
+
 ## 手动补跑每周更新（自动任务失败、或想立刻更新时）
 
 开始前先 `git pull`。

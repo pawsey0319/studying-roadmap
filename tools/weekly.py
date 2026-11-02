@@ -13,7 +13,7 @@
   MODELSCOPE_KEY（魔搭，首选）→ SILICONFLOW_KEY（硅基流动免费模型）→ ZHIPU_KEY（智谱免费模型）→ LLM_BASE/LLM_KEY/LLM_MODEL（自定义）
 可选：SUPABASE_URL + SUPABASE_SERVICE_KEY，读取内测用户对 AI 整理结果的“分错了”标记（只读 marks 这一份数据，只做汇总）。
 
-用法：python3 tools/weekly.py [--no-ai] [--dry-run] [--skip-community]
+用法：python3 tools/weekly.py [--stage all|collect|ai|auto] [--dry-run] [--skip-community] [--force]
 只用标准库。
 """
 import argparse
@@ -128,25 +128,30 @@ def clean_base(u):
 
 
 def check_base(name, base):
-    """调用前先确认地址能连上。日志是公开的，所以不打印地址本身，只说明问题在哪。"""
+    """调用前先确认地址能连上。日志是公开的，所以不打印地址本身，只说明问题在哪。
+    内网地址只在 GitHub Actions 上算问题；在公司电脑上跑时内网地址是正常的。"""
     import ipaddress
     import socket
+    on_ci = os.environ.get("GITHUB_ACTIONS") == "true"
+    who = "GitHub 的服务器" if on_ci else "这台电脑"
     host = urllib.parse.urlsplit(base).hostname or ""
     if not host:
         return f"{name}：接口地址格式不对（解析不出域名）。应该像 https://api.example.com/v1"
     hint = []
-    if "." not in host:
+    if on_ci and "." not in host:
         hint.append("域名里没有点，像是内网主机名")
-    elif re.search(r"\.(local|lan|internal|intranet|corp|home)$", host, re.I):
+    elif on_ci and re.search(r"\.(local|lan|internal|intranet|corp|home)$", host, re.I):
         hint.append("域名后缀像是公司或家庭内网")
     try:
         ips = {a[4][0] for a in socket.getaddrinfo(host, 443)}
     except socket.gaierror:
-        return (f"{name}：GitHub 的服务器查不到这个接口地址的域名（DNS 解析失败）。"
+        if not on_ci:
+            return f"{name}：{who}查不到接口地址的域名。检查 LLM_BASE 有没有拼错，以及这台电脑现在是否连着公司内网（VPN）。"
+        return (f"{name}：{who}查不到这个接口地址的域名（DNS 解析失败）。"
                 + ("".join("可能原因：" + h + "。" for h in hint))
                 + "请检查：1) LLM_BASE 有没有拼错，复制时有没有多带空格或换行；"
                 "2) 这个地址是不是只能在公司内网或特定网络里访问——GitHub Actions 在海外公网上运行，访问不到内网地址，这种情况要换成公网可用的接口。")
-    if any(ipaddress.ip_address(ip).is_private for ip in ips):
+    if on_ci and any(ipaddress.ip_address(ip).is_private for ip in ips):
         return f"{name}：接口域名解析到的是内网 IP，GitHub Actions 访问不到。请换成公网可用的接口地址。"
     return ""
 
@@ -563,39 +568,30 @@ def suggest(llm, track, picked, overlay_hint=""):
 
 
 # ---------- 主流程 ----------
-def main():
-    try:
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    except Exception:
-        pass
-    ap = argparse.ArgumentParser(description="每周自动更新")
-    ap.add_argument("--no-ai", action="store_true", help="只抓社区讨论，不调用模型")
-    ap.add_argument("--dry-run", action="store_true", help="不写文件，只打印结果")
-    ap.add_argument("--skip-community", action="store_true", help="跳过 Reddit/HN 抓取")
-    a = ap.parse_args()
+# 分两段，可以在不同的机器上跑：
+#   collect（采集）：抓社区讨论、读用户标记、挑候选并逐条核验链接，写 data/weekly-candidates.json。只需要公网，GitHub Actions 上跑。
+#   ai（整理）：读候选，调用模型写精选、精修前沿路线、生成待确认建议。在能连上模型接口的机器上跑。
+# 不加 --stage 就两段连着跑（模型接口公网可达时，全在 Actions 上完成）。
+# 公司内网的模型接口 Actions 连不上：Actions 只跑 collect，公司电脑每天检查一次，有新候选就跑 ai 并推送（见 tools/weekly_local.sh）。
+CAND = ROOT / "data" / "weekly-candidates.json"
 
-    if not a.skip_community and not a.dry_run:
-        try:
-            update_community()
-        except Exception as e:
-            log(f"社区讨论抓取出错：{type(e).__name__}: {e}")
-    if a.no_ai:
-        log("按 --no-ai 跳过 AI 整理")
-        return finish(0)
-    llm = LLM()
-    bad = [m for m in (check_base(n, b) for n, b, _, _ in llm.list) if m]
-    for m in dict.fromkeys(bad):
-        log(m)
-    if llm.list and len(bad) == len(llm.list):
-        log("所有模型接口的地址都连不上，本周只更新了社区讨论。")
-        return finish(1)
-    if not llm.ok():
-        log("没有配置任何模型 Key（MODELSCOPE_KEY / SILICONFLOW_KEY / ZHIPU_KEY / LLM_KEY），本周只更新了社区讨论。")
-        return finish(1)
-    if not P["sources"].exists():
-        log("没有 data/sources.json，请先运行 python3 tools/fetch_sources.py")
-        return finish(1)
 
+def collect():
+    feed = load(P["feed"])
+    marks, users = read_marks()
+    feed_ids = {news_id(x["u"]) for x in feed["items"]}
+    cands = verify_all(candidates(feed_ids, set(marks)))
+    # 前沿路线精修要用最近 3 周的快照；快照不进仓库，这里存一份精简版给整理那一段用
+    snap = (load(P["sources"], {}) or {}).get("items", []) + (load(P["community"], {}) or {}).get("items", [])
+    cut = (TODAY - timedelta(days=21)).isoformat()
+    recent = [{k: x[k] for k in ("d", "k", "t", "s", "lvl") if k in x} for x in snap if x.get("d", "") >= cut]
+    data = {"week": TODAY.isoformat(), "cands": cands, "recent": recent, "marked": sorted(marks)}
+    dump(CAND, data, compact=True)
+    log(f"候选已写入 data/weekly-candidates.json：{sum(len(v) for v in cands.values())} 条候选，{len(recent)} 条近 3 周资讯")
+    return data
+
+
+def organize(llm, data, dry):
     feed = load(P["feed"])
     routes_doc = load(P["routes"])
     sugs_doc = load(P["sugs"], {"items": []}) or {"items": []}
@@ -604,10 +600,10 @@ def main():
     routes = routes_doc["routes"]
 
     # 用户标记：被标为“分错了/不该收”的 AI 整理条目下架，并作为反例告诉模型
-    marks, users = read_marks()
+    marked = set(data.get("marked") or [])
     wrong, keep = [], []
     for x in feed["items"]:
-        if x.get("ai") and marks.get(news_id(x["u"])):
+        if x.get("ai") and news_id(x["u"]) in marked:
             wrong.append(f"- 《{x['t']}》被归到 {x['k']}" + (f"、路线 {','.join(x.get('r', []))}" if x.get("r") else ""))
         else:
             keep.append(x)
@@ -616,10 +612,10 @@ def main():
     feed["items"] = keep
     feed_ids = {news_id(x["u"]) for x in feed["items"]}
 
-    cands = verify_all(candidates(feed_ids, set(marks)))
+    cands = data["cands"]
     added, fails, new_items = {}, 0, []
     for t in tracks:
-        cs = cands.get(t["id"], [])
+        cs = [x for x in cands.get(t["id"], []) if x["id"] not in feed_ids]
         if not cs:
             continue
         try:
@@ -635,16 +631,15 @@ def main():
         log(f"{t['name']}：新增 {len(got)} 条精选" + (f"，例如《{got[0]['t']}》" if got else ""))
     if fails and fails == len([t for t in tracks if cands.get(t["id"])]):
         log("所有方向的 AI 整理都失败了，内容保持上周的版本")
-        return finish(1)
+        return 1
     feed["items"] = trim_feed(feed["items"] + new_items)
     feed["updated"] = TODAY.isoformat()
+    feed["weekly"] = data["week"]   # 记下处理过哪一周的候选，同一周不会重复整理
 
-    # 前沿路线精修：用最近 3 周的快照和精选
-    snap = (load(P["sources"], {}) or {}).get("items", []) + (load(P["community"], {}) or {}).get("items", [])
     cut = (TODAY - timedelta(days=21)).isoformat()
     route_notes = []
     for t in tracks:
-        recent = [x for x in snap if t["id"] in x.get("k", []) and x.get("d", "") >= cut] + \
+        recent = [x for x in data.get("recent", []) if t["id"] in x.get("k", [])] + \
                  [x for x in feed["items"] if x["k"] == t["id"] and x.get("d", "") >= cut]
         if len(recent) < 5:
             continue
@@ -656,7 +651,6 @@ def main():
         log("前沿路线 " + n)
     routes_doc["updated"] = TODAY.isoformat()
 
-    # 对理论路线的修改建议：只写成待确认建议，保留 4 周
     old = [s for s in sugs_doc.get("items", []) if s.get("at", "") >= (TODAY - timedelta(days=28)).isoformat()]
     new_s = []
     for t in tracks:
@@ -670,13 +664,82 @@ def main():
         log(f"待确认建议：{s['title']}（{s['stage']}）")
 
     log(f"模型调用 {llm.calls} 次")
-    if a.dry_run:
+    if dry:
         print(json.dumps({"new": new_items, "sugs": new_s}, ensure_ascii=False, indent=1)[:6000])
-        return finish(0)
+        return 0
     dump(P["feed"], feed)
     dump(P["routes"], routes_doc)
     dump(P["sugs"], sugs_doc)
-    return finish(0)
+    return 0
+
+
+def make_llm():
+    """返回 (LLM, 失败原因)。"""
+    llm = LLM()
+    if not llm.ok():
+        return None, "没有配置任何模型 Key（MODELSCOPE_KEY / SILICONFLOW_KEY / ZHIPU_KEY / LLM_BASE+LLM_KEY+LLM_MODEL）"
+    bad = [m for m in (check_base(n, b) for n, b, _, _ in llm.list) if m]
+    for m in dict.fromkeys(bad):
+        log(m)
+    if len(bad) == len(llm.list):
+        return None, "所有模型接口的地址都连不上"
+    return llm, ""
+
+
+def main():
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+    ap = argparse.ArgumentParser(description="每周自动更新")
+    ap.add_argument("--stage", choices=["all", "collect", "ai", "auto"], default="all",
+                    help="all：采集+整理；collect：只采集候选；ai：只整理（读 data/weekly-candidates.json）；"
+                         "auto：先采集，模型接口连得上就接着整理，连不上就只留候选给公司电脑")
+    ap.add_argument("--no-ai", action="store_true", help="等同 --stage collect")
+    ap.add_argument("--dry-run", action="store_true", help="不写文件，只打印结果")
+    ap.add_argument("--skip-community", action="store_true", help="跳过 Reddit/HN 抓取")
+    ap.add_argument("--force", action="store_true", help="ai 阶段：这一周已经整理过也重新整理")
+    a = ap.parse_args()
+    stage = "collect" if a.no_ai else a.stage
+
+    if stage in ("all", "collect", "auto"):
+        if not P["sources"].exists():
+            log("没有 data/sources.json，请先运行 python3 tools/fetch_sources.py")
+            return finish(1)
+        if not a.skip_community and not a.dry_run:
+            try:
+                update_community()
+            except Exception as e:
+                log(f"社区讨论抓取出错：{type(e).__name__}: {e}")
+        data = collect()
+        if stage == "collect":
+            return finish(0)
+        llm, why = make_llm()
+        if not llm:
+            if stage == "auto":
+                log(f"{why}：本周只采集了候选，等能连上模型接口的电脑（如公司内网）整理")
+                return finish(0)
+            log(why + "，本周只更新了社区讨论和候选")
+            return finish(1)
+        return finish(organize(llm, data, a.dry_run))
+
+    # stage == "ai"
+    data = load(CAND)
+    if not data or not data.get("cands"):
+        log("没有 data/weekly-candidates.json，先等每周一的云端采集（或运行 --stage collect）")
+        return finish(1)
+    age = (TODAY - datetime.strptime(data["week"], "%Y-%m-%d").date()).days
+    if (load(P["feed"]) or {}).get("weekly") == data["week"] and not a.force:
+        log(f"{data['week']} 这一周的候选已经整理过了，不重复整理")
+        return finish(0)
+    if age > 10:
+        log(f"候选是 {data['week']} 采集的，已经 {age} 天，太旧了。等下周一的新候选")
+        return finish(0)
+    llm, why = make_llm()
+    if not llm:
+        log(why)
+        return finish(1)
+    return finish(organize(llm, data, a.dry_run))
 
 
 def finish(code):

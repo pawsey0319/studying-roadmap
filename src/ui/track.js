@@ -87,10 +87,9 @@ function newsTab(t) {
   const cItems = curated.filter(n => (f === 'all' || n.type === f) && (!onlyU || !M.isRead(n.id)));
   const groups = groupByAge(cItems, M.today).map(g => {
     const key = `${t.id}.${g.id}`, open = U.open['feed.' + key] ?? g.open;
-    return `<details class="fgroup" data-gkey="${key}"${open ? ' open' : ''}><summary>${g.name}<small>${g.items.length} 条 · ${g.items.filter(n => !M.isRead(n.id)).length} 未读</small></summary><ul class="nlist">${g.items.map(n => newsRow(n)).join('')}</ul></details>`;
+    return `<details class="fgroup" data-gkey="${key}"${open ? ' open' : ''}><summary>${g.name}<small>${g.items.length} 条</small></summary><ul class="nlist">${g.items.map(n => newsRow(n)).join('')}</ul></details>`;
   }).join('');
-  const un = all.filter(n => !M.isRead(n.id)).length;
-  return `<div class="sh" style="margin-top:14px"><span class="mut small">${un} 条未读。点开标题或点“标为已读”后变灰；属于某条前沿路线的会标出路线名。</span>
+  return `<div class="sh" style="margin-top:14px"><span class="mut small">标题前有黄点的是未读，点开标题或点“标为已读”后变灰；属于某条前沿路线的会标出路线名。</span>
       <span class="r"><button class="chip" data-act="${PICK.on ? 'pick-cancel' : 'pick-start'}" aria-pressed="${PICK.on}" title="勾选几条你觉得有关联的资讯，让 Agent 讲清楚它们之间的关系">${PICK.on ? '退出多选' : '多选解析'}</button><button class="chip" data-act="only-unread" data-id="${t.id}" aria-pressed="${!!onlyU}">只看未读</button><button class="btn sm gh" data-act="read-all" data-id="${t.id}">本方向全部标为已读</button></span></div>
     ${t.live ? `<div class="sh"><h3>实时动态</h3><span class="fnt small">打开页面时从公开接口直接拉取，1 小时内用缓存</span></div>
     <div class="live">${LIVE.map(c => `<div class="card"><h4><span>${esc(c.name)}<em>${esc(c.kind)}</em></span><button data-reload="${c.id}" aria-label="刷新${esc(c.name)}">刷新</button></h4><div id="live-${c.id}" class="msg">加载中…</div></div>`).join('')}</div>` : ''}
@@ -108,12 +107,12 @@ export function renderTrack(id, sub, q) {
   const t = M.track(id);
   if (!t) return `<p class="empty">没有这个方向。<a href="#/">回到工作台</a></p>`;
   document.documentElement.style.setProperty('--c', t.color);
-  const st = M.state(id), rs = M.routes(id), un = M.unread(id).length;
+  const st = M.state(id), rs = M.routes(id);
   const html = `<div class="ph"><span class="sign"><b>${esc(t.name)}</b></span>
       <span class="mut">理论 ${st.doneStages}/${st.stages.length} · 前沿路线 ${rs.filter(r => !r.stopped).length} 条，${rs.filter(r => M.routeHasNew(r.id)).length} 条有新进展</span>
       <span class="r"><button class="btn" data-act="agent-track" data-id="${t.id}">和 Agent 规划这个方向</button></span></div>
     ${t.goal ? `<p class="lede">${esc(t.goal)}</p>` : ''}${t.note ? `<p class="note">${esc(t.note)}</p>` : ''}
-    <nav class="tabs" aria-label="方向内容"><a href="#/t/${id}" aria-current="${sub !== 'news' ? 'page' : 'false'}">路线</a><a href="#/t/${id}/news" aria-current="${sub === 'news' ? 'page' : 'false'}">资讯动态 ${un ? `<span class="newp">${un}</span>` : ''}</a></nav>
+    <nav class="tabs" aria-label="方向内容"><a href="#/t/${id}" aria-current="${sub !== 'news' ? 'page' : 'false'}">路线</a><a href="#/t/${id}/news" aria-current="${sub === 'news' ? 'page' : 'false'}">资讯动态</a></nav>
     ${sub === 'news' ? newsTab(t) : routeTab(t, q)}`;
   return html;
 }
