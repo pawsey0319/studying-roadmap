@@ -68,7 +68,7 @@
 
 ## 内测（Supabase 云端账号）
 
-见 [内测说明.md](内测说明.md)：创建 Supabase 项目、运行 `supabase/schema.sql`、关闭公开注册、邀请测试用户、填 `config.json`。
+见 [内测说明.md](内测说明.md)：创建 Supabase 项目、运行 `supabase/schema.sql`、关闭公开注册、邀请测试用户、填 `config.json`、部署模型代理 `supabase/functions/ai`（内测用户用管理员的模型，Key 只存在 Supabase 函数密钥里）。
 
 ## 换到一台新电脑
 

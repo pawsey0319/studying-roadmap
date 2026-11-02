@@ -5,14 +5,24 @@ import * as store from '../store/index.js';
 import { md } from '../core/md.js';
 import { uid } from '../core/ids.js';
 import { chat, cost, PROVIDERS } from '../ai/providers.js';
+import * as cloud from '../store/cloud.js';
 import { systemPrompt, stageContext, extractBlocks, cleanPlan } from '../ai/agent.js';
 import { act, refresh, toast } from './kit.js';
 import { planCard, registerPlan } from './suggest.js';
 import { stageLabel } from './home.js';
 
 /* ---------- 设置与花费（只存本设备） ---------- */
-export async function aiCfg() { return (await store.localGet('ai')) || { provider: 'modelscope', model: PROVIDERS.modelscope.model, key: '', budget: 30 }; }
-export const saveCfg = c => store.localSet('ai', c);
+// 网站接了云端时，默认用管理员提供的内测模型；否则默认魔搭
+export async function aiCfg() {
+  const c = (await store.localGet('ai')) || (cloud.available() ? { provider: 'hosted', model: '', key: '', budget: 0 } : { provider: 'modelscope', model: PROVIDERS.modelscope.model, key: '', budget: 30 });
+  return c.provider === 'hosted' ? { ...c, endpoint: cloud.aiEndpoint } : c;
+}
+export const saveCfg = c => { const { endpoint, ...rest } = c; return store.localSet('ai', rest); };
+// 能不能调用；不能时返回原因
+export function aiBlock(cfg) {
+  if (cfg.provider === 'hosted') return !cloud.available() ? '这个网站没有接云端，请在设置里换一个服务商' : !cloud.signedIn() ? '内测模型需要先登录：设置 → 账号与云端同步' : '';
+  return cfg.key || cfg.provider === 'custom' ? '' : '还没有设置 AI 服务。去“设置”选一个服务商并填 Key';
+}
 const month = () => new Date().toISOString().slice(0, 7);
 export async function usage() { const u = (await store.localGet('usage')) || {}; return u.m === month() ? u : { m: month(), cny: 0, tin: 0, tout: 0, calls: 0 }; }
 async function addUsage(cfg, us) {
@@ -79,20 +89,20 @@ export function closeAgent() { document.body.classList.remove('dw-open'); if (dw
 
 async function renderDrawer() {
   const cfg = await aiCfg(), u = await usage(), p = PROVIDERS[cfg.provider] || PROVIDERS.custom;
-  const ready = !!(cfg.key || cfg.provider === 'custom');
+  const block = aiBlock(cfg), ready = !block;
   const prof = store.get('meta', 'profile'), mem = store.get('meta', 'memory');
   const pills = ['学习者档案' + (prof ? '' : '（未填）'), mem ? '长期记忆' : null, ...(CUR.pills || [])].filter(Boolean);
   dw().innerHTML = `<div class="dw-h"><h3>学习 Agent</h3><span class="fnt small">${esc(CUR.title)}</span>
       <button class="x" data-act="agent-close" aria-label="收起">×</button></div>
     <div class="mem">它会看到：${pills.map(x => `<span>${esc(x)}</span>`).join('')}<button class="btn sm gh" data-act="agent-clear" title="清空这段对话">清空</button></div>
-    <div class="msgs" id="msgs" aria-live="polite">${ready ? '' : `<div class="ai"><p>还没有设置 AI 服务。去“设置”选一个服务商并填 Key。魔搭 ModelScope 和硅基流动都能免费注册。</p><p><a class="btn sm acc" href="#/settings" data-act="agent-close">去设置</a></p></div>`}
+    <div class="msgs" id="msgs" aria-live="polite">${ready ? '' : `<div class="ai"><p>${esc(block)}。</p><p><a class="btn sm acc" href="#/settings" data-act="agent-close">去设置</a></p></div>`}
       ${CUR.first && !MSGS.length ? `<div class="ai md">${md(CUR.first)}</div>` : ''}
       ${MSGS.map(msgHtml).join('')}</div>
     <div class="quick">${['出 3 道自测题检验我', '讲简单点', '这对产品意味着什么', '把上面的回答存进笔记'].map(q => `<button data-act="agent-quick">${q}</button>`).join('')}</div>
     <form class="inb" id="agentForm"><textarea id="agentIn" rows="2" placeholder="说说你的情况，或者问一个问题。Enter 发送，Shift+Enter 换行"${ready ? '' : ' disabled'}></textarea>
       <div class="inb-r"><div class="chips"><button type="button" class="chip" data-act="agent-mode" data-id="quick" aria-pressed="${mode === 'quick'}" title="一次调用，便宜快速">快速回答</button><button type="button" class="chip" data-act="agent-mode" data-id="agent" aria-pressed="${mode === 'agent'}" title="允许 Agent 多步查资讯、读笔记，最多 6 步，更费 token">让 Agent 处理</button></div>
       <button class="btn pri" id="agentSend"${ready ? '' : ' disabled'}>${busy ? '停止' : '发送'}</button></div>
-      <div class="cost">${esc(p.name)} · ${esc(cfg.model || p.model)} · 本月 ¥${u.cny.toFixed(2)}${cfg.budget ? ` / 上限 ¥${cfg.budget}` : ''} · ${u.calls} 次</div></form>`;
+      <div class="cost">${cfg.provider === 'hosted' ? `内测模型${cfg.model ? ' · ' + esc(cfg.model) : ''} · 本月 ${u.calls} 次` : `${esc(p.name)} · ${esc(cfg.model || p.model)} · 本月 ¥${u.cny.toFixed(2)}${cfg.budget ? ` / 上限 ¥${cfg.budget}` : ''} · ${u.calls} 次`}</div></form>`;
   const box = $('#msgs'); box.scrollTop = box.scrollHeight;
   const ta = $('#agentIn');
   ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); $('#agentForm').requestSubmit(); } });

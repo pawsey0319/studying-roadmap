@@ -8,28 +8,34 @@ import { PROVIDERS, chat } from '../ai/providers.js';
 import { act, refresh, toast } from './kit.js';
 import { aiCfg, saveCfg, usage } from './agentui.js';
 
+let hostedInfo = null;  // 内测模型的可选模型和用量，进设置页时取一次
+
 export async function renderSettings() {
   document.documentElement.style.setProperty('--c', '#1B2430');
-  const c = await aiCfg(), u = await usage(), p = PROVIDERS[c.provider] || PROVIDERS.custom;
+  const c = await aiCfg(), u = await usage(), p = PROVIDERS[c.provider] || PROVIDERS.custom, hosted = c.provider === 'hosted';
+  if (hosted && cloud.signedIn()) hostedInfo = await cloud.aiInfo().catch(e => ({ error: e.message }));
   const prof = store.get('meta', 'profile') || '', mem = store.get('meta', 'memory') || '';
   const hidden = store.ui().hiddenTracks || {};
   const allTracks = M.C.tracks.concat(Object.entries(store.all('tracks')).filter(([k]) => k.startsWith('u')).map(([, t]) => t));
   return `<div class="ph"><h1>设置</h1></div>
   <div class="g2" style="margin-top:14px;align-items:start">
     <section class="card set"><h3>AI 服务</h3>
-      <p class="hint">Key 只保存在这台设备的浏览器里，不会同步到其他设备，只发给你选的服务商。公用电脑上不要填。</p>
-      <label class="field"><span>服务商</span><select id="aiProv">${Object.entries(PROVIDERS).map(([k, v]) => `<option value="${k}"${k === c.provider ? ' selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>
+      <p class="hint">${hosted ? '内测期间学习 Agent 用管理员提供的模型，登录后就能用，不需要自己的 Key。也可以换成自己的服务商。' : 'Key 只保存在这台设备的浏览器里，不会同步到其他设备，只发给你选的服务商。公用电脑上不要填。'}</p>
+      <label class="field"><span>服务商</span><select id="aiProv">${Object.entries(PROVIDERS).filter(([k, v]) => !v.hosted || cloud.available()).map(([k, v]) => `<option value="${k}"${k === c.provider ? ' selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>
       <p class="hint">${esc(p.help || '')}</p>
+      ${hosted ? hostedHtml(c) : ''}
+      <div${hosted ? ' hidden' : ''}>
       ${c.provider === 'custom' ? `<label class="field"><span>接口地址</span><input id="aiBase" value="${esc(c.base || '')}" placeholder="https://…/v1"></label>` : ''}
       <label class="field"><span>模型</span><input id="aiModel" list="aiModels" value="${esc(c.model || p.model)}"><datalist id="aiModels">${p.models.map(m => `<option value="${esc(m)}">`).join('')}</datalist></label>
       <label class="field"><span>API Key</span><input id="aiKey" type="password" autocomplete="off" spellcheck="false" value="${esc(c.key || '')}" placeholder="sk-…"></label>
       <label class="field"><span>价格（美元 / 百万 token，用来估算花费；免费模型填 0）</span>
         <span style="display:flex;gap:6px"><input id="aiPin" type="number" step="0.01" min="0" value="${(c.price || p.price)[0]}" aria-label="输入价格"><input id="aiPout" type="number" step="0.01" min="0" value="${(c.price || p.price)[1]}" aria-label="输出价格"></span></label>
+      </div>
       <div class="sa"><button class="btn pri" data-act="ai-save">保存</button><button class="btn" data-act="ai-test">测试连接</button><span id="aiMsg" class="small"></span></div>
-      <h3 style="margin-top:18px">花费</h3>
+      <div${hosted ? ' hidden' : ''}><h3 style="margin-top:18px">花费</h3>
       <p class="small">本月（${esc(u.m)}）已用约 ¥${u.cny.toFixed(2)}，${u.calls} 次调用，${(u.tin + u.tout).toLocaleString()} token。</p>
       <label class="field"><span>每月上限（元，0 表示不限）</span><input id="aiBudget" type="number" min="0" step="1" value="${c.budget ?? 30}"></label>
-      <p class="hint">用到 80% 时提醒；超过后每次调用前都要你确认。</p></section>
+      <p class="hint">用到 80% 时提醒；超过后每次调用前都要你确认。</p></div></section>
     <section class="card set"><h3>学习者档案</h3>
       <p class="hint">每次对话都会带给学习 Agent。开局规划时会自动生成，也可以直接改。</p>
       <textarea id="prof" rows="6">${esc(prof || M.C.domains[0].profile || '')}</textarea>
@@ -60,9 +66,18 @@ export async function renderSettings() {
   </div>`;
 }
 
+function hostedHtml(c) {
+  if (!cloud.signedIn()) return '<p class="small err">先在右边“账号与云端同步”里用邮箱登录，才能用内测模型。</p>';
+  const h = hostedInfo || {};
+  if (h.error) return `<p class="small err">${esc(h.error)}</p>`;
+  const ms = h.models || [];
+  return `${ms.length > 1 ? `<label class="field"><span>模型</span><select id="aiHostedModel">${ms.map((m, i) => `<option value="${esc(m)}"${m === c.model || (!c.model && !i) ? ' selected' : ''}>${esc(m)}${i ? '' : '（默认）'}</option>`).join('')}</select></label>` : ''}
+    ${h.monthLimit ? `<p class="small">内测额度：今天 ${h.day}/${h.dayLimit} 次，本月 ${h.month}/${h.monthLimit} 次。</p>` : ''}`;
+}
+
 export function afterSettings() {
   const prov = $('#aiProv'); if (!prov) return;
-  prov.onchange = async () => { const c = await aiCfg(), p = PROVIDERS[prov.value]; await saveCfg({ ...c, provider: prov.value, model: p.model, price: p.price, base: prov.value === 'custom' ? c.base : '' }); refresh(); };
+  prov.onchange = async () => { const c = await aiCfg(), p = PROVIDERS[prov.value]; await saveCfg({ ...c, provider: prov.value, model: p.model, budget: p.hosted ? 0 : (c.budget || 30), price: p.price, base: prov.value === 'custom' ? c.base : '' }); refresh(); };
   const cf = $('#cloudForm');
   if (cf) cf.onsubmit = async e => { e.preventDefault(); const m = $('#cloudMsg'); m.textContent = '正在发送…'; try { await cloud.sendCode($('#cloudEmail').value.trim()); m.textContent = '验证码已发到邮箱，填到下面。'; $('#cloudVerify').hidden = false; $('#cloudCode').focus(); } catch (err) { m.innerHTML = `<span class="err">${esc(err.message)}</span>`; } };
   const cv = $('#cloudVerify');
@@ -73,13 +88,16 @@ export function afterSettings() {
 
 act('ai-save', async () => {
   const c = await aiCfg(), base = $('#aiBase');
+  if (c.provider === 'hosted') { const hm = $('#aiHostedModel'); await saveCfg({ ...c, model: hm ? hm.value : '' }); $('#aiMsg').textContent = '已保存'; return; }
   await saveCfg({ ...c, provider: $('#aiProv').value, model: $('#aiModel').value.trim(), key: $('#aiKey').value.trim(), base: base ? base.value.trim() : '', price: [+$('#aiPin').value || 0, +$('#aiPout').value || 0], budget: +$('#aiBudget').value || 0 });
   $('#aiMsg').textContent = '已保存';
 });
 act('ai-test', async () => {
   const m = $('#aiMsg'); m.textContent = '正在测试…';
   const base = $('#aiBase');
-  const c = { provider: $('#aiProv').value, model: $('#aiModel').value.trim(), key: $('#aiKey').value.trim(), base: base ? base.value.trim() : '' };
+  const hm = $('#aiHostedModel');
+  const c = $('#aiProv').value === 'hosted' ? { ...(await aiCfg()), model: hm ? hm.value : '' }
+    : { provider: $('#aiProv').value, model: $('#aiModel').value.trim(), key: $('#aiKey').value.trim(), base: base ? base.value.trim() : '' };
   try { const r = await chat(c, [{ role: 'user', content: '只回复两个字：可以' }], { maxTokens: 20 }); m.innerHTML = `<span style="color:var(--ok)">连接成功：${esc(r.text.slice(0, 20))}</span>`; }
   catch (e) { m.innerHTML = `<span class="err">${esc(e.message)}</span>`; }
 });

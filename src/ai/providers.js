@@ -1,6 +1,8 @@
 // 模型服务商：两套接口格式覆盖全部（OpenAI 兼容 / Anthropic），都用流式输出。
 // Key 只存在本设备（store.localSet），只发给你选的服务商。
 export const PROVIDERS = {
+  hosted: { name: '内测提供（管理员的模型，登录后可用）', base: '', model: '', fmt: 'openai', price: [0, 0], models: [], hosted: true,
+    help: '内测期间由管理员提供模型，不用自己注册 Key。需要先在下面“账号与云端同步”里登录；每人每天和每月有调用次数上限。' },
   modelscope: { name: '魔搭 ModelScope（免费）', base: 'https://api-inference.modelscope.cn/v1', model: 'deepseek-ai/DeepSeek-V4.1-Flash', fmt: 'openai', price: [0, 0],
     models: ['deepseek-ai/DeepSeek-V4.1-Flash', 'ZhipuAI/GLM-5.3', 'deepseek-ai/DeepSeek-V4-Flash-0731', 'MiniMax/MiniMax-M2.7'],
     help: '在 modelscope.cn 注册并绑定阿里云账号后，在“访问令牌”里创建，免费每天 2000 次。' },
@@ -23,11 +25,15 @@ export const USD_CNY = 7.2;
 export async function chat(cfg, messages, { onDelta, signal, temperature = 0.4, maxTokens = 2048 } = {}) {
   const p = PROVIDERS[cfg.provider] || PROVIDERS.custom;
   const base = (cfg.base || p.base || '').replace(/\/+$/, '');
-  if (!base) throw new Error('还没有填接口地址');
-  if (!cfg.key && cfg.provider !== 'custom') throw new Error('还没有填 API Key');
-  const fmt = p.fmt;
+  if (!base && !p.hosted) throw new Error('还没有填接口地址');
+  if (!cfg.key && cfg.provider !== 'custom' && !p.hosted) throw new Error('还没有填 API Key');
+  let fmt = p.fmt;
   let url, headers, body;
-  if (fmt === 'anthropic') {
+  if (p.hosted) {
+    const ep = await cfg.endpoint();
+    url = ep.url; headers = { 'content-type': 'application/json', ...ep.headers };
+    body = { model: cfg.model || '', messages, temperature, max_tokens: maxTokens, stream: true };
+  } else if (fmt === 'anthropic') {
     const sys = messages.filter(m => m.role === 'system').map(m => m.content).join('\n\n');
     url = base + '/messages';
     headers = { 'content-type': 'application/json', 'x-api-key': cfg.key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' };
@@ -47,8 +53,10 @@ export async function chat(cfg, messages, { onDelta, signal, temperature = 0.4, 
     let msg = '';
     try { const j = await r.json(); msg = (j.error && (j.error.message || j.error)) || j.message || JSON.stringify(j); } catch (e) { msg = await r.text().catch(() => ''); }
     const hint = r.status === 401 || r.status === 403 ? 'Key 不对或没有权限。' : r.status === 429 ? '请求太频繁或免费额度用完了，稍后再试或换一个服务商。' : r.status === 404 ? '模型名或地址不对。' : '';
+    if (p.hosted) throw new Error(String(msg || ('内测模型返回 ' + r.status)).slice(0, 200));
     throw new Error(`服务商返回 ${r.status}。${hint}${msg ? '（' + String(msg).slice(0, 160) + '）' : ''}`);
   }
+  if (p.hosted && r.headers.get('x-ai-format') === 'anthropic') fmt = 'anthropic';
   let text = '', usage = { in: 0, out: 0 };
   const ct = r.headers.get('content-type') || '';
   if (!/event-stream/.test(ct) || !r.body) {   // 有的服务商忽略 stream，直接返回 JSON

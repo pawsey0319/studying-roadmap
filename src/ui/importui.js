@@ -7,7 +7,7 @@ import { extractFile, fromHtml, fromPaste, ruleParse, normalizeTrack, dupStages 
 import { chat, cost } from '../ai/providers.js';
 import { extractBlocks, draftTrackPrompt } from '../ai/agent.js';
 import { act, refresh, toast } from './kit.js';
-import { aiCfg, usage } from './agentui.js';
+import { aiCfg, aiBlock, usage } from './agentui.js';
 import { migrateV1 } from '../store/migrate.js';
 
 let EX = null;      // 提取结果
@@ -111,7 +111,7 @@ act('imp-rm', el => { TR.stages.splice(+el.dataset.i, 1); show(); afterImport();
 act('imp-merge', el => { const i = +el.dataset.i, a = TR.stages[i - 1], b = TR.stages[i]; a.items.push(...b.items); a.resources.push(...b.resources); TR.stages.splice(i, 1); TR = normalizeTrack(TR, { id: TR.id }); show(); afterImport(); });
 act('imp-agent', async () => {
   const cfg = await aiCfg();
-  if (!cfg.key && cfg.provider !== 'custom') { toast('先在“设置”里选择 AI 服务并填 Key'); return; }
+  if (aiBlock(cfg)) { toast(aiBlock(cfg)); return; }
   if (!confirm(`将把提取出的约 ${Math.round(Math.min(EX.text.length, 24000) / 1000)} 千字发给你选的模型服务商来整理。继续吗？`)) return;
   busy = 'Agent 正在整理成路线，长文档可能需要一分钟…'; show();
   try {

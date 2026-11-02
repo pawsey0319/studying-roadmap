@@ -54,6 +54,20 @@ export async function consumeLink() {
   try { const u = await call('/auth/v1/user'); S.uid = u.id; S.email = u.email; save(); return true; }
   catch (e) { S = {}; save(); error = '登录失败：' + e.message; status(); return false; }
 }
+// 内测模型代理（supabase/functions/ai）：用登录凭证调用，管理员的 Key 不经过浏览器
+export async function aiEndpoint() {
+  if (!CFG) throw new Error('这个网站没有接云端，不能用内测模型');
+  if (!S.refresh) throw new Error('内测模型需要先登录：设置 → 账号与云端同步');
+  await ensureToken();
+  return { url: CFG.url + '/functions/v1/ai', headers: { apikey: CFG.key, authorization: 'Bearer ' + S.access } };
+}
+export async function aiInfo() {
+  const ep = await aiEndpoint();
+  const r = await fetch(ep.url, { headers: ep.headers });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || ('内测模型不可用（' + r.status + '）'));
+  return j;
+}
 export function signOut() { S = {}; save(); status(); }
 
 async function ensureToken() {

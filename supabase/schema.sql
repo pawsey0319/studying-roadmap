@@ -35,3 +35,43 @@ grant select, insert, update, delete on public.docs to authenticated;
 
 -- 自检：下面这句应该返回 4 行策略
 -- select policyname, cmd from pg_policies where tablename = 'docs';
+
+-- ============ 内测：管理员提供的学习 Agent 模型（可选） ============
+-- 配合 supabase/functions/ai（模型代理）使用：每人每天、每月调用次数计数。
+-- 只有模型代理用 secret key 能读写，用户自己读不到也改不了。
+create table if not exists public.ai_usage (
+  user_id uuid not null references auth.users (id) on delete cascade,
+  day     date not null default (now() at time zone 'Asia/Shanghai')::date,
+  calls   int  not null default 0,
+  primary key (user_id, day)
+);
+alter table public.ai_usage enable row level security;
+revoke all on public.ai_usage from anon, authenticated;
+
+-- 记一次调用；超过上限返回 ok=false 且不计数
+create or replace function public.ai_take(p_user uuid, p_day int, p_month int)
+returns json language plpgsql security definer set search_path = public as $$
+declare d date := (now() at time zone 'Asia/Shanghai')::date; c_day int; c_month int;
+begin
+  select coalesce(sum(calls) filter (where day = d), 0), coalesce(sum(calls), 0) into c_day, c_month
+    from ai_usage where user_id = p_user and day >= date_trunc('month', d)::date;
+  if c_day >= p_day or c_month >= p_month then
+    return json_build_object('ok', false, 'day', c_day, 'month', c_month);
+  end if;
+  insert into ai_usage (user_id, day, calls) values (p_user, d, 1)
+    on conflict (user_id, day) do update set calls = ai_usage.calls + 1;
+  return json_build_object('ok', true, 'day', c_day + 1, 'month', c_month + 1);
+end $$;
+
+create or replace function public.ai_peek(p_user uuid)
+returns json language sql security definer set search_path = public as $$
+  select json_build_object('day', coalesce(sum(calls) filter (where day = (now() at time zone 'Asia/Shanghai')::date), 0), 'month', coalesce(sum(calls), 0))
+  from ai_usage where user_id = p_user and day >= date_trunc('month', (now() at time zone 'Asia/Shanghai'))::date;
+$$;
+
+revoke execute on function public.ai_take(uuid, int, int) from public, anon, authenticated;
+revoke execute on function public.ai_peek(uuid) from public, anon, authenticated;
+grant execute on function public.ai_take(uuid, int, int) to service_role;
+grant execute on function public.ai_peek(uuid) to service_role;
+
+-- 管理员查看用量：select u.email, a.day, a.calls from ai_usage a join auth.users u on u.id = a.user_id order by a.day desc;

@@ -1,6 +1,6 @@
 // 离线缓存：网页代码用“缓存优先、后台更新”，数据文件用“网络优先、断网用缓存”。
 // 不缓存任何跨站请求（AI 服务商、GitHub、Supabase 等），只缓存本站文件。
-const VER = 'lh-v2-3';
+const VER = 'lh-v2-4';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png',
   'src/css/base.css', 'src/css/pages.css', 'src/css/shell.css'];
 

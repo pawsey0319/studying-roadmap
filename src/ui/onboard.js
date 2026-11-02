@@ -8,7 +8,7 @@ import { onboardPrompt, extractBlocks, summaryStatus, profileFromSummary, planFo
 import { normalizeTrack } from '../import/parse.js';
 import { act, refresh, toast } from './kit.js';
 import { planCard, registerPlan } from './suggest.js';
-import { aiCfg, usage } from './agentui.js';
+import { aiCfg, aiBlock, usage } from './agentui.js';
 
 const MAX_ROUNDS = 8;
 let S = null;   // { msgs, summary, round, step: 'talk'|'gen'|'done', plans:[], drafts:[] }
@@ -67,7 +67,7 @@ function render() {
 
 async function talk(text) {
   const cfg = await aiCfg();
-  if (!cfg.key && cfg.provider !== 'custom') { toast('先在“设置”里选择 AI 服务并填 Key'); location.hash = '#/settings'; $('#obDlg').close(); return; }
+  if (aiBlock(cfg)) { toast(aiBlock(cfg)); location.hash = '#/settings'; $('#obDlg').close(); return; }
   S.msgs.push({ role: 'user', content: text }); render();
   const chatEl = $('#obChat'); const el = document.createElement('div'); el.className = 'ai md fnt'; el.textContent = '思考中…'; chatEl.appendChild(el);
   $('#obSend').disabled = true;

@@ -325,7 +325,7 @@ def read_marks():
     users = 0
     if url and key:
         try:
-            req = urllib.request.Request(url.rstrip("/") + "/rest/v1/docs?select=data&name=eq.marks", headers={"apikey": key, "Authorization": "Bearer " + key})
+            req = urllib.request.Request(url.rstrip("/") + "/rest/v1/docs?select=data&name=eq.marks", headers={"apikey": key} if key.startswith("sb_") else {"apikey": key, "Authorization": "Bearer " + key})
             with urllib.request.urlopen(req, timeout=30) as r:
                 rows = json.loads(r.read())
             for row in rows:
