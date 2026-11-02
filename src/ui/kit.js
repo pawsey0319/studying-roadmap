@@ -11,7 +11,10 @@ export function bindActs(root = document) {
     const el = e.target.closest('[data-act]');
     if (!el || el.disabled) return;
     const fn = ACTS[el.dataset.act];
-    if (fn) { e.preventDefault(); fn(el, e); }
+    if (!fn) return;
+    // 带地址的链接（资讯原文、页面跳转）照常打开，只顺带执行动作（如标为已读）
+    if (!(el.tagName === 'A' && el.getAttribute('href'))) e.preventDefault();
+    fn(el, e);
   });
 }
 
