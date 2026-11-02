@@ -6,7 +6,7 @@ import * as store from './store/index.js';
 import * as gist from './store/gist.js';
 import * as cloud from './store/cloud.js';
 import { setupLive, loadOne } from './live.js';
-import { act, bindActs, setRender, refresh, toast } from './ui/kit.js';
+import { act, bindActs, setRender, refresh, toast, pickBar } from './ui/kit.js';
 import { renderHome } from './ui/home.js';
 import { renderTrack, afterTrack } from './ui/track.js';
 import { renderRoute, renderBiz, renderSuggestions, renderLater } from './ui/pages.js';
@@ -49,6 +49,7 @@ async function render(opts = {}) {
   $('#view').innerHTML = html;
   renderNav(page, seg);
   after();
+  pickBar();
   if (opts.keepScroll) scrollTo(0, y); else if (!q.s) scrollTo(0, 0);
 }
 setRender(render);

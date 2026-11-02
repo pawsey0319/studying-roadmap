@@ -14,7 +14,7 @@ const status = m => statusFns.forEach(fn => fn(m));
 try { S = JSON.parse(localStorage.getItem(SKEY)) || {}; } catch (e) { S = {}; }
 const save = () => { try { localStorage.setItem(SKEY, JSON.stringify(S)); } catch (e) {} };
 
-export function setup(config) { CFG = config && config.supabaseUrl && config.supabaseAnonKey ? { url: config.supabaseUrl.replace(/\/+$/, ''), key: config.supabaseAnonKey, hosted: config.hostedAI === true } : null; }
+export function setup(config) { CFG = config && config.supabaseUrl && config.supabaseAnonKey ? { url: config.supabaseUrl.trim().replace(/\/+$/, '').replace(/\/(rest|auth|functions)\/v1$/, ''), key: config.supabaseAnonKey, hosted: config.hostedAI === true } : null; }
 // config.json 里写了 "hostedAI": true 才提供“内测提供”的模型（需要先部署 supabase/functions/ai）
 export const hostedAI = () => !!(CFG && CFG.hosted);
 export const available = () => !!CFG;

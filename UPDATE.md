@@ -38,6 +38,8 @@
 每周任务需要仓库 Secrets 里至少有一个模型 Key，按顺序轮换：`MODELSCOPE_KEY`（魔搭，首选，可用 `MODELSCOPE_MODEL` 改模型，逗号分隔多个）→ `SILICONFLOW_KEY` → `ZHIPU_KEY` → `LLM_BASE` + `LLM_KEY` + `LLM_MODEL`（聚合接口用这一组：`LLM_BASE` 填到 `/v1` 为止，`LLM_MODEL` 可以写多个模型、逗号分隔，按顺序备用）。
 可选 `SUPABASE_URL` + `SUPABASE_SERVICE_KEY`：读取内测用户对 AI 整理条目的“分错了”标记，被标记的条目下架，并作为反例告诉模型。
 
+每日快照还包括经转载服务获取的二手来源，条目都带 `via` 字段：微信公众号（wechat2rss.bestblogs.dev）、X 账号（api.xgo.ing）、BestBlogs 高分精选。这些服务可能停掉，单个源失败不影响其他源。
+
 每日快照里的 AI 资讯日报（hex2077.dev）是二手聚合：每条按它引用的原始链接的域名定可信度，标“经 AI 资讯日报”，只存标题、原始链接和一句摘要。
 
 ## 手动补跑每周更新（自动任务失败、或想立刻更新时）

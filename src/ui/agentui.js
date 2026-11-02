@@ -3,11 +3,11 @@ import { $, esc } from '../util.js';
 import * as M from '../model.js';
 import * as store from '../store/index.js';
 import { md } from '../core/md.js';
-import { uid } from '../core/ids.js';
+import { uid, hash } from '../core/ids.js';
 import { chat, cost, PROVIDERS } from '../ai/providers.js';
 import * as cloud from '../store/cloud.js';
 import { systemPrompt, stageContext, extractBlocks, cleanPlan } from '../ai/agent.js';
-import { act, refresh, toast } from './kit.js';
+import { act, refresh, toast, PICK, MAX_PICK, pickBar } from './kit.js';
 import { planCard, registerPlan } from './suggest.js';
 import { stageLabel } from './home.js';
 
@@ -66,16 +66,41 @@ const KINDS = {
     return { title: '整理卡片', docId: id, text: `阶段：${stageLabel(id)}\n现有文档：\n${doc || '（空）'}\n\n卡片笔记：\n${cards.map(c => '- ' + c.t).join('\n')}`, pills: [`${cards.length} 张卡片`, '阶段文档'],
       auto: '把这些卡片整理进阶段文档：保留文档原有内容，合并重复的点，按主题分小标题，标出还没搞懂的问题。输出完整的新文档，放在 note 代码块里（text 字段是完整 Markdown，at 字段是阶段 ID）。' }; },
   news: id => { const n = M.news().find(x => x.id === id); if (!n) return null;
-    return { title: '解读资讯', text: `资讯：${n.t}\n来源：${n.src || ''}（${n.d}）\n链接：${n.u}\n摘要：${n.s || '（无）'}\n所属前沿路线：${n.r.map(M.routeName).join('、') || '无'}\n用户在学：${M.doing().filter(d => d.kind === 'stage').map(d => d.s.title).join('、')}`, pills: ['这条资讯'],
-      auto: '用三四句话说清这条资讯讲了什么、对我正在学的内容和产品落地意味着什么。只根据标题和摘要判断，不要编造原文没有的细节；需要我读原文时直接说。' }; },
+    const rel = M.news().filter(x => x.id !== id && x.r.some(r => n.r.includes(r))).slice(0, 6);
+    return { title: '一键解析', newsIds: [id], routeId: n.r[0] || null, text: newsBlock(n) + `\n\n同一前沿路线最近的其他进展（供参考）：\n${rel.map(x => `- ${x.d} ${x.t}`).join('\n') || '（无）'}\n\n${doingText()}`,
+      pills: ['这条资讯', rel.length ? `${rel.length} 条相关进展` : null, '在学的阶段'], auto: EXPLAIN_ONE }; },
+  multi: ids => { const L = String(ids).split(',').map(id => M.news().find(x => x.id === id)).filter(Boolean); if (L.length < 2) return null;
+    return { title: `关联解析 · ${L.length} 条`, newsIds: L.map(n => n.id), routeId: (L[0].r || [])[0] || null, text: L.map((n, i) => `【${i + 1}】` + newsBlock(n)).join('\n\n') + '\n\n' + doingText(),
+      pills: [`${L.length} 条资讯`, '在学的阶段'], auto: EXPLAIN_MANY }; },
   route: id => { const t = routeCtx(id); return t && { title: '更新跟踪学习清单', routeId: id, text: t, pills: ['这条前沿路线', '最近进展'],
     auto: '根据这条前沿路线的最新进展，补充 2–4 项跟踪学习任务（至少一项实践验证），放在 route 代码块里：{"route":"路线 ID","items":[{"text":"…","mode":"theory 或 practice","url":"确定才填"}]}。不要重复已有清单，并用一两句话说明为什么选这些。' }; },
   track: id => ({ title: '规划这个方向', text: trackCtx(id), pills: ['整个方向'], first: `想怎么调整“${M.track(id).name}”？可以说说你整体学到哪了、目标是什么。我会先问清楚，再对需要调整的阶段各给一份修改方案。` })
 };
 
+function newsBlock(n) {
+  return `标题：${n.t}\n来源：${n.src || ''}（${n.lvl ? { A: '一手来源', B: '权威媒体', C: '社区讨论，未核实' }[n.lvl] : '未定级'}${n.via ? '，经 ' + n.via + ' 转载' : ''}）· ${n.d}\n链接：${n.u}\n摘要：${n.s || '（无）'}\n方向：${n.k.map(k => (M.track(k) || {}).name || k).join('、')}；前沿路线：${n.r.map(M.routeName).join('、') || '无'}`;
+}
+const doingText = () => '用户正在学：' + (M.doing().map(d => d.kind === 'stage' ? `${d.t.name} / ${d.s.title}` : `${d.t.name} / 前沿：${d.r.title}`).join('；') || '（未设置）');
+const EXPLAIN_RULE = '只根据给出的标题、摘要和你确定知道的背景来讲；原文里才有的细节（数字、结论）不要编，拿不准就标“需要看原文确认”。来源是社区讨论的，提醒我它未经核实。';
+const EXPLAIN_ONE = `帮我一键解析这条资讯，按下面的结构，总共不超过 400 字：
+**一句话**：发生了什么。
+**看懂它要知道的**：里面的术语或背景，每个一两句话讲清楚（最多 3 个）。
+**为什么重要**：分技术和产品/商业两个角度，各一两句。
+**和我的关系**：和我正在学的哪个阶段或前沿路线有关，建议我做什么（读原文、先补什么、还是可以略过）。
+${EXPLAIN_RULE}
+最后把要点整理成一张笔记，放在 note 代码块里：{"text":"Markdown 内容，开头写上资讯标题和链接","at":"最相关的阶段或前沿路线 ID，没有就留空"}。`;
+const EXPLAIN_MANY = `这几条资讯我觉得有关联，但没看懂它们之间是什么关系。帮我一键解析，总共不超过 600 字：
+**一句话串起来**：它们共同指向的是什么变化或趋势；如果其实没什么关系，直接说，并按话题分组。
+**各条的位置**：每条一两句话，说清它在这件事里扮演的角色（起因、进展、反应、对比、反例……），用【编号】指代。
+**关系**：先后、因果、竞争、互补、矛盾，哪些是确定的，哪些只是推测。
+**看懂它们要知道的**：共同的术语或背景（最多 3 个）。
+**对我的意义**：技术和产品各一两句，以及和我正在学的内容的关系、下一步建议。
+${EXPLAIN_RULE}
+最后把结论整理成一张笔记，放在 note 代码块里：{"text":"Markdown 内容，列出各条标题和链接","at":"最相关的阶段或前沿路线 ID，没有就留空"}。`;
+
 /* ---------- 抽屉状态 ---------- */
 let CUR = null, MSGS = [], busy = false, ctl = null, mode = 'quick';
-const ckey = c => 'chat.' + c.kind + '.' + (c.id || '');
+const ckey = c => 'chat.' + c.kind + '.' + (c.kind === 'multi' ? hash(String(c.id)) : (c.id || ''));
 const dw = () => $('#dw');
 
 export async function openAgent(kind = 'free', id = '') {
@@ -85,7 +110,7 @@ export async function openAgent(kind = 'free', id = '') {
   MSGS = (await store.localGet(ckey(CUR))) || [];
   document.body.classList.add('dw-open'); dw().hidden = false;
   await renderDrawer();
-  if (!MSGS.length && CUR.auto) send(CUR.auto, { auto: true });
+  if (!MSGS.length && CUR.auto) send(CUR.auto, { auto: true, label: kind === 'news' ? '一键解析这条资讯' : kind === 'multi' ? `一键解析这 ${String(id).split(',').length} 条资讯的关联` : '' });
 }
 export function closeAgent() { document.body.classList.remove('dw-open'); if (dw()) dw().hidden = true; if (ctl) ctl.abort(); }
 
@@ -113,7 +138,7 @@ async function renderDrawer() {
 }
 
 function msgHtml(m, i) {
-  if (m.role === 'user') return m.auto ? `<div class="me auto">${esc(m.content.slice(0, 60))}…</div>` : `<div class="me">${esc(m.content)}</div>`;
+  if (m.role === 'user') return m.auto ? `<div class="me auto">${esc(m.label || m.content.slice(0, 60) + '…')}</div>` : `<div class="me">${esc(m.content)}</div>`;
   if (m.role === 'tool') return `<div class="tool">${esc(m.content)}</div>`;
   if (m.role === 'err') return `<div class="ai err">${esc(m.content)}</div>`;
   const { text, blocks } = extractBlocks(m.content);
@@ -165,7 +190,7 @@ async function send(text, opts = {}) {
   const u = await usage();
   if (cfg.budget && u.cny >= cfg.budget && !confirm(`本月已经用了 ¥${u.cny.toFixed(2)}，超过你设的上限 ¥${cfg.budget}。还要继续调用吗？`)) return;
   if (cfg.budget && u.cny >= cfg.budget * 0.8 && u.cny < cfg.budget && !opts.warned) toast(`本月花费已到上限的 ${Math.round(u.cny / cfg.budget * 100)}%`);
-  MSGS.push({ role: 'user', content: text, ...(opts.auto ? { auto: true } : {}) });
+  MSGS.push({ role: 'user', content: text, ...(opts.auto ? { auto: true, label: opts.label } : {}) });
   busy = true; await renderDrawer();
   const box = $('#msgs');
   const sys = systemPrompt({ profile: store.get('meta', 'profile') || M.C.domains[0].profile, memory: store.get('meta', 'memory'), mode, recent: recentChanges() });
@@ -251,7 +276,22 @@ act('agent-stage', el => openAgent('stage', el.dataset.id));
 act('agent-card', el => openAgent('card', el.dataset.id));
 act('agent-doc', el => openAgent('doc', el.dataset.id));
 act('agent-organize', el => openAgent('organize', el.dataset.id));
-act('agent-news', el => openAgent('news', el.dataset.id));
+act('agent-news', el => { if (!M.isRead(el.dataset.id)) store.put('read', el.dataset.id, new Date().toISOString().slice(0, 10)); openAgent('news', el.dataset.id); });
+// 多选：进入选择模式 → 勾选 2–8 条 → 一键解析关联
+act('pick-start', el => { PICK.on = true; PICK.ids = el.dataset.id ? [el.dataset.id] : []; refresh(); pickBar(); });
+act('pick-cancel', () => { PICK.on = false; PICK.ids = []; refresh(); pickBar(); });
+act('pick', el => {
+  const id = el.dataset.id, i = PICK.ids.indexOf(id);
+  if (i >= 0) PICK.ids.splice(i, 1);
+  else if (PICK.ids.length >= MAX_PICK) { el.checked = false; toast(`一次最多选 ${MAX_PICK} 条`); return; }
+  else PICK.ids.push(id);
+  const on = PICK.ids.includes(id);
+  setTimeout(() => { el.checked = on; }, 0);   // 点击事件被统一 preventDefault 了，这里手动同步勾选状态
+  const li = el.closest('li'); if (li) li.classList.toggle('picked', on);
+  pickBar();
+});
+act('pick-go', () => { if (PICK.ids.length < 2) return; const ids = PICK.ids.join(','); PICK.on = false; PICK.ids = []; refresh(); pickBar(); openAgent('multi', ids); });
+act('route-explain', el => { const ids = M.routeNews(el.dataset.id).slice(0, MAX_PICK).map(n => n.id); if (ids.length < 2) { toast('这条路线的进展不到 2 条'); return; } openAgent('multi', ids.join(',')); });
 act('agent-route', el => openAgent('route', el.dataset.id));
 act('agent-track', el => openAgent('track', el.dataset.id));
 act('agent-open', () => openAgent('free'));

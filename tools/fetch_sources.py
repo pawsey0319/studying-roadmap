@@ -84,6 +84,57 @@ SOURCES = [
     ("RD-Agent Release", "https://github.com/microsoft/RD-Agent/releases.atom", "A", ["quant"], False, 3),
     ("vn.py Release", "https://github.com/vnpy/vnpy/releases.atom", "A", ["quant"], False, 3),
     ("AKShare Release", "https://github.com/akfamily/akshare/releases.atom", "A", ["quant"], False, 3),
+    # ---- 2026-11 新增：国外 newsletter（二手聚合，B 级只收命中关键词的条目） ----
+    ("Ben's Bites", "https://www.bensbites.com/feed", "B", [], True, 10),
+    ("The Rundown AI", "https://www.therundown.ai/feed", "B", [], True, 10),
+    ("TheSequence", "https://thesequence.substack.com/feed", "B", ["llm"], False, 10),
+    ("Last Week in AI", "https://lastweekin.ai/feed", "B", ["llm"], False, 6),
+    ("AI Weekly", "https://aiweekly.co/issues.rss", "B", ["llm"], False, 6),
+    # BestBlogs：AI 打分 90 分以上的中英文文章、播客、视频（链接指向 bestblogs.dev 的摘要页，原文在页内）
+    ("BestBlogs 高分精选", "https://www.bestblogs.dev/en/feeds/rss?category=ai&minScore=90", "B", [], True, 30),
+    # ---- 微信公众号（经 wechat2rss.bestblogs.dev 转成 RSS）：模型厂商官方号 A 级，科技媒体 B 级 ----
+    ("公众号 · DeepSeek", "https://wechat2rss.bestblogs.dev/feed/1709da4f538d4ce4fb6d7a8ba1a5a1c297919601.xml", "A", ["llm"], False, 5),
+    ("公众号 · 智谱", "https://wechat2rss.bestblogs.dev/feed/433d2134dca54d80804daf32e8be546155be3300.xml", "A", ["llm"], False, 5),
+    ("公众号 · 通义大模型", "https://wechat2rss.bestblogs.dev/feed/4ebee6222ae08705b8aabc9116f0defbcb6b17c6.xml", "A", ["llm"], False, 5),
+    ("公众号 · 月之暗面 Kimi", "https://wechat2rss.bestblogs.dev/feed/c5c43d4bc17bae656763859ed0903bb6314ec6fe.xml", "A", ["llm"], False, 5),
+    ("公众号 · 腾讯混元", "https://wechat2rss.bestblogs.dev/feed/306ce19a1ca590c9c2df781789e828d1acfa1356.xml", "A", ["llm"], False, 5),
+    ("公众号 · 阶跃星辰", "https://wechat2rss.bestblogs.dev/feed/3e2714d06aa36142e8ed6b3f4e5cf9090a069dd2.xml", "A", ["llm"], False, 5),
+    ("公众号 · MiniMax", "https://wechat2rss.bestblogs.dev/feed/00306b171f754d463b28cf83f3ba086ad009b430.xml", "A", ["llm"], False, 5),
+    ("公众号 · 字节跳动 Seed", "https://wechat2rss.bestblogs.dev/feed/6efd40bb335d2037f365d284cb5e00f0843e737e.xml", "A", ["llm"], False, 5),
+    ("公众号 · 魔搭 ModelScope 社区", "https://wechat2rss.bestblogs.dev/feed/d993a885260f96057b9a4c96212cb2c95bb5054b.xml", "A", ["slm"], False, 5),
+    ("公众号 · 机器之心", "https://wechat2rss.bestblogs.dev/feed/8d97af31b0de9e48da74558af128a4673d78c9a3.xml", "B", [], True, 6),
+    ("公众号 · 新智元", "https://wechat2rss.bestblogs.dev/feed/e531a18b21c34cf787b83ab444eef659d7a980de.xml", "B", [], True, 6),
+    ("公众号 · 晚点 LatePost", "https://wechat2rss.bestblogs.dev/feed/c442206ec9957f3c52f2f40300ca532079538b31.xml", "B", [], True, 6),
+    ("公众号 · 海外独角兽", "https://wechat2rss.bestblogs.dev/feed/7200d3a5e976d231deb1e40ad33745c0e649b029.xml", "B", [], True, 6),
+    ("公众号 · 智东西", "https://wechat2rss.bestblogs.dev/feed/cfd52b4245ca6119b2fda4ef934832c689028927.xml", "B", [], True, 6),
+    ("公众号 · 甲子光年", "https://wechat2rss.bestblogs.dev/feed/1c4008936645d5c17239d99bba91522cf2bdfa26.xml", "B", [], True, 6),
+    ("公众号 · AI 前线", "https://wechat2rss.bestblogs.dev/feed/25185b01482da0f485418ecb92e208b4416712fb.xml", "B", [], True, 6),
+    ("公众号 · 腾讯科技", "https://wechat2rss.bestblogs.dev/feed/a81bdfcbb9eefe870d285e81510ffa1af26e4520.xml", "B", [], True, 6),
+    ("公众号 · 硅星人 Pro", "https://wechat2rss.bestblogs.dev/feed/c62ceda9eed269d851802bdbc5f33c4fabbf7462.xml", "B", [], True, 6),
+    ("公众号 · Founder Park", "https://wechat2rss.bestblogs.dev/feed/f940695505f2be1399d23cc98182297cadf6f90d.xml", "B", [], True, 6),
+    ("公众号 · 42章经", "https://wechat2rss.bestblogs.dev/feed/f6694726ced4ba3d7c7cd65c6edf2160c5978387.xml", "B", [], True, 6),
+    # ---- X（经 api.xgo.ing 转成 RSS，不需要登录）：官方账号 A 级，知名研究者 B 级，中文 AI 博主 C 级 ----
+    ("X · OpenAI", "https://api.xgo.ing/rss/user/0c0856a69f9f49cf961018c32a0b0049", "A", ["llm"], False, 5),
+    ("X · OpenAI Developers", "https://api.xgo.ing/rss/user/971dc1fc90da449bac23e5fad8a33d55", "A", ["agent"], False, 5),
+    ("X · Anthropic", "https://api.xgo.ing/rss/user/fc28a211471b496682feff329ec616e5", "A", ["llm"], False, 5),
+    ("X · Claude", "https://api.xgo.ing/rss/user/01f60d63a61b44d692cc35c7feb0b4a4", "A", ["agent"], False, 5),
+    ("X · Google DeepMind", "https://api.xgo.ing/rss/user/a99538443a484fcc846bdcc8f50745ec", "A", ["llm"], False, 5),
+    ("X · DeepSeek", "https://api.xgo.ing/rss/user/68b610deb24b47ae9a236811563cda86", "A", ["llm"], False, 5),
+    ("X · Qwen", "https://api.xgo.ing/rss/user/80032d016d654eb4afe741ff34b7643d", "A", ["llm"], False, 5),
+    ("X · AI at Meta", "https://api.xgo.ing/rss/user/ef7c70f9568d45f4915169fef4ce90b4", "A", ["llm"], False, 5),
+    ("X · Mistral AI", "https://api.xgo.ing/rss/user/8d2d03aea8af49818096da4ea00409d1", "A", ["llm"], False, 5),
+    ("X · Hugging Face", "https://api.xgo.ing/rss/user/fc16750ce50741f1b1f05ea1fb29436f", "A", ["slm"], False, 5),
+    ("X · xAI", "https://api.xgo.ing/rss/user/3953aa71e87a422eb9d7bf6ff1c7c43e", "A", ["llm"], False, 5),
+    ("X · Cursor", "https://api.xgo.ing/rss/user/5287b4e0e13a4ab7ab7b1d56f9d88960", "A", ["agent"], False, 5),
+    ("X · Andrej Karpathy", "https://api.xgo.ing/rss/user/edf707b5c0b248579085f66d7a3c5524", "B", [], True, 5),
+    ("X · Andrew Ng", "https://api.xgo.ing/rss/user/08b5488b20bc437c8bfc317a52e5c26d", "B", [], True, 5),
+    ("X · Jim Fan", "https://api.xgo.ing/rss/user/c6cfe7c0d6b74849997073233fdea840", "B", [], True, 5),
+    ("X · AK（论文速递）", "https://api.xgo.ing/rss/user/341f7b9f8d9b477e8bb200caa7f32c6e", "B", [], True, 5),
+    ("X · elvis（omarsar0）", "https://api.xgo.ing/rss/user/931d6e88e067496cac6bf23f69d60f33", "B", [], True, 5),
+    ("X · 宝玉", "https://api.xgo.ing/rss/user/97f1484ae48c430fbbf3438099743674", "C", [], True, 5),
+    ("X · 歸藏", "https://api.xgo.ing/rss/user/831fac36aa0a49a9af79f35dc1c9b5d9", "C", [], True, 5),
+    # ---- 量化：美联储新闻稿只收货币政策相关 ----
+    ("美联储新闻稿", "https://www.federalreserve.gov/feeds/press_all.xml", "A", ["quant"], False, 6, r"FOMC|monetary policy|federal funds|interest rate|Beige Book|minutes"),
 ]
 
 KW = {
@@ -162,9 +213,22 @@ def parse_feed(raw):
     return out
 
 
+def clean_link(u):
+    """去掉 utm_* 等跟踪参数，其余参数原样保留（微信文章的 __biz/mid 等参数必须保留）。"""
+    x = urllib.parse.urlsplit(u)
+    if not x.query:
+        return u
+    all_q = urllib.parse.parse_qsl(x.query, keep_blank_values=True)
+    q = [(k, v) for k, v in all_q if not k.startswith("utm_") and k not in ("entry", "ref")]
+    if len(q) == len(all_q):
+        return u
+    return urllib.parse.urlunsplit((x.scheme, x.netloc, x.path, urllib.parse.urlencode(q), x.fragment))
+
+
 def fetch(src):
     name, url, lvl, default, need_kw = src[:5]
     cap = src[5] if len(src) > 5 else MAX_PER_SOURCE
+    must = re.compile(src[6], re.I) if len(src) > 6 else None
     try:
         req = urllib.request.Request(url, headers=UA)
         with urllib.request.urlopen(req, timeout=20) as r:
@@ -181,6 +245,10 @@ def fetch(src):
             continue
         if "Release" in name and PRE_RE.search(title):  # 跳过预发布版本
             continue
+        if must and not must.search(title):
+            continue
+        if name.startswith("X · ") and (title.startswith(("RT ", "@", "Replying")) or len(title) < 20):  # 转推、回复、太短的推文
+            continue
         blob = f"{title} {summ}"
         ks = [k for k, r in KW.items() if r.search(blob)]
         if need_kw:
@@ -193,8 +261,15 @@ def fetch(src):
             ks.remove("quant")
         if not ks:
             continue
-        items.append({"d": d.astimezone(timezone(timedelta(hours=8))).strftime("%Y-%m-%d"),
-                      "src": name, "lvl": lvl, "k": ks, "t": title[:160], "u": link})
+        link = clean_link(link)
+        d = min(d, datetime.now(timezone.utc))  # 个别源站把发布时间写成未来，压到现在
+        item = {"d": d.astimezone(timezone(timedelta(hours=8))).strftime("%Y-%m-%d"),
+                "src": name, "lvl": lvl, "k": ks, "t": title[:160], "u": link}
+        if name.startswith(("公众号 · ", "X · ", "BestBlogs")):
+            item["via"] = "BestBlogs" if name.startswith("BestBlogs") else "wechat2rss" if name.startswith("公众号") else "xgo.ing"
+        if summ and name.startswith(("BestBlogs", "公众号 · ")):
+            item["s"] = re.sub(r"^📌\s*One-Sentence Summary\s*", "", summ)[:120]
+        items.append(item)
         if len(items) >= cap:
             break
     return name, items, None
@@ -352,6 +427,40 @@ def fetch_ai_daily():
     return items, note
 
 
+# 交易所公告（A 级一手）：没有 RSS，解析列表页。只收和交易规则、程序化交易、业务指引相关的，跳过逐只债券/基金的日常通知。
+SSE_RX = re.compile(r'<span>\s*(\d{4}-\d{2}-\d{2})\s*</span>\s*<a href="([^"]+)" title="([^"]+)"', re.S)
+SZSE_RX = re.compile(r"var curHref = '\./([^']+)';.*?var curTitle ='([^']+)';.*?<span class=\"time\">\s*(\d{4}-\d{2}-\d{2})", re.S)
+# (名称, 列表页, 链接基准, 正则, (日期, 链接, 标题) 分组序号, 只收命中这个正则的标题；None = 全收)
+EX_KEEP = re.compile(r"规则|细则|指引|办法|程序化|量化|交易机制|涨跌幅|融资融券|做市|收费|休市|投资者|异常交易|监管|ETF|改革|新规|征求意见", re.I)
+EXCHANGES = [
+    ("上交所业务规则", "https://www.sse.com.cn/lawandrules/sselawsrules/latest/", "https://www.sse.com.cn", SSE_RX, (0, 1, 2), None),
+    ("上交所要闻", "https://www.sse.com.cn/aboutus/mediacenter/hotandd/", "https://www.sse.com.cn", SSE_RX, (0, 1, 2), EX_KEEP),
+    ("深交所要闻", "https://www.szse.cn/aboutus/trends/news/index.html", "https://www.szse.cn/aboutus/trends/news/", SZSE_RX, (2, 0, 1), EX_KEEP),
+    ("深交所公告", "https://www.szse.cn/disclosure/notice/index.html", "https://www.szse.cn/disclosure/notice/", SZSE_RX, (2, 0, 1),
+     re.compile(r"规则|细则|指引|程序化|交易机制|休市|收费|异常交易|融资融券")),
+]
+
+
+def fetch_exchanges():
+    out = []
+    for name, url, base, rx, (di, ui, ti), keep in EXCHANGES:
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=20) as r:
+                raw = r.read().decode("utf-8", "replace")
+        except Exception as e:
+            out.append((name, [], f"{type(e).__name__}: {e}"))
+            continue
+        cutoff = (datetime.now(timezone(timedelta(hours=8))) - timedelta(days=KEEP_DAYS)).strftime("%Y-%m-%d")
+        its = []
+        for m in rx.finditer(raw):
+            d, u, t = m.group(di + 1), m.group(ui + 1), html.unescape(m.group(ti + 1)).strip()
+            if d < cutoff or (keep and not keep.search(t)) or re.search(r"专项债券|公司债券|提供(一般|主)做市服务|在深交所上市$|在上交所上市$", t):
+                continue
+            its.append({"d": d, "src": name, "lvl": "A", "k": ["quant"], "t": t[:160], "u": urllib.parse.urljoin(base, u)})
+        out.append((name, its[:10], None))
+    return out
+
+
 def fetch_hf_daily():
     """Hugging Face 每日论文，作为网页在打不开 huggingface.co 时的兜底数据。"""
     for base in ("https://huggingface.co", "https://hf-mirror.com"):
@@ -375,6 +484,7 @@ def main():
         results = list(ex.map(fetch, SOURCES))
     items, report = [], []
     seen = set()
+    results += fetch_exchanges()
     daily, note = fetch_ai_daily()
     results.append(("AI 资讯日报", daily, None if daily else "没有抓到"))
     for name, its, err in results:
@@ -386,7 +496,7 @@ def main():
                 items.append(x)
     items.sort(key=lambda x: x["d"], reverse=True)
     now = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M")
-    names = [{"name": s[0], "lvl": s[2]} for s in SOURCES] + [{"name": "AI 资讯日报（何夕2077，按原始链接定级）", "lvl": "B"}]
+    names = [{"name": s[0], "lvl": s[2]} for s in SOURCES] + [{"name": "AI 资讯日报（何夕2077，按原始链接定级）", "lvl": "B"}] + [{"name": e[0], "lvl": "A"} for e in EXCHANGES]
     data = {"updated": now, "sources": names, "status": report, "items": items, "hf": fetch_hf_daily()}
     OUT.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     print(f"已写入 {OUT}，共 {len(items)} 条，更新时间 {now}")

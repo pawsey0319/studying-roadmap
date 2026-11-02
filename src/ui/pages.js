@@ -24,7 +24,7 @@ export function renderRoute(id) {
         <button class="btn gh" data-act="route-stop" data-id="${id}">${mine.stopped ? '恢复跟踪' : '停止跟踪'}</button></span></div>
     <p class="lede">${esc(r.desc)}</p>
     <div class="dual" style="grid-template-columns:minmax(0,1fr) minmax(0,1.05fr)">
-      <div><div class="colh"><b>进展时间线</b>每天自动追加，每周由 AI 整理</div>
+      <div><div class="colh"><b>进展时间线</b>每天自动追加，每周由 AI 整理${news.length >= 2 ? `<button class="btn sm acc" style="margin-left:auto" data-act="route-explain" data-id="${id}" title="把最近 8 条进展交给 Agent，讲清楚这条路线最近发生了什么">一键解析最近进展</button>` : ''}</div>
         <div class="card" style="padding:14px 16px 4px">${news.length ? `<ul class="tline">${news.slice(0, lim).map(n => `<li class="${n.d >= cut ? 'nw' : ''}">
           <time>${esc(n.d)}${n.d >= cut ? ' · 新' : ''}${M.isRead(n.id) ? ' · 已读' : ''}</time><a href="${esc(n.u)}" target="_blank" rel="noopener" data-act="read" data-id="${n.id}">${esc(n.t)}</a>
           <div class="meta">${n.lvl ? `<span class="tag ${n.lvl.toLowerCase()}">${{ A: '一手来源', B: '权威媒体', C: '社区讨论' }[n.lvl]}</span>` : ''}${esc(n.src || '')}${n.rAuto ? '<span class="tag" title="按关键词自动归类，每周一会由 AI 复核">自动归类</span>' : ''}</div></li>`).join('')}</ul>

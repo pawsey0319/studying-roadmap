@@ -5,7 +5,7 @@ import * as store from '../store/index.js';
 import { stageStatus } from '../core/progress.js';
 import { groupByAge } from '../core/feed.js';
 import { uid } from '../core/ids.js';
-import { act, refresh, toast, newsRow, resLink, TYPES, LVL, lvlTag } from './kit.js';
+import { act, refresh, toast, newsRow, resLink, TYPES, LVL, lvlTag, PICK } from './kit.js';
 import { applyToStage } from './suggest.js';
 import { LIVE, loadLive } from '../live.js';
 
@@ -91,7 +91,7 @@ function newsTab(t) {
   }).join('');
   const un = all.filter(n => !M.isRead(n.id)).length;
   return `<div class="sh" style="margin-top:14px"><span class="mut small">${un} 条未读。点开标题或点“标为已读”后变灰；属于某条前沿路线的会标出路线名。</span>
-      <span class="r"><button class="chip" data-act="only-unread" data-id="${t.id}" aria-pressed="${!!onlyU}">只看未读</button><button class="btn sm gh" data-act="read-all" data-id="${t.id}">本方向全部标为已读</button></span></div>
+      <span class="r"><button class="chip" data-act="${PICK.on ? 'pick-cancel' : 'pick-start'}" aria-pressed="${PICK.on}" title="勾选几条你觉得有关联的资讯，让 Agent 讲清楚它们之间的关系">${PICK.on ? '退出多选' : '多选解析'}</button><button class="chip" data-act="only-unread" data-id="${t.id}" aria-pressed="${!!onlyU}">只看未读</button><button class="btn sm gh" data-act="read-all" data-id="${t.id}">本方向全部标为已读</button></span></div>
     ${t.live ? `<div class="sh"><h3>实时动态</h3><span class="fnt small">打开页面时从公开接口直接拉取，1 小时内用缓存</span></div>
     <div class="live">${LIVE.map(c => `<div class="card"><h4><span>${esc(c.name)}<em>${esc(c.kind)}</em></span><button data-reload="${c.id}" aria-label="刷新${esc(c.name)}">刷新</button></h4><div id="live-${c.id}" class="msg">加载中…</div></div>`).join('')}</div>` : ''}
     <div class="sh"><h3>官方博客、权威媒体与社区讨论</h3><span class="fnt small">${H ? `每天 8 点更新（${esc(H.updated)}）` : '每天 8 点由 GitHub 自动抓取'}${CM ? `；Reddit 与 Hacker News 每周更新（${esc(CM.updated)}）` : ''}</span></div>

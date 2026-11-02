@@ -38,7 +38,7 @@ jobs:
         # 只在仓库里有 config.json（内测云端配置）时执行；publishable/anon key 本来就是公开的，行级安全规则下查不到任何数据
         run: |
           if [ -f config.json ]; then
-            url=$(python3 -c "import json;print(json.load(open('config.json')).get('supabaseUrl',''))")
+            url=$(python3 -c "import json;import re;print(re.sub(r'/(rest|auth)/v1/?$','',json.load(open('config.json')).get('supabaseUrl','').strip().rstrip('/')))")
             key=$(python3 -c "import json;print(json.load(open('config.json')).get('supabaseAnonKey',''))")
             if [ -n "$url" ] && [ -n "$key" ]; then
               curl -s -o /dev/null -w "Supabase 返回 %{http_code}\n" "$url/rest/v1/docs?select=name&limit=1" -H "apikey: $key" || true

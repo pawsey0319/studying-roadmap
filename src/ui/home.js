@@ -3,7 +3,7 @@ import { esc } from '../util.js';
 import * as M from '../model.js';
 import * as store from '../store/index.js';
 import { stageStatus } from '../core/progress.js';
-import { newsRow, trackTag, routeTag } from './kit.js';
+import { newsRow, trackTag, routeTag, PICK } from './kit.js';
 import { pendingSuggestions } from './suggest.js';
 
 // 线路图：每个方向一条线，站点 = 理论阶段；从站点分出的虚线支线 = 前沿路线，黄点 = 7 天内有新进展
@@ -71,7 +71,7 @@ export function renderHome() {
         <div class="sh"><h3>最近笔记</h3><span class="r"><a class="btn sm gh" href="#/notes">全部笔记</a></span></div>
         <div class="card"><ul class="lst">${recent.map(([id, c]) => `<li><a href="#/notes/${id}" style="text-decoration:none">${esc(c.t.split('\n')[0].slice(0, 80))}</a>
           <div class="meta">${c.at ? esc(stageLabel(c.at)) : '没有归类'}<span class="act"><button data-act="agent-card" data-id="${id}">和 Agent 聊</button></span></div></li>`).join('') || '<li class="fnt">还没有笔记。按 ⌘J / Ctrl+J 或点右下角“随手记”。</li>'}</ul></div></div>
-      <div><div class="sh"><h3>未读资讯</h3><span class="r"><button class="btn sm gh" data-act="read-all">全部标为已读</button></span></div>
+      <div><div class="sh"><h3>未读资讯</h3><span class="r"><button class="chip" data-act="${PICK.on ? 'pick-cancel' : 'pick-start'}" aria-pressed="${PICK.on}" title="勾选几条你觉得有关联的资讯，让 Agent 讲清楚它们之间的关系">${PICK.on ? '退出多选' : '多选解析'}</button><button class="btn sm gh" data-act="read-all">全部标为已读</button></span></div>
         <div class="card"><ul class="nlist compact">${un.slice(0, 7).map(n => newsRow(n, { showTrack: true, compact: true })).join('') || '<li><span></span><div class="fnt">都读完了。资讯每天早上 8 点更新。</div><span></span></li>'}</ul>
         ${per.length ? `<div class="chips" style="padding:8px 12px;border-top:1px solid var(--soft)">${per.map(([t, n]) => `<a class="chip" href="#/t/${t.id}/news" style="text-decoration:none">${esc(t.short || t.name)} ${n}</a>`).join('')}</div>` : ''}</div></div>
     </div>`;
