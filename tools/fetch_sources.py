@@ -247,6 +247,8 @@ def fetch(src):
             continue
         if must and not must.search(title):
             continue
+        if name.startswith("BestBlogs") and re.search(r"/(video|podcast)s?/", link):  # 不收视频和播客
+            continue
         if name.startswith("X · ") and (title.startswith(("RT ", "@", "Replying")) or len(title) < 20):  # 转推、回复、太短的推文
             continue
         blob = f"{title} {summ}"
