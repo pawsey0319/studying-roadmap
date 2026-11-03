@@ -37,6 +37,22 @@
 .pf{display:flex;gap:6px;padding:7px 10px;border-top:1px solid #F3E3CF;background:#fff;justify-content:flex-end;flex-wrap:wrap}
 .blk .pf{border:0;padding:6px 0 0;background:none}
 
+/* 学习方法档案 */
+.mrow{display:grid;grid-template-columns:54px minmax(0,1fr);gap:10px;align-items:start}
+.mw{height:6px;border-radius:3px;background:var(--soft);margin-top:8px;overflow:hidden}
+.mw i{display:block;height:100%;background:var(--ink);border-radius:3px}
+.mfoot{display:flex;gap:10px;align-items:center;margin-top:2px}
+.lnk{border:0;background:none;padding:0;color:var(--muted);font-size:12px;text-decoration:underline;text-underline-offset:2px}
+.lnk:disabled{text-decoration:none;color:var(--faint)}
+.inb-r .fnt{margin-right:auto}
+
+/* 搜索、路线库、空工作台 */
+.srch{display:flex;gap:8px;margin-top:14px}
+.srch input{flex:1;min-width:0;border:1px solid var(--line);border-radius:9px;padding:7px 11px;font-size:15px}
+mark{background:var(--hl);color:inherit;border-radius:3px;padding:0 1px}
+.start .opt{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.start .opt p{margin:0 0 6px;flex:1}
+
 /* 拖进 Agent 的资讯、右键“问 Agent” */
 .att{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
 .attc{display:inline-flex;align-items:center;gap:4px;max-width:100%;background:var(--soft);border:1px solid var(--line);border-radius:7px;padding:2px 4px 2px 8px;font-size:12px;color:var(--ink)}

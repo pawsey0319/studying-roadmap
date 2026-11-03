@@ -6,7 +6,8 @@ import { md } from '../core/md.js';
 import { uid, hash } from '../core/ids.js';
 import { chat, cost, PROVIDERS } from '../ai/providers.js';
 import * as cloud from '../store/cloud.js';
-import { systemPrompt, stageContext, extractBlocks, cleanPlan } from '../ai/agent.js';
+import { systemPrompt, stageContext, extractBlocks, cleanPlan, digestPrompt, digestText } from '../ai/agent.js';
+import { applyMethodOps, activeMethod } from '../core/method.js';
 import { act, refresh, toast, PICK, MAX_PICK, pickBar } from './kit.js';
 import { planCard, registerPlan } from './suggest.js';
 import { stageLabel } from './home.js';
@@ -125,8 +126,81 @@ export async function askWith(items, question) {
   await send(question || '');
 }
 
+/* ---------- 一段对话的生命周期 ---------- */
+// 对话不长期保留：离开超过设定的小时数再打开，或你点“新话题”，就把这一段压缩成“对话纪要”，原对话从上下文里移走。
+// 纪要会同步到你的其他设备；原对话只在这台设备上存档（不再发给模型），纪要出错时可以回查。
+const NEXT_RE = /```next[\s\S]*?```/g;
+export const idleHours = () => store.get('meta', 'idleHours') || 6;
+const idleMs = () => idleHours() * 3600e3;
+const lastTs = msgs => Math.max(0, ...msgs.map(m => m.ts || 0));
+const ctxAt = () => { const a = CUR && (CUR.stageId || CUR.routeId || CUR.docId); return a && (M.findStage(a) || M.route(a)) ? a : null; };
+const sessionInfo = () => ({ kind: CUR.kind, title: CUR.title, at: ctxAt() });
+async function indexSession(key, info) {
+  const ix = (await store.localGet('chatIndex')) || {};
+  if (MSGS.length) ix[key] = { ...info, t: Date.now(), tries: (ix[key] || {}).tries || 0 }; else delete ix[key];
+  await store.localSet('chatIndex', ix);
+}
+// 和当前话题相关的过去纪要：同一个阶段或路线的最近 3 份；自由对话带最近 2 份
+function relatedDigests() {
+  const all = Object.values(store.all('digests')).sort((a, b) => b.c - a.c), at = CUR && ctxAt();
+  return at ? all.filter(g => g.at === at).slice(0, 3) : CUR && CUR.kind === 'free' ? all.slice(0, 2) : [];
+}
+
+// 把一段对话整理成纪要，并更新学习方法档案。成功返回纪要 ID；AI 不可用时返回 null，对话保留
+async function closeSession(key, msgs, info, manual) {
+  const talk = msgs.filter(m => (m.role === 'user' || m.role === 'assistant') && String(m.content || '').trim());
+  const ix = (await store.localGet('chatIndex')) || {};
+  const done = async () => { await store.localSet(key, []); delete ix[key]; await store.localSet('chatIndex', ix); };
+  if (talk.filter(m => m.role === 'assistant').length < 1 || talk.length < 2) { await done(); return null; }
+  const cfg = await aiCfg();
+  if (aiBlock(cfg)) return null;
+  const transcript = talk.map(m => `${m.role === 'user' ? '用户' : 'Agent'}：${(m.show || extractBlocks(m.content).text).slice(0, 1500)}`).join('\n\n').slice(-12000);
+  const lines = Object.entries(store.all('method')).sort((a, b) => b[1].w - a[1].w).slice(0, 40).map(([id, x]) => `${id}｜${x.d}｜${x.t}｜${x.w >= 0.7 ? '很有把握' : x.w >= 0.35 ? '较有把握' : '待观察'}`).join('\n');
+  let d = null, ops = [];
+  try {
+    const res = await chat(cfg, [{ role: 'system', content: digestPrompt(lines) }, { role: 'user', content: `对话主题：${info.title}${info.at ? '（' + stageLabel(info.at) + '）' : ''}\n\n${transcript}` }], { maxTokens: 1500, temperature: 0.2 });
+    await addUsage(cfg, res.usage);
+    const bl = extractBlocks(res.text).blocks;
+    d = (bl.find(b => b.type === 'digest') || {}).data || null;
+    ops = ((bl.find(b => b.type === 'method') || {}).data || {}).ops || [];
+  } catch (e) { /* 网络或模型出错：下次再试 */ }
+  if (!d) {
+    const tries = ((ix[key] || {}).tries || 0) + 1;
+    if (tries < 3 && !manual) { ix[key] = { ...(ix[key] || info), tries }; await store.localSet('chatIndex', ix); return null; }
+    d = { title: info.title, learned: [], open: [], wrong: [], next: '（自动整理失败，原对话已在这台设备上存档）' };
+  }
+  const gid = 'g' + uid('');
+  store.put('digests', gid, { title: String(d.title || info.title).slice(0, 60), t: digestText(d) || '（这段对话没有可沉淀的内容）', at: info.at || null, kind: info.kind, c: Date.now(), n: talk.length });
+  await store.localSet('arch.' + gid, msgs);
+  const n = store.get('meta', 'methodN') || 0;
+  const r = applyMethodOps(store.all('method'), ops, { n, src: gid, idGen: () => 'm' + uid('') });
+  for (const [id, x] of Object.entries(r.set)) store.put('method', id, x);
+  for (const id of r.del) store.del('method', id);
+  store.put('meta', 'methodN', n + 1);
+  await done();
+  return gid;
+}
+// 打开网站时，把离开太久的对话在后台整理掉（每次最多 3 段）
+export async function sweepSessions() {
+  const ix = (await store.localGet('chatIndex')) || {}, now = Date.now();
+  let n = 0;
+  for (const [key, info] of Object.entries(ix)) {
+    if (n >= 3 || now - info.t < idleMs()) continue;
+    if (CUR && key === ckey(CUR) && !dw().hidden) continue;
+    const msgs = (await store.localGet(key)) || [];
+    if (await closeSession(key, msgs, info)) n++;
+  }
+  if (n) { refresh(); toast(`已把 ${n} 段过去的对话整理成纪要`); }
+}
+function nextHtml() {
+  const last = [...MSGS].reverse().find(m => m.role === 'assistant');
+  const b = last && extractBlocks(last.content).blocks.find(x => x.type === 'next');
+  const qs = (b && Array.isArray(b.data.q) ? b.data.q : []).filter(q => typeof q === 'string' && q.trim()).map(q => q.trim().slice(0, 40)).slice(0, 3);
+  return qs.length ? `<div class="quick">${qs.map(q => `<button data-act="agent-next" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>` : '';
+}
+
 /* ---------- 抽屉状态 ---------- */
-let CUR = null, MSGS = [], busy = false, ctl = null, mode = 'quick';
+let CUR = null, MSGS = [], busy = false, ctl = null, note = '';
 const ckey = c => 'chat.' + c.kind + '.' + (c.kind === 'multi' ? hash(String(c.id)) : (c.id || ''));
 const dw = () => $('#dw');
 
@@ -134,8 +208,15 @@ export async function openAgent(kind = 'free', id = '') {
   const make = KINDS[kind]; if (!make) return;
   const c = make(id); if (!c) { toast('找不到要讨论的内容'); return; }
   CUR = { kind, id, ...c };
-  MSGS = (await store.localGet(ckey(CUR))) || [];
+  const key = ckey(CUR);
+  MSGS = (await store.localGet(key)) || [];
   document.body.classList.add('dw-open'); dw().hidden = false;
+  // 离开太久：先把上次的对话整理成纪要，再开始新的一段
+  if (MSGS.length && Date.now() - lastTs(MSGS) > idleMs()) {
+    note = '正在把上次的对话整理成纪要…'; await renderDrawer();
+    await closeSession(key, MSGS, sessionInfo());
+    MSGS = (await store.localGet(key)) || []; note = '';
+  }
   await renderDrawer();
   if (!MSGS.length && CUR.auto) send(CUR.auto, { auto: true, label: kind === 'news' ? '一键解析这条资讯' : kind === 'multi' ? `一键解析这 ${String(id).split(',').length} 条资讯的关联` : '' });
 }
@@ -145,17 +226,18 @@ async function renderDrawer() {
   const cfg = await aiCfg(), u = await usage(), p = PROVIDERS[cfg.provider] || PROVIDERS.custom;
   const block = aiBlock(cfg), ready = !block;
   const prof = store.get('meta', 'profile'), mem = store.get('meta', 'memory');
-  const pills = ['学习者档案' + (prof ? '' : '（未填）'), mem ? '长期记忆' : null, ...(CUR.pills || [])].filter(Boolean);
+  const nMethod = activeMethod(store.all('method')).length, nDig = relatedDigests().length;
+  const pills = ['学习者档案' + (prof ? '' : '（未填）'), mem ? '长期记忆' : null, nMethod ? '你的学习方法' : null, nDig ? `${nDig} 份过去的纪要` : null, ...(CUR.pills || [])].filter(Boolean);
   dw().innerHTML = `<div class="dw-h"><h3>学习 Agent</h3><span class="fnt small">${esc(CUR.title)}</span>
       <button class="x" data-act="agent-close" aria-label="收起">×</button></div>
-    <div class="mem">它会看到：${pills.map(x => `<span>${esc(x)}</span>`).join('')}<button class="btn sm gh" data-act="agent-clear" title="清空这段对话">清空</button></div>
+    <div class="mem">它会看到：${pills.map(x => `<span>${esc(x)}</span>`).join('')}<button class="btn sm gh" data-act="agent-new" title="把这段对话整理成纪要，然后开始新话题"${MSGS.length && !busy ? '' : ' disabled'}>新话题</button></div>
     <div class="msgs" id="msgs" aria-live="polite">${ready ? '' : `<div class="ai"><p>${esc(block)}。</p><p><a class="btn sm acc" href="#/settings" data-act="agent-close">去设置</a></p></div>`}
       ${CUR.first && !MSGS.length ? `<div class="ai md">${md(CUR.first)}</div>` : ''}
-      ${MSGS.map(msgHtml).join('')}</div>
-    <div class="quick">${['出 3 道自测题检验我', '讲简单点', '这对产品意味着什么', '把上面的回答存进笔记'].map(q => `<button data-act="agent-quick">${q}</button>`).join('')}</div>
+      ${MSGS.map(msgHtml).join('')}${note ? `<div class="tool">${esc(note)}</div>` : ''}</div>
+    ${busy ? '' : nextHtml()}
     <form class="inb" id="agentForm">${ATT.length ? `<div class="att">${ATT.map((x, i) => `<span class="attc" title="${esc(x.u || '')}">${x.quote ? '“' + esc(x.quote.slice(0, 24)) + '…”' : esc(x.t.slice(0, 40))}<button type="button" data-act="att-rm" data-i="${i}" aria-label="移除">×</button></span>`).join('')}</div>` : ''}
       <textarea id="agentIn" rows="2" placeholder="${ATT.length ? '想问什么？直接按 Enter 就是让 Agent 解析' : '说说你的情况，或者问一个问题。可以把资讯拖进来。Enter 发送，Shift+Enter 换行'}"${ready ? '' : ' disabled'}></textarea>
-      <div class="inb-r"><div class="chips"><button type="button" class="chip" data-act="agent-mode" data-id="quick" aria-pressed="${mode === 'quick'}" title="一次调用，便宜快速">快速回答</button><button type="button" class="chip" data-act="agent-mode" data-id="agent" aria-pressed="${mode === 'agent'}" title="允许 Agent 多步查资讯、读笔记，最多 6 步，更费 token">让 Agent 处理</button></div>
+      <div class="inb-r"><span class="fnt small">需要时会自己去查你的笔记和资讯</span>
       <button class="btn pri" id="agentSend"${ready ? '' : ' disabled'}>${busy ? '停止' : '发送'}</button></div>
       <div class="cost">${cfg.provider === 'hosted' ? `内测模型${cfg.model ? ' · ' + esc(cfg.model) : ''} · 本月 ${u.calls} 次` : `${esc(p.name)} · ${esc(cfg.model || p.model)} · 本月 ¥${u.cny.toFixed(2)}${cfg.budget ? ` / 上限 ¥${cfg.budget}` : ''} · ${u.calls} 次`}</div></form>`;
   const box = $('#msgs'); box.scrollTop = box.scrollHeight;
@@ -175,7 +257,8 @@ function msgHtml(m, i) {
   if (m.role === 'err') return `<div class="ai err">${esc(m.content)}</div>`;
   const { text, blocks } = extractBlocks(m.content);
   const extra = blocks.map((b, k) => blockHtml(b, `${i}.${k}`)).join('');
-  return `<div class="ai"><div class="md">${md(text)}</div>${extra}${m.cost != null ? `<div class="fnt small">约 ${m.tin + m.tout} token · ¥${m.cost.toFixed(4)}${m.est ? '（估算）' : ''}</div>` : ''}</div>`;
+  const save = blocks.some(b => b.type === 'note') ? '' : `<button class="lnk" data-act="msg-note" data-i="${i}">存进笔记</button>`;
+  return `<div class="ai"><div class="md">${md(text)}</div>${extra}<div class="fnt small mfoot">${save}${m.cost != null ? `<span>约 ${m.tin + m.tout} token · ¥${m.cost.toFixed(4)}${m.est ? '（估算）' : ''}</span>` : ''}</div></div>`;
 }
 
 const BLOCKS = new Map();
@@ -195,7 +278,7 @@ function blockHtml(b, key) {
     return `<div class="blk"><b class="small">跟踪学习清单补充</b><ul>${items.map(x => `<li>${x.mode === 'practice' ? '<span class="tag">实践验证</span> ' : ''}${esc(x.text)}${x.url ? ' <span class="tag ai">链接未核实</span>' : ''}</li>`).join('')}</ul>
       <div class="pf"><button class="btn sm acc" data-act="blk-route" data-k="${key}">加入清单</button></div></div>`;
   }
-  if (b.type === 'tool' || b.type === 'summary') return '';
+  if (b.type === 'tool' || b.type === 'summary' || b.type === 'next') return '';
   return '';
 }
 
@@ -213,8 +296,14 @@ const TOOLS = {
     const doc = a.at ? store.note(a.at) : '';
     return [doc && '阶段文档：\n' + doc.slice(0, 3000), cs.join('\n')].filter(Boolean).join('\n\n') || '没有笔记';
   },
-  get_route: a => routeCtx(a.id) || '没有这条路线'
+  get_route: a => routeCtx(a.id) || '没有这条路线',
+  search_digests: a => {
+    const q = String(a.query || '').toLowerCase().split(/\s+/).filter(Boolean);
+    const hits = Object.values(store.all('digests')).filter(g => q.every(w => (g.title + ' ' + g.t).toLowerCase().includes(w))).sort((x, y) => y.c - x.c).slice(0, 5);
+    return hits.map(g => `## ${new Date(g.c).toLocaleDateString('zh-CN')} ${g.title}\n${g.t.slice(0, 1200)}`).join('\n\n') || '没有找到相关的对话纪要';
+  }
 };
+const TOOL_LABEL = { list_tracks: '查看你的学习方向', get_stage: '查看一个阶段', search_news: '搜索资讯', get_notes: '查看你的笔记', get_route: '查看前沿路线', search_digests: '查找过去的对话纪要' };
 
 async function send(text, opts = {}) {
   if (busy) return;
@@ -229,34 +318,38 @@ async function send(text, opts = {}) {
     MSGS.push({ role: 'user', show: q, att: list.map(x => ({ t: x.quote ? '“' + x.quote.slice(0, 40) + '…”' : x.t, u: x.u || '' })),
       content: `${q}\n\n附带的内容：\n${attText(list)}${rule}` });
   } else MSGS.push({ role: 'user', content: text, ...(opts.auto ? { auto: true, label: opts.label } : {}) });
+  MSGS[MSGS.length - 1].ts = Date.now();
   busy = true; await renderDrawer();
   const box = $('#msgs');
-  const sys = systemPrompt({ profile: store.get('meta', 'profile') || M.C.domains[0].profile, memory: store.get('meta', 'memory'), mode, recent: recentChanges() });
-  const steps = mode === 'agent' ? 6 : 1;
+  const sys = systemPrompt({ profile: store.get('meta', 'profile'), memory: store.get('meta', 'memory'), recent: recentChanges(),
+    method: activeMethod(store.all('method')).map(([, x]) => `- ${x.d}：${x.t}`).join('\n'),
+    digests: relatedDigests().map(g => `- ${new Date(g.c).toLocaleDateString('zh-CN')} ${g.title}：${g.t.replace(/\s+/g, ' ').slice(0, 700)}`).join('\n') });
+  const steps = 6;
   try {
     for (let step = 0; step < steps; step++) {
-      const history = MSGS.filter(m => m.role !== 'err').slice(-16).map(m => m.role === 'tool' ? { role: 'user', content: '工具结果：\n' + m.result } : { role: m.role, content: m.content });
+      const history = MSGS.filter(m => m.role !== 'err').slice(-16).map(m => m.role === 'tool' ? { role: 'user', content: '工具结果：\n' + m.result } : { role: m.role, content: m.role === 'assistant' ? m.content.replace(NEXT_RE, '') : m.content });
       const messages = [{ role: 'system', content: sys + '\n\n当前上下文：\n' + CUR.text }, ...history];
       const el = document.createElement('div'); el.className = 'ai'; el.innerHTML = '<div class="md fnt">思考中…</div>'; box.appendChild(el);
       let acc = '';
       ctl = new AbortController();
-      const res = await chat(cfg, messages, { signal: ctl.signal, onDelta: d => { acc += d; el.firstChild.className = 'md'; el.firstChild.innerHTML = md(acc.replace(/```[\s\S]*?(```|$)/g, '\n（正在生成方案…）\n')); box.scrollTop = box.scrollHeight; } });
+      const res = await chat(cfg, messages, { signal: ctl.signal, onDelta: d => { acc += d; el.firstChild.className = 'md'; el.firstChild.innerHTML = md(acc.replace(/```next[\s\S]*?(```|$)/g, '').replace(/```[\s\S]*?(```|$)/g, '\n（正在生成方案…）\n')); box.scrollTop = box.scrollHeight; } });
       const c = cost(cfg, res.usage); await addUsage(cfg, res.usage);
-      MSGS.push({ role: 'assistant', content: res.text, cost: c, tin: res.usage.in, tout: res.usage.out, est: res.estimated });
+      MSGS.push({ role: 'assistant', ts: Date.now(), content: res.text, cost: c, tin: res.usage.in, tout: res.usage.out, est: res.estimated });
       const { blocks } = extractBlocks(res.text);
       const tool = blocks.find(b => b.type === 'tool');
-      if (!tool || mode !== 'agent') break;
+      if (!tool) break;
       const fn = TOOLS[tool.data.name];
       const out = fn ? String(fn(tool.data.args || {})).slice(0, 6000) : '没有这个工具';
-      MSGS.push({ role: 'tool', content: `调用 ${tool.data.name} ${JSON.stringify(tool.data.args || {})}`, result: out });
+      MSGS.push({ role: 'tool', ts: Date.now(), content: TOOL_LABEL[tool.data.name] || `调用 ${tool.data.name}`, result: out });
       await renderDrawer();
     }
   } catch (e) {
     if (e.name !== 'AbortError') MSGS.push({ role: 'err', content: e.message || String(e) });
   }
   busy = false; ctl = null;
-  MSGS = MSGS.slice(-40);
+  MSGS = MSGS.slice(-60);
   await store.localSet(ckey(CUR), MSGS);
+  await indexSession(ckey(CUR), sessionInfo());
   await renderDrawer();
 }
 
@@ -269,17 +362,20 @@ function recentChanges() {
 /* ---------- 动作 ---------- */
 act('agent-close', () => closeAgent());
 act('att-rm', el => { ATT.splice(+el.dataset.i, 1); renderDrawer(); });
-act('agent-clear', async () => { MSGS = []; await store.localSet(ckey(CUR), []); renderDrawer(); });
-act('agent-mode', el => { mode = el.dataset.id; renderDrawer(); });
-act('agent-quick', el => {
-  const q = el.textContent;
-  if (q.startsWith('把上面')) {
-    const last = [...MSGS].reverse().find(m => m.role === 'assistant'); if (!last) return;
-    const id = 'c' + uid('');
-    store.put('cards', id, { t: extractBlocks(last.content).text, at: CUR.stageId || CUR.routeId || null, c: Date.now() });
-    toast('已存进笔记', () => store.del('cards', id)); return;
-  }
-  send(q);
+act('agent-new', async () => {
+  if (busy || !MSGS.length) return;
+  busy = true; note = '正在把这段对话整理成纪要…'; await renderDrawer();
+  const gid = await closeSession(ckey(CUR), MSGS, sessionInfo(), true);
+  MSGS = (await store.localGet(ckey(CUR))) || []; busy = false; note = '';
+  await renderDrawer();
+  toast(gid ? '已整理成纪要，可以在“我的学习方法”里查看' : '没能整理（AI 服务不可用），这段对话先保留');
+});
+act('agent-next', el => send(el.dataset.q));
+act('msg-note', el => {
+  const m = MSGS[+el.dataset.i]; if (!m) return;
+  const id = 'c' + uid('');
+  store.put('cards', id, { t: extractBlocks(m.content).text, at: ctxAt(), c: Date.now() });
+  el.disabled = true; el.textContent = '已存进笔记'; toast('已存进笔记', () => store.del('cards', id));
 });
 act('blk-note', el => {
   const b = BLOCKS.get(el.dataset.k); if (!b) return;

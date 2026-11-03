@@ -99,3 +99,18 @@ export function mergeRemote(name, remote) {
   return changed;
 }
 export const legacyMap = () => legacy;
+
+/* ---------- 采用的学习方向 ---------- */
+import { wasUsingBefore, adoptedList } from '../core/adopt.js';
+// 老用户（改版前就有进度或笔记）第一次打开时，自动采用全部公共方向；新用户从空白开始
+export function ensureAdopted(pubIds) {
+  if (adoptedList(D)) return false;
+  if (!wasUsingBefore(D)) return false;
+  put('meta', 'adopted', pubIds.slice());
+  return true;
+}
+export const adopted = () => adoptedList(D) || [];
+export function setAdopted(id, on) {
+  const cur = adopted().filter(x => x !== id);
+  put('meta', 'adopted', on ? [...cur, id] : cur);
+}

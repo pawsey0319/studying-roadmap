@@ -1,5 +1,5 @@
 // 前沿路线（纯函数）：按关键词把资讯归到路线上，生成进展时间线。
-// 路线：{ id, track, title, desc, from, kw: [关键词], status: 'active'|'pending'|'merged', into?, learn: [{id,text,mode,url?}], updated }
+// 路线：{ id, track, title, desc, from, kw: [关键词], status: 'active'|'pending'|'merged'|'retired'（不再跟踪，ID 保留）, into?, learn: [{id,text,mode,url?}], updated }
 const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const cache = new Map();
 
@@ -19,6 +19,7 @@ export function matchRoutes(text, trackIds, routes) {
   const out = new Set();
   for (const r of routes) {
     if (trackIds && !trackIds.includes(r.track)) continue;
+    if (r.status === 'retired') continue;   // 不再跟踪的话题
     const re = routeRegex(r.kw || []);
     if (re && re.test(text)) out.add(r.status === 'merged' && r.into ? r.into : r.id);
   }
@@ -44,6 +45,6 @@ export function hasNew(routeId, news, today) {
 
 // 应用个人操作（改名、停止跟踪）后，可见的路线
 export function visibleRoutes(routes, mine, trackId) {
-  return routes.filter(r => r.track === trackId && r.status !== 'merged')
+  return routes.filter(r => r.track === trackId && r.status !== 'merged' && r.status !== 'retired')
     .map(r => ({ ...r, title: (mine[r.id] && mine[r.id].name) || r.title, stopped: !!(mine[r.id] && mine[r.id].stopped), follow: !!(mine[r.id] && mine[r.id].follow) }));
 }

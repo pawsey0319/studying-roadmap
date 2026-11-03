@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-01",
+ "updated": "2026-11-03",
  "routes": [
   {
    "id": "llm.r01",
@@ -68,9 +68,9 @@
   {
    "id": "llm.r03",
    "track": "llm",
-   "title": "开源权重格局与许可证",
+   "title": "开源权重模型格局",
    "from": "llm.s03",
-   "desc": "DeepSeek、Qwen、GLM、Kimi、MiMo、Meta Muse 等开放权重模型轮番发布，许可证差异决定能否商用。",
+   "desc": "DeepSeek、Qwen、GLM、Kimi、MiMo、Meta Muse 等开放权重模型轮番发布，看点是能力追到哪、怎么部署、适合哪些场景。",
    "kw": [
     "open-weight",
     "open weight",
@@ -83,14 +83,13 @@
     "MiMo",
     "Muse Spark",
     "Llama",
-    "Gemma",
-    "license"
+    "Gemma"
    ],
    "status": "active",
    "learn": [
     {
      "id": "llm.r03.l01",
-     "text": "整理一张主流开放权重模型的许可证与商用限制表，每月更新",
+     "text": "整理一张主流开放权重模型对比表：参数规模、上下文长度、擅长任务、部署成本，每月更新",
      "mode": "practice"
     }
    ]
@@ -192,14 +191,15 @@
     "safety bill",
     "评估方"
    ],
-   "status": "active",
+   "status": "retired",
    "learn": [
     {
      "id": "llm.r07.l01",
      "text": "整理一页“面向国内/欧盟上线 AI 功能要过的合规清单”",
      "mode": "practice"
     }
-   ]
+   ],
+   "why": "非技术类话题（监管合规），不再作为前沿路线跟踪"
   },
   {
    "id": "slm.r01",

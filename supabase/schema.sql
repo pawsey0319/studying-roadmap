@@ -6,11 +6,16 @@
 
 create table if not exists public.docs (
   user_id    uuid        not null references auth.users (id) on delete cascade,
-  name       text        not null check (name in ('progress','notes','cards','overlay','read','later','routes','tracks','library','sugs','marks','meta')),
+  name       text        not null check (name ~ '^[a-z]{2,20}$'),
   data       jsonb       not null check (jsonb_typeof(data) = 'object' and data ? 'e' and data ? 'mt'),
   updated_at timestamptz not null default now(),
   primary key (user_id, name)
 );
+
+-- 2026-11 起个人数据多了 digests（对话纪要）、method（学习方法档案），名字不再写死在约束里。
+-- 已经建过表的项目，运行下面两句即可（重复运行没问题）：
+alter table public.docs drop constraint if exists docs_name_check;
+alter table public.docs add constraint docs_name_check check (name ~ '^[a-z]{2,20}$');
 
 -- 单份数据最大 2 MB（导入的长文档在 library 里），防止误传超大内容
 alter table public.docs drop constraint if exists docs_size;

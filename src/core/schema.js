@@ -36,6 +36,13 @@ export const DOCS = {
   marks: (k, v) => NEWS_RE.test(k) && (v === 'wrong' || v === 'drop'),
   // 学习者档案与开局摘要
   meta: (k, v) => ((k === 'profile' || k === 'memory') && str(v, 8000)) || (k === 'onboarded' && str(v, 30)) || (k === 'summary' && isObj(v) && size(v) < 20000)
+    || (k === 'adopted' && Array.isArray(v) && v.length <= 60 && v.every(x => typeof x === 'string' && TRACK_RE.test(x)))
+    || (k === 'idleHours' && typeof v === 'number' && v >= 1 && v <= 720) || (k === 'methodN' && Number.isInteger(v) && v >= 0),
+  // 对话纪要：每段对话结束时由学习 Agent 压缩成的笔记。g<随机> → {title, t, at, kind, c, n}
+  digests: (k, v) => /^g[0-9a-z]{6,24}$/.test(k) && isObj(v) && str(v.title, 200) && str(v.t, 20000) && (v.at == null || STAGE_RE.test(v.at)) && typeof v.c === 'number',
+  // 学习方法档案：m<随机> → {d 维度, t 描述, w 权重 0–1, n 印证次数, c, u, src[纪要 ID], by ai|user}
+  method: (k, v) => /^m[0-9a-z]{6,24}$/.test(k) && isObj(v) && str(v.d, 20) && str(v.t, 600) && typeof v.w === 'number' && v.w >= 0 && v.w <= 1
+    && (v.by === 'ai' || v.by === 'user') && (!v.src || (Array.isArray(v.src) && v.src.length <= 8))
 };
 export const DOC_NAMES = Object.keys(DOCS);
 export const validFor = name => DOCS[name] || (() => false);

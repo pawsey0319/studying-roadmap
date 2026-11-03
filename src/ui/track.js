@@ -22,7 +22,7 @@ function itemRow(i, s) {
 }
 
 export function stageCard(t, s, idx, cur, openId) {
-  const k = stageStatus(s, cur), open = store.ui().open[s.id] ?? (s.id === openId || k === 'now');
+  const k = stageStatus(s, cur), open = s.id === openId || !!store.ui().open[s.id];
   const theory = s.items.filter(i => i.mode !== 'practice'), prac = s.items.filter(i => i.mode === 'practice');
   const skipped = s.items.filter(i => i.skipped).length;
   const notes = Object.values(store.all('cards')).filter(c => c.at === s.id).length + (store.note(s.id) ? 1 : 0);

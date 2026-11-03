@@ -8,7 +8,7 @@
 //   ```tool {"name":"…","args":{…}}```                               多步模式下调用工具（只读）
 import { cleanOps } from '../core/overlay.js';
 
-const BLOCK_RE = /```(plan|route|note|memory|summary|tool|track)\s*\n?([\s\S]*?)```/g;
+const BLOCK_RE = /```(plan|route|note|memory|summary|tool|track|next|digest|method)\s*\n?([\s\S]*?)```/g;
 
 // 宽松解析：去掉注释和尾逗号，容忍模型输出的常见小错误
 export function looseJSON(s) {
@@ -40,20 +40,23 @@ export function stageContext(s, t, notes) {
   return lines.join('\n');
 }
 
-export function systemPrompt({ profile, memory, mode, recent }) {
+export function systemPrompt({ profile, memory, recent, method, digests }) {
   return [
     '你是一个学习网站里的个人学习 Agent，用中文回答，语气平实、直接，不说客套话。',
     '用户自驱力强，目标是进入一个新领域或在领域里持续深耕；不要督促打卡，要帮他把路线调到最适合他的样子。',
     profile ? `学习者档案：${clip(profile, 2000)}` : '',
     memory ? `你记得的长期信息：${clip(memory, 2000)}` : '',
     recent ? `最近的调整：${clip(recent, 800)}` : '',
+    method ? `你观察到的这个用户的学习方式（越靠前越有把握），讲解和出题时照着调整，不要向用户复述这份清单：\n${clip(method, 1500)}` : '',
+    digests ? `和这次话题相关的过去对话纪要（只在相关时引用）：\n${clip(digests, 2400)}` : '',
     '规则：',
     '1. 用户描述模糊时先追问，每次最多 3 个问题，并尽量给出可以直接选的选项；清楚了再给方案。',
     '2. 修改路线时只在现有阶段上裁剪和改写（改目标、新增或改写任务、加资源、建议跳过、建议标为已掌握），不重排阶段。修改方案放在 ```plan``` 代码块里，格式：{"stage":"阶段 ID","title":"一句话标题","ops":[{"op":"goal","text":"新目标","why":"原因"},{"op":"skip","id":"任务 ID","why":"…"},{"op":"add","text":"新任务","mode":"theory 或 practice","why":"…"},{"op":"edit","id":"任务 ID","text":"改写后的内容","why":"…"},{"op":"res","name":"资源名","url":"链接（不确定就留空）","why":"…"},{"op":"mastered","why":"…"}]}。',
     '3. 跳过和标为已掌握只能建议，由用户自己勾选确认。实践验证类任务（动手做、写、搭、跑通）的 mode 写 practice。',
     '4. 不要编造链接。推荐资源时，不确定链接就只写资源名称，url 留空。',
     '5. 建议存进笔记的内容放在 ```note``` 代码块：{"text":"Markdown 内容","at":"阶段 ID"}。值得长期记住的用户信息放在 ```memory``` 代码块：{"text":"…"}。用户确认后才会保存。',
-    mode === 'agent' ? '6. 你可以调用工具查资料，每次只调用一个，格式：```tool\n{"name":"工具名","args":{…}}\n```，然后停下等结果。可用工具：list_tracks{}；get_stage{"id"}；search_news{"query","track"}；get_notes{"at" 或 "query"}；get_route{"id"}。最多 6 步，信息够了就直接回答。' : '',
+    '6. 工具：只有当前上下文里没有、又确实需要用户自己的数据（其他阶段、笔记、资讯、过去的对话纪要）时才调用；概念解释、一般问题直接回答，不要调用。调用时每次只调一个，格式：```tool\n{"name":"工具名","args":{…}}\n```，然后停下等结果。可用工具：list_tracks{}；get_stage{"id"}；search_news{"query","track"}；get_notes{"at" 或 "query"}；get_route{"id"}；search_digests{"query"}。最多 6 步。',
+    '7. 每次回答的最后，附上用户接下来可能想做的 3 件事，放在 ```next``` 代码块：{"q":["…","…","…"]}。用用户的口吻，每条 18 字以内，紧扣刚才讲的内容，不要泛泛的“讲简单点”；其中 1 条是检验理解的（例如“考我一道……的题”“我复述一遍……你看对不对”）。',
     '回答尽量短，先给结论。'
   ].filter(Boolean).join('\n');
 }
@@ -77,7 +80,7 @@ export function onboardPrompt(existing) {
   return [
     '你在帮一个新用户理清学习路线。目标是弄清楚下面 6 项，弄清楚之前不要生成方案：',
     '1) 想学哪些方向（数量由用户定，可以是网站已有的方向，也可以是新方向）；2) 每个方向现在的程度：没接触 / 了解概念 / 动手做过 / 能独立做项目；3) 学的目的：求职、做项目、跟前沿、转行等；4) 想要的产出：作品、论文笔记、面试准备等；5) 产品和技术怎么分配；6) 有没有现成的路线或资料可以导入。',
-    `网站已有的方向：${existing.map(t => `${t.name}（id: ${t.id}）`).join('、')}。`,
+    `路线库里现成的方向（用户提到时填它的 id）：${existing.map(t => `${t.name}（id: ${t.id}）`).join('、')}。`,
     '每轮：先用一两句话回应用户，再问还没弄清的项，每次最多问 3 个问题，并给出可以直接选的选项（用“· 选项”列出）。',
     '每轮回复的最后，必须输出当前的理解摘要，放在 ```summary``` 代码块里，JSON 格式：',
     '{"tracks":[{"name":"方向名","id":"已有方向的 id，新方向留空","level":"程度","note":"补充，可空"}],"purpose":"…","outputs":"…","ratio":"…","materials":"…","unclear":["还模糊的项的名称"],"ready":false}',
@@ -113,4 +116,23 @@ export function draftTrackPrompt(name, summary) {
   return `用户想学一个网站还没有的新方向：“${name}”。用户程度：${summary.level || '未说明'}${summary.note ? '，' + summary.note : ''}。` +
     '请起草一条理论路线，4–6 个阶段，按内容的先后逻辑排列。每个阶段 3–6 个任务，其中至少 1 个实践验证（动手做的任务）。资源只写你确定存在的，不确定链接就留空。' +
     '输出在 ```track``` 代码块里，JSON：{"name":"方向名","goal":"一句话目标","stages":[{"title":"…","goal":"…","items":[{"text":"…","mode":"theory 或 practice"}],"resources":[{"name":"…","url":""}],"output":"阶段产出"}]}';
+}
+
+/* ---------- 对话纪要与学习方法档案 ---------- */
+// 一段对话结束时（离开超过设定的小时数，或用户点“新话题”），把它压缩成纪要，并对学习方法档案做几处小修改
+export function digestPrompt(methodLines) {
+  return [
+    '你在整理一段学习对话。用中文，只根据对话内容，不要编造。输出两个代码块：',
+    '1) ```digest``` 代码块，JSON：{"title":"这段对话在学什么，16 字以内","learned":["用户弄懂了的要点，最多 5 条"],"open":["还没解决的疑问"],"wrong":["出现过的误解 → 正确理解"],"next":"建议的下一步，一句话"}。没有的项给空数组或空字符串。',
+    '2) ```method``` 代码块，JSON：{"ops":[…]}。这是用户的“学习方法档案”：记录他“怎么学”，不是“学了什么”。比如适合先看例子还是先看定义、会不会追问为什么、能不能用自己的话讲回来、做自测的表现、反复出现的误区类型、喜欢的节奏、是不是动手才记得住。',
+    '   维度只能从这些里选：呈现偏好、提取练习、自我解释、深加工、元认知、常见误区、节奏、动手偏好、其他。',
+    '   操作：{"op":"add","d":"维度","t":"一句具体的观察"}；{"op":"reinforce","id":"已有条目 ID"}（这次对话又印证了它）；{"op":"revise","id":"…","t":"修正后的描述"}（这次的表现说明原来的描述不准）；{"op":"weaken","id":"…"}（这次的表现和它相反）。',
+    '   最多 3 个操作。只写这次对话里有直接证据的；没有就给空数组。描述要具体到能指导讲法，例如“先给生活类比再讲公式时理解更快”，不要“学习认真”这种空话。',
+    '现有的学习方法档案（ID｜维度｜描述｜把握程度）：',
+    methodLines || '（空白，还没有任何条目）'
+  ].join('\n');
+}
+export function digestText(d) {
+  const L = (h, xs) => (xs && xs.length ? `**${h}**\n${xs.map(x => '- ' + String(x).slice(0, 300)).join('\n')}\n` : '');
+  return [L('弄懂了', d.learned), L('还没解决', d.open), L('误解与纠正', d.wrong), d.next ? `**下一步**：${String(d.next).slice(0, 300)}` : ''].filter(Boolean).join('\n').trim();
 }

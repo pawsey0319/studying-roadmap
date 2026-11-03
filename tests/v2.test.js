@@ -146,3 +146,61 @@ test('每周自动生成的内容：精选、路线、待确认建议都能被�
     assert.equal(cleanOps(s.ops, st).length, s.ops.length, s.id + ' 有无效的修改');
   }
 });
+
+import { applyMethodOps, activeMethod, rate, ACTIVE } from '../src/core/method.js';
+import { tokens, matches, snippet, highlight } from '../src/core/search.js';
+import { wasUsingBefore, adoptedList } from '../src/core/adopt.js';
+
+test('学习方法档案：前期变化快、后期变化慢，用户改过的条目不被改写或删除', () => {
+  assert.equal(rate(0), 1); assert.ok(rate(50) < rate(5) && rate(1000) === 0.15);
+  let k = 0; const idGen = () => 'mtest' + (++k).toString().padStart(3, '0');
+  let E = {};
+  const put = r => { E = { ...E, ...r.set }; r.del.forEach(id => delete E[id]); };
+  put(applyMethodOps(E, [{ op: 'add', d: '呈现偏好', t: '先给类比再讲公式时理解更快' }, { op: 'add', d: '乱写', t: 'x' }, { op: 'bogus' }], { n: 0, src: 'g1', idGen }));
+  const [id1, id2] = Object.keys(E);
+  assert.equal(E[id2].d, '其他', '未知维度归到其他');
+  const w0 = E[id1].w;
+  put(applyMethodOps(E, [{ op: 'reinforce', id: id1 }], { n: 1, src: 'g2', idGen }));
+  const early = E[id1].w - w0;
+  assert.ok(E[id1].w > w0 && E[id1].n === 2 && E[id1].src.includes('g2'));
+  const late = applyMethodOps({ a: { ...E[id1], w: w0 } }, [{ op: 'reinforce', id: 'a' }], { n: 100, idGen }).set.a.w - w0;
+  assert.ok(late < early, '后期同样一次印证，变化更小');
+  assert.ok(activeMethod(E).some(([id]) => id === id1) && E[id1].w >= ACTIVE);
+  // 削弱到很低：AI 的条目被删除，用户的条目保留
+  E.mu = { d: '节奏', t: '我喜欢晚上学', w: 0.5, n: 1, c: 1, u: 1, by: 'user' };
+  for (let i = 0; i < 8; i++) put(applyMethodOps(E, [{ op: 'weaken', id: id2 }, { op: 'weaken', id: 'mu' }, { op: 'revise', id: 'mu', t: '改掉' }], { n: 0, idGen }));
+  assert.ok(!E[id2], 'AI 条目被削弱到底后删除');
+  assert.ok(E.mu && E.mu.t === '我喜欢晚上学' && E.mu.w >= 0.4, '用户条目不改写、不删除');
+  // 重复新增同一句 = 印证
+  const before = Object.keys(E).length;
+  put(applyMethodOps(E, [{ op: 'add', d: '呈现偏好', t: '先给类比再讲公式时理解更快' }], { n: 3, idGen }));
+  assert.equal(Object.keys(E).length, before);
+  for (const x of Object.values(E)) assert.ok(DOCS.method('m0000001', x), '符合数据校验');
+});
+
+test('搜索：所有关键词都命中才算，片段和高亮安全', () => {
+  const t = tokens(' MCP  Server ');
+  assert.deepEqual(t, ['mcp', 'server']);
+  assert.ok(matches('写一个 MCP server', t) && !matches('只有 MCP', t) && !matches('任何', []));
+  assert.ok(snippet('a'.repeat(300) + ' MCP server', t).startsWith('…'));
+  const h = highlight('<b>MCP</b> 服务', ['mcp']);
+  assert.ok(!h.includes('<b>') && h.includes('<mark>MCP</mark>'));
+});
+
+test('新用户没有默认方向；改版前就在用的人自动保留原来的方向', () => {
+  assert.equal(wasUsingBefore({}), false);
+  assert.equal(wasUsingBefore({ progress: { e: { start: '2026-11-04' } }, read: { e: { n0123456789ab: '2026-11-05' } } }), false, '只有开始日期、改版后才读资讯 = 新用户');
+  assert.equal(wasUsingBefore({ progress: { e: { 'agent.s01.i01': '2026-10-20' } } }), true);
+  assert.equal(wasUsingBefore({ read: { e: { n0123456789ab: '2026-10-30' } } }), true);
+  assert.equal(adoptedList({ meta: { e: { adopted: ['llm'] } } })[0], 'llm');
+  assert.ok(DOCS.meta('adopted', ['llm', 'u1abcd']) && !DOCS.meta('adopted', ['<x>']) && DOCS.meta('idleHours', 6) && !DOCS.meta('idleHours', 0));
+  assert.ok(DOCS.digests('g1abcdef', { title: 't', t: 'x', at: 'agent.s02', c: 1 }) && !DOCS.digests('g1abcdef', { title: 't', t: 'x', at: '<x>', c: 1 }));
+});
+
+test('前沿路线：退役的路线不再归类资讯，也不显示', () => {
+  const R = [{ id: 'a.r01', track: 'a', kw: ['监管'], status: 'retired' }, { id: 'a.r02', track: 'a', kw: ['MCP'], status: 'active' }];
+  assert.deepEqual(matchRoutes('监管 MCP', ['a'], R), ['a.r02']);
+  assert.equal(visibleRoutes(R, {}, 'a').length, 1);
+  assert.equal(ROUTES.find(r => r.id === 'llm.r07').status, 'retired');
+  assert.ok(!ROUTES.find(r => r.id === 'llm.r03').kw.includes('license'));
+});

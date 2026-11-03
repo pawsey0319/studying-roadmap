@@ -40,8 +40,21 @@ export function metroSvg(tracks, opts = {}) {
   return `<svg viewBox="0 0 ${W} ${h}" role="img" aria-label="各方向的学习线路图">${g}</svg>`;
 }
 
+// 还没有任何方向：引导用户自己设计路线
+function emptyHome() {
+  return `<div class="ph"><h1>开始设计你的学习路线</h1></div>
+    <div class="card start" style="margin-top:14px;padding:20px 22px">
+      <p class="lede" style="margin-top:0">这里还没有任何学习方向。方向和路线都由你决定，三种开始方式：</p>
+      <div class="g3" style="margin-top:12px">
+        <div class="opt"><b>和 Agent 一起规划</b><p class="small mut">说说你想学什么、学到哪了。Agent 会追问到清楚为止，你确认后才生成路线。</p><button class="btn pri" data-act="onboard">开始规划</button></div>
+        <div class="opt"><b>从路线库挑</b><p class="small mut">现成的理论路线和前沿路线，加进来后可以随意裁剪、改写。</p><a class="btn" href="#/library">打开路线库</a></div>
+        <div class="opt"><b>导入已有的</b><p class="small mut">把手上的学习大纲、课程目录、文档（HTML、PDF、Word、Markdown）导进来，生成你自己的路线。</p><a class="btn" href="#/import">导入文档</a></div>
+      </div></div>`;
+}
+
 export function renderHome() {
   const T = M.tracks(), doing = M.doing(), sugs = pendingSuggestions(), un = M.unread();
+  if (!T.length) return emptyHome();
   un.sort((a, b) => (M.related(b) - M.related(a)) || (a.d < b.d ? 1 : -1));
   const cards = store.all('cards'), recent = Object.entries(cards).sort((a, b) => b[1].c - a[1].c).slice(0, 4);
   const doingHtml = doing.map(x => {

@@ -36,11 +36,11 @@ function render() {
     const st = summaryStatus(S.summary), clear = Object.values(st).every(Boolean);
     d.innerHTML = `<div class="ob"><div class="ob-h"><h3>规划我的学习路线</h3><span class="fnt small">第 ${Math.min(S.round + 1, MAX_ROUNDS)} / ${MAX_ROUNDS} 轮</span><button class="x" data-act="ob-close" aria-label="关闭">×</button></div>
       <div class="ob-b"><div class="ob-chat" id="obChat">
-        ${S.msgs.length ? '' : `<div class="ai md"><p>先用一段话说说：想学哪些方向、每个方向学到哪了、想达到什么目标。说不全也没关系，我会追问。</p><p class="fnt small">例如：“在准备 AI 产品经理求职。Transformer 懂，Agent 的 ReAct 学过但细节忘了，MCP 没写过；量化完全没接触过。想做出几个能放进作品集的项目。”</p></div>`}
+        ${S.msgs.length ? '' : `<div class="ai md"><p>先用一段话说说：想学哪些方向、每个方向学到哪了、想达到什么目标。说不全也没关系，我会追问。路线库里有现成的方向可以直接用，没有的我来起草。</p><p class="fnt small">例如：“在准备 AI 产品经理求职。Transformer 懂，Agent 的 ReAct 学过但细节忘了，MCP 没写过；量化完全没接触过。想做出几个能放进作品集的项目。”</p></div>`}
         ${S.msgs.map(m => m.role === 'user' ? `<div class="me">${esc(m.content)}</div>` : m.role === 'err' ? `<div class="ai err">${esc(m.content)}</div>` : `<div class="ai md">${md(extractBlocks(m.content).text)}</div>`).join('')}
       </div><aside class="ob-sum"><b>学习路线摘要</b><p class="fnt small">理清的打勾，模糊的标黄</p>${summaryHtml()}</aside></div>
       <form class="ob-in" id="obForm"><textarea id="obText" rows="3" placeholder="${S.msgs.length ? '回答上面的问题，或补充说明' : '说说你的情况'}"></textarea>
-        <div class="ob-f"><button type="button" class="btn gh" data-act="ob-default">先用默认路线</button>
+        <div class="ob-f"><button type="button" class="btn gh" data-act="ob-default">先去路线库挑</button>
           <button type="button" class="btn" data-act="ob-gen"${S.summary && (S.summary.tracks || []).length ? '' : ' disabled'}>${clear ? '确认，生成方案' : '按现在的理解生成'}</button>
           <button class="btn pri" id="obSend">发送</button></div></form></div>`;
     const ta = $('#obText');
@@ -72,7 +72,7 @@ async function talk(text) {
   const chatEl = $('#obChat'); const el = document.createElement('div'); el.className = 'ai md fnt'; el.textContent = '思考中…'; chatEl.appendChild(el);
   $('#obSend').disabled = true;
   try {
-    const sys = onboardPrompt(M.tracks().filter(t => !t.mine));
+    const sys = onboardPrompt([...M.library(), ...M.tracks().filter(t => t.mine)]);
     const history = S.msgs.filter(m => m.role !== 'err').map(m => ({ role: m.role, content: m.content }));
     if (S.round >= MAX_ROUNDS - 1) history.push({ role: 'user', content: '（已经是最后一轮了：不要再追问，把仍不清楚的项写进 unclear，按合理默认值填好摘要，ready 设为 true。）' });
     let acc = '';
@@ -95,7 +95,10 @@ async function generate() {
   S.plans = []; S.drafts = []; S.genNotes = '';
   const sys = '你是学习路线规划助手，用中文。学习者档案：' + profile;
   for (const t of sum.tracks || []) {
-    const pub = t.id && M.track(t.id) && !M.track(t.id).mine ? M.track(t.id) : M.tracks().find(x => x.name === t.name);
+    // 路线库里有的方向：先加入，再在它的基础上按用户情况调整；没有的：起草新方向
+    const lib = M.library().find(x => x.id === t.id) || M.library().find(x => x.name === t.name);
+    if (lib && !M.adopted(lib.id)) { store.setAdopted(lib.id, true); M.invalidate(); }
+    const pub = lib ? M.track(lib.id) : M.tracks().find(x => x.name === t.name);
     try {
       if (pub) {
         line(`正在生成“${esc(pub.name)}”…`);
@@ -124,7 +127,7 @@ async function generate() {
 const PALETTE = ['#3C6E71', '#B5446E', '#5B7F1F', '#AF6E1A', '#2E6FA7', '#7A4E9C'];
 act('ob-close', () => { store.ui().obSeen = true; store.saveUi(); $('#obDlg').close(); });
 act('ob-gen', () => generate());
-act('ob-default', async () => { store.put('meta', 'onboarded', new Date().toISOString().slice(0, 10)); S = null; await store.localSet('onboard', null); $('#obDlg').close(); toast('已使用默认路线。随时可以在工作台点“和 Agent 规划我的路线”。'); });
+act('ob-default', async () => { store.ui().obSeen = true; store.saveUi(); $('#obDlg').close(); location.hash = '#/library'; });
 act('ob-restart', async () => { S = { msgs: [], summary: S.summary, round: 0, step: 'talk', plans: [], drafts: [] }; await save(); render(); });
 act('ob-finish', async () => { store.put('meta', 'onboarded', new Date().toISOString().slice(0, 10)); await store.localSet('onboard', null); $('#obDlg').close(); refresh(); });
 act('ob-draft-add', el => {

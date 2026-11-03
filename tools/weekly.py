@@ -492,6 +492,19 @@ def next_id(prefix, used, letter):
     return f"{prefix}.{letter}{n:02d}"
 
 
+# 前沿路线的划分规则（每周精修时交给模型，并由程序再过滤一次）
+ROUTE_RULES = (
+    "前沿路线的划分规则：\n"
+    "- 一条路线 = 一个正在快速变化、值得持续跟踪学习的话题，能回答“这个领域接下来往哪走”。\n"
+    "- 必须能挂到某个理论阶段上（from），并且能列出具体的学习任务（读什么、动手做什么）。\n"
+    "- 可以是：模型与方法、训练与推理技术、工具与框架、协议与标准、产品形态与交互、落地场景、商业模式、价格与成本、融资与市场格局。\n"
+    "- 不要：许可证与授权条款、法律诉讼、人事变动、纯公关活动。这类资讯不归到任何路线。\n"
+    "- 量化方向例外：交易规则、程序化交易监管、交易所和证监会规则直接影响个人量化能不能做、怎么做，属于前沿路线。\n"
+    "- 粒度：至少 3 条资讯在讲同一件事才成路线；两条路线讲的是同一件事就合并；一个方向的路线控制在 4–8 条。"
+)
+NON_TECH = re.compile(r"许可证|授权协议|license|licensing|诉讼|lawsuit|起诉|人事|任命|离职", re.I)
+
+
 def refine_routes(llm, track, routes, recent, verified_urls):
     """recent：这个方向最近 3 周的资讯（快照 + 精选）。返回改动说明列表；直接修改 routes。"""
     mine = [r for r in routes if r["track"] == track["id"] and r.get("status") == "active"]
@@ -509,6 +522,7 @@ def refine_routes(llm, track, routes, recent, verified_urls):
         "现有前沿路线（ID｜名称｜关键词｜最近 3 周命中条数）：\n"
         + "\n".join(f"- {r['id']}｜{r['title']}｜{', '.join(r.get('kw', [])[:10])}｜{hits.get(r['id'], 0)}" for r in mine) + "\n\n"
         "最近 3 周没有归到任何路线的资讯（编号. 标题）：\n" + "\n".join(f"{i}. {x['t']}" for i, x in enumerate(loose[:60])) + "\n\n"
+        + ROUTE_RULES + "\n\n"
         "请做三件事，没有把握的就不做：\n"
         "1) kw：给现有路线补关键词，让上面没归类但明显属于它的资讯能命中。每条路线最多补 3 个，关键词要具体（产品名、技术名、协议名），不要“AI”“模型”这种泛词。\n"
         "2) new：如果没归类的资讯里有一个新话题，至少 3 条资讯都在讲它，并且和现有路线都不重复，就新建一条路线。最多 2 条。\n"
@@ -527,7 +541,7 @@ def refine_routes(llm, track, routes, recent, verified_urls):
         if not r or r["track"] != track["id"] or r.get("status") != "active":
             continue
         add = [w.strip() for w in (k.get("add") or []) if isinstance(w, str) and 2 <= len(w.strip()) <= 40 and not bad_kw.match(w.strip())]
-        add = [w for w in add if w.lower() not in {x.lower() for x in r.get("kw", [])}][:3]
+        add = [w for w in add if w.lower() not in {x.lower() for x in r.get("kw", [])} and not NON_TECH.search(w)][:3]
         # 新关键词命中的资讯太多（超过 40%）说明太泛，不要
         add = [w for w in add if (rx := route_re([w])) and sum(1 for x in recent if rx.search(x["t"])) <= max(3, len(recent) * 0.4)]
         if add:
@@ -543,6 +557,8 @@ def refine_routes(llm, track, routes, recent, verified_urls):
         rx = route_re(kw)
         support = [x for x in recent if rx and rx.search(f"{x['t']} {x.get('s', '')}")]
         if not title or not desc or len(kw) < 2 or len(support) < 3:  # 少于 3 条进展的话题先不成路线
+            continue
+        if NON_TECH.search(title + desc) and track["id"] != "quant":  # 许可证、诉讼、人事类话题不成路线
             continue
         if any(title == r["title"] for r in mine):
             continue

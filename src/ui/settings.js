@@ -16,7 +16,7 @@ export async function renderSettings() {
   if (hosted && cloud.signedIn()) hostedInfo = await cloud.aiInfo().catch(e => ({ error: e.message }));
   const prof = store.get('meta', 'profile') || '', mem = store.get('meta', 'memory') || '';
   const hidden = store.ui().hiddenTracks || {};
-  const allTracks = M.C.tracks.concat(Object.entries(store.all('tracks')).filter(([k]) => k.startsWith('u')).map(([, t]) => t));
+  const allTracks = M.library().filter(t => M.adopted(t.id)).concat(Object.entries(store.all('tracks')).filter(([k]) => k.startsWith('u')).map(([, t]) => t));
   return `<div class="ph"><h1>设置</h1></div>
   <div class="g2" style="margin-top:14px;align-items:start">
     <section class="card set"><h3>AI 服务</h3>
@@ -38,7 +38,7 @@ export async function renderSettings() {
       <p class="hint">用到 80% 时提醒；超过后每次调用前都要你确认。</p></div></section>
     <section class="card set"><h3>学习者档案</h3>
       <p class="hint">每次对话都会带给学习 Agent。开局规划时会自动生成，也可以直接改。</p>
-      <textarea id="prof" rows="6">${esc(prof || M.C.domains[0].profile || '')}</textarea>
+      <textarea id="prof" rows="6" placeholder="还没有。开局规划时会自动生成，例如：会 Python，懂 Transformer；在准备 AI 产品经理求职……">${esc(prof)}</textarea>
       <h3 style="margin-top:14px">Agent 记住的事</h3>
       <p class="hint">你在对话里点“记住”的内容。可以删改。</p>
       <textarea id="mem" rows="4" placeholder="还没有">${esc(mem)}</textarea>

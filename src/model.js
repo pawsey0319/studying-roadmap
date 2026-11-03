@@ -17,8 +17,8 @@ export function setContent(c) { C = c; invalidate(); }
 // 公共方向 + 用户导入的方向；“ext.<方向>”是导入后追加到公共方向末尾的阶段
 export function tracks() {
   if (cache.tracks) return cache.tracks;
-  const mine = store.all('tracks');
-  const pub = C.tracks.map(t => {
+  const mine = store.all('tracks'), use = new Set(store.adopted());
+  const pub = C.tracks.filter(t => use.has(t.id)).map(t => {
     const ext = mine['ext.' + t.id];
     return ext && ext.stages && ext.stages.length ? { ...t, stages: t.stages.concat(ext.stages.map(s => ({ ...s, imported: true }))) } : t;
   });
@@ -27,6 +27,9 @@ export function tracks() {
   return (cache.tracks = pub.concat(own).filter(t => !hidden[t.id]));
 }
 export const track = id => tracks().find(t => t.id === id);
+// 路线库：所有公共方向（不管有没有采用）
+export const library = () => C.tracks;
+export const adopted = id => store.adopted().includes(id);
 export function state(trackId) {
   const k = 'st.' + trackId;
   if (cache[k]) return cache[k];
@@ -41,7 +44,7 @@ export function findStage(stageId) {
 export function routes(trackId) {
   const mine = store.all('routes');
   const all = C.routes.routes.map(r => (mine[r.id] && mine[r.id].learnAdd) ? { ...r, learn: (r.learn || []).concat(mine[r.id].learnAdd) } : r);
-  return trackId ? visibleRoutes(all, mine, trackId) : all.filter(r => r.status !== 'merged');
+  return trackId ? visibleRoutes(all, mine, trackId) : all.filter(r => r.status === 'active' || !r.status);
 }
 export const route = id => C.routes.routes.find(r => r.id === id);
 export function routeName(id) {
@@ -81,7 +84,8 @@ export function related(n) {
 // 第一次打开时，7 天以前的资讯都算已读（readBase），免得一上来就有几百条未读
 export const isFresh = n => { const base = store.ui().readBase || ''; return n.d && n.d.length === 10 && n.d >= base && (today - new Date(n.d + 'T00:00:00')) / 864e5 <= 30; };
 export function unread(trackId) {
-  return news().filter(n => isFresh(n) && !isRead(n.id) && !isHidden(n.id) && (!trackId || n.k.includes(trackId)));
+  const mine = new Set(tracks().map(t => t.id));
+  return news().filter(n => isFresh(n) && !isRead(n.id) && !isHidden(n.id) && (trackId ? n.k.includes(trackId) : n.k.some(k => mine.has(k))));
 }
 export const routeHasNew = rid => hasNew(rid, news(), today);
 export const routeNews = rid => news().filter(n => n.r.includes(rid));

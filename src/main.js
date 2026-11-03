@@ -9,10 +9,13 @@ import { setupLive, loadOne } from './live.js';
 import { act, bindActs, setRender, refresh, toast, pickBar } from './ui/kit.js';
 import { renderHome } from './ui/home.js';
 import { renderTrack, afterTrack } from './ui/track.js';
-import { renderRoute, renderBiz, renderSuggestions, renderLater } from './ui/pages.js';
+import { renderRoute, renderBiz, renderSuggestions, renderLater, renderLibrary } from './ui/pages.js';
 import { renderNotes, openQuick } from './ui/notes.js';
 import { renderSettings, afterSettings } from './ui/settings.js';
 import { renderImport, afterImport } from './ui/importui.js';
+import { renderSearch } from './ui/search.js';
+import { renderMethod } from './ui/method.js';
+import { sweepSessions } from './ui/agentui.js';
 import { openAgent, closeAgent } from './ui/agentui.js';
 import { openOnboard } from './ui/onboard.js';
 import './ui/suggest.js';
@@ -38,6 +41,9 @@ async function render(opts = {}) {
     else if (page === 'notes') html = renderNotes(seg[1], { id: seg.slice(2).join('/') });
     else if (page === 'biz') html = renderBiz(q);
     else if (page === 'later') html = renderLater();
+    else if (page === 'library') html = renderLibrary();
+    else if (page === 'search') html = renderSearch(q);
+    else if (page === 'method') { html = renderMethod(q); if (q.g) after = () => { const el = document.getElementById('dg-' + q.g); if (el) el.scrollIntoView({ block: 'center' }); }; }
     else if (page === 'suggestions') { html = renderSuggestions(q); if (q.id) after = () => { const el = document.getElementById('sug-' + q.id); if (el) setTimeout(() => el.scrollIntoView({ block: 'center' }), 30); }; }
     else if (page === 'import') { html = renderImport(); after = afterImport; }
     else if (page === 'settings') { html = await renderSettings(); after = afterSettings; }
@@ -64,17 +70,21 @@ function renderNav(page, seg) {
     <a class="nav" href="#/notes" aria-current="${cur('notes')}">笔记</a>
     <a class="nav" href="#/biz" aria-current="${cur('biz')}">落地与商机</a>
     <a class="nav" href="#/later" aria-current="${cur('later')}">稍后读<span class="n">${Object.keys(store.all('later')).filter(id => !M.isRead(id)).length || ''}</span></a>
+    <a class="nav" href="#/search" aria-current="${cur('search')}">搜索</a>
+    <a class="nav" href="#/method" aria-current="${cur('method')}">我的学习方法</a>
     <div class="gh">学习方向</div>
     ${M.tracks().map(t => { const st = M.state(t.id); return `<a class="nav" href="#/t/${t.id}" aria-current="${tid === t.id ? 'page' : 'false'}"><span class="dot" style="background:${t.color}"></span>${esc(t.name)}<span class="n">${st.doneStages}/${st.stages.length}</span></a>`; }).join('')}
-    <a class="nav" href="#/import" aria-current="${cur('import')}" style="margin-top:4px"><span class="dot" style="background:none;border:1.5px dashed var(--faint)"></span>导入文档</a>
+    ${M.tracks().length ? '' : '<p class="fnt small" style="padding:2px 10px 6px">还没有方向</p>'}
+    <a class="nav" href="#/library" aria-current="${cur('library')}" style="margin-top:4px"><span class="dot" style="background:none;border:1.5px dashed var(--faint)"></span>路线库</a>
+    <a class="nav" href="#/import" aria-current="${cur('import')}"><span class="dot" style="background:none;border:1.5px dashed var(--faint)"></span>导入文档</a>
     <div class="ft"><a class="nav" href="#/settings" aria-current="${cur('settings')}">设置</a><p class="fnt small" id="syncState" style="padding:4px 10px"></p></div>`;
   const mt = page === 't' || page === 'r';
   $('#mtop').innerHTML = mt ? `<div class="chips">${M.tracks().map(t => `<a class="chip" href="#/t/${t.id}" aria-pressed="${tid === t.id}" style="text-decoration:none${tid === t.id ? `;background:${t.color};border-color:${t.color}` : ''}">${esc(t.short || t.name)}</a>`).join('')}</div>` : ({ home: '<b>今天</b>', more: '<b>我的</b>' }[page] || '');
   $('#mnav').innerHTML = `<a href="#/" aria-current="${cur('home')}"><b>◉</b>今天</a>
-    <a href="#/t/${tid || UI().lastTrack || M.tracks()[0].id}" aria-current="${mt ? 'page' : 'false'}"><b><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 4h12M3 9h7M3 14h10"/><circle cx="13" cy="9" r="1.6" fill="currentColor"/></svg></b>方向</a>
+    <a href="${M.tracks().length ? '#/t/' + (tid && M.track(tid) ? tid : M.track(UI().lastTrack) ? UI().lastTrack : M.tracks()[0].id) : '#/library'}" aria-current="${mt ? 'page' : 'false'}"><b><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 4h12M3 9h7M3 14h10"/><circle cx="13" cy="9" r="1.6" fill="currentColor"/></svg></b>方向</a>
     <button class="plus" data-act="quick-note" aria-label="随手记"><b>＋</b></button>
     <button data-act="agent-open"><b>✦</b>Agent</button>
-    <a href="#/more" aria-current="${['more', 'notes', 'biz', 'later', 'settings', 'import'].includes(page) ? 'page' : 'false'}"><b>☰</b>我的</a>`;
+    <a href="#/more" aria-current="${['more', 'notes', 'biz', 'later', 'settings', 'import', 'search', 'method', 'library'].includes(page) ? 'page' : 'false'}"><b>☰</b>我的</a>`;
   if (tid) { UI().lastTrack = tid; store.saveUi(); }
   setSyncStatus();
 }
@@ -83,7 +93,7 @@ function renderMore() {
   const cards = Object.keys(store.all('cards')).length, docs = Object.keys(store.all('notes')).length;
   const later = Object.keys(store.all('later')).filter(id => !M.isRead(id)).length;
   const row = (href, t, n) => `<a class="mi" href="${href}" style="text-decoration:none;display:flex"><b>${t}</b><span class="n" style="margin-left:auto;color:var(--faint)">${n}</span></a>`;
-  return `<div class="card" style="margin-top:8px">${row('#/notes', '笔记', `${cards} 张卡片 · ${docs} 篇文档`)}${row('#/later', '稍后在电脑上读', later)}${row('#/biz', '落地与商机', M.C.biz.items.length)}${row('#/suggestions', '等你确认', '')}${row('#/import', '导入文档', '')}</div>
+  return `<div class="card" style="margin-top:8px">${row('#/notes', '笔记', `${cards} 张卡片 · ${docs} 篇文档`)}${row('#/later', '稍后在电脑上读', later)}${row('#/biz', '落地与商机', M.C.biz.items.length)}${row('#/search', '搜索', '资讯和笔记')}${row('#/suggestions', '等你确认', '')}${row('#/library', '路线库', '')}${row('#/import', '导入文档', '')}${row('#/method', '我的学习方法', '')}</div>
     <div class="card" style="margin-top:10px">${row('#/settings', '设置', 'AI 服务、花费、同步、备份')}</div>
     <p class="fnt small" style="margin-top:10px">阶段长文档和导入在电脑上操作更方便。</p>`;
 }
@@ -139,12 +149,13 @@ async function boot() {
   M.setContent(C);
   await store.init({ legacyMap: C.legacy, defaultTab: C.tracks[0].id, today: iso(new Date()) });
   cloud.setup(C.config);
+  store.ensureAdopted(C.tracks.map(t => t.id));
   const linked = await cloud.consumeLink();
   setupLive(C, () => parse().seg[1]);
   bindActs();
   store.onChange(what => {
     M.invalidate();
-    if (what.startsWith('remote:')) refresh();
+    if (what.startsWith('remote:')) { store.ensureAdopted(C.tracks.map(t => t.id)); refresh(); }
     else { cloud.queueSync(); gist.queueSync(); }
   });
   gist.onStatus(setSyncStatus); cloud.onStatus(setSyncStatus);
@@ -153,6 +164,7 @@ async function boot() {
   await render();
   syncNow();
   if (linked) toast('已登录，正在同步');
+  setTimeout(() => sweepSessions().catch(() => {}), 3000);
   // 第一次使用：开局规划（可以跳过）
   if (!store.get('meta', 'onboarded') && !store.ui().obSeen && !location.hash.includes('settings')) setTimeout(() => openOnboard(), 400);
   if ('serviceWorker' in navigator && location.protocol === 'https:') {

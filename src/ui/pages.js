@@ -60,6 +60,24 @@ export function renderSuggestions(q = {}) {
     ${s.map(one).join('') || '<div class="card" style="margin-top:14px"><p class="empty">没有待确认的建议。</p></div>'}`;
 }
 
+// 路线库：所有公共方向，加进来 / 移出（移出只是不显示，进度和笔记都保留）
+export function renderLibrary() {
+  document.documentElement.style.setProperty('--c', '#1B2430');
+  const L = M.library();
+  const card = t => { const on = M.adopted(t.id), rs = M.C.routes.routes.filter(r => r.track === t.id && r.status === 'active');
+    return `<div class="card mcard" style="--lc:${t.color}"><h4><span class="dot" style="background:${t.color}"></span> ${esc(t.name)}${on ? ' <span class="tag a">已加入</span>' : ''}</h4>
+      <p>${esc(t.goal || '')}</p>
+      <p class="small mut">理论路线 ${t.stages.length} 个阶段：${t.stages.map(s => esc(s.title)).join(' → ')}</p>
+      <p class="small mut">前沿路线 ${rs.length} 条：${rs.slice(0, 5).map(r => esc(r.title)).join('、')}${rs.length > 5 ? '…' : ''}</p>
+      <div class="sa">${on ? `<a class="btn sm" href="#/t/${t.id}">打开</a><button class="btn sm gh" data-act="lib-remove" data-id="${t.id}">移出我的方向</button>`
+        : `<button class="btn sm pri" data-act="lib-add" data-id="${t.id}">加入我的方向</button>`}</div></div>`; };
+  return `<div class="ph"><h1>路线库</h1><span class="mut">现成的学习方向。加进来后在方向页里可以跳过、改写、新增任务，或者让 Agent 按你的情况调整</span></div>
+    <div class="g2" style="margin-top:14px">${L.map(card).join('')}</div>
+    <p class="fnt small" style="margin-top:12px">没有合适的？<a href="#" data-act="onboard">和 Agent 规划一个新方向</a>，或者<a href="#/import">导入你自己的大纲</a>。以后还会有“公共区域”，可以看其他用户公开的路线。</p>`;
+}
+act('lib-add', el => { store.setAdopted(el.dataset.id, true); refresh(); toast('已加入，侧边栏里能看到这个方向'); });
+act('lib-remove', el => { const id = el.dataset.id; store.setAdopted(id, false); refresh(); toast('已移出。进度和笔记都保留，重新加入就能恢复', () => { store.setAdopted(id, true); refresh(); }); });
+
 export function renderLater() {
   const L = Object.entries(store.all('later')).sort((a, b) => (b[1].at || 0) - (a[1].at || 0));
   return `<div class="ph"><h1>稍后读</h1><span class="mut">在手机上标记的长文和论文，回到电脑上再读</span></div>
