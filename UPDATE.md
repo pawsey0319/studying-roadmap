@@ -49,11 +49,14 @@
 1. **每周一，云端采集**：`weekly.yml` 运行 `weekly.py --stage auto`，抓社区讨论、核验候选链接，写出 `data/weekly-candidates.json` 并提交。连不上模型接口时到这里就停，任务显示成功，不开失败 issue。
 2. **公司电脑，整理**：运行 `bash tools/weekly_local.sh`。它会拉取最新仓库，用内网模型整理精选、精修前沿路线、生成待确认建议，跑测试后推送，网站自动重新部署。同一周的候选只整理一次，所以可以每天跑，没有新候选时几秒就结束。
 
-第一次在公司电脑上配置：
+第一次在公司电脑上配置（只需两步）：
 
-- 建一个文件 `~/.config/learning-hub/llm.env`（在仓库之外，不会被提交），内容三行：`LLM_BASE=内网地址/v1`、`LLM_KEY=…`、`LLM_MODEL=模型1,模型2`。脚本会把它的权限设成只有自己能读。
-- 想让它每天自动跑：macOS 终端运行 `crontab -e`，加一行 `30 10 * * * cd ~/Desktop/学习/learning-hub && bash tools/weekly_local.sh`（每天 10:30）。电脑关机或没连内网的那天跳过，第二天补上；候选超过 10 天就不再整理，等下周的新候选。运行记录在 `~/.config/learning-hub/weekly.log`。
-- 学习 Agent 也可以直接用内网模型：在公司电脑的网站设置 → AI 服务 → 自定义，填同一个地址。
+1. 终端运行 `bash ~/Desktop/学习/learning-hub/tools/setup_local.sh`。它会建好配置文件 `~/.config/learning-hub/llm.env`（在仓库之外、权限 600、不会被提交），并装一个每天 10:30 自动运行 `weekly_local.sh` 的定时任务（launchd，睡眠错过会在唤醒后补跑）。
+2. 运行 `open -e ~/.config/learning-hub/llm.env`，把三处“在这里填…”换成内网地址、Key、模型名，保存后再运行一次第 1 步的命令，它会测试模型接口能不能用。
+
+之后不用管：每周一云端采集候选，这台电脑当天（或之后第一次开机连上内网时）整理并推送。没连内网的那天会跳过，候选超过 10 天就等下周。运行记录在 `~/.config/learning-hub/weekly.log`。卸载定时任务：`bash tools/setup_local.sh --uninstall`。想马上跑一次：`bash tools/weekly_local.sh`；只测试接口：`python3 tools/weekly.py --stage ping`。
+
+学习 Agent 也可以用内网模型：在公司电脑的网站设置 → AI 服务 → 自定义，填同一个地址、Key、模型名（只存在这台电脑的浏览器里）。
 
 以后换成公网能访问的接口（独立产品）时，不用改代码：把 Key 填进仓库 Secrets（`LLM_BASE`/`LLM_KEY`/`LLM_MODEL` 或 `MODELSCOPE_KEY` 等），云端那一段会自动接着整理，`weekly_local.sh` 就不用再跑了。
 

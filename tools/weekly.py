@@ -99,6 +99,25 @@ def news_id(u):
     return "n" + fnv_hash(norm_url(u))
 
 
+# ---------- 本机配置文件（公司电脑用）：~/.config/learning-hub/llm.env ----------
+def load_env_file():
+    """宽松读取 KEY=VALUE：容忍等号两边的空格、引号、Windows 换行。已经在环境变量里的不覆盖。在 GitHub Actions 上不读。"""
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        return ""
+    path = Path(os.environ.get("LH_ENV_FILE") or Path.home() / ".config" / "learning-hub" / "llm.env")
+    if not path.exists():
+        return ""
+    for line in path.read_text(encoding="utf-8-sig").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, v = line.split("=", 1)
+        k, v = k.strip(), v.strip().strip("'\"").strip()
+        if re.fullmatch(r"[A-Z_][A-Z0-9_]*", k) and v and "在这里填" not in v and not os.environ.get(k):
+            os.environ[k] = v
+    return str(path)
+
+
 # ---------- 免费模型轮换 ----------
 def providers():
     env = os.environ.get
@@ -153,7 +172,21 @@ def check_base(name, base):
                 "2) 这个地址是不是只能在公司内网或特定网络里访问——GitHub Actions 在海外公网上运行，访问不到内网地址，这种情况要换成公网可用的接口。")
     if on_ci and any(ipaddress.ip_address(ip).is_private for ip in ips):
         return f"{name}：接口域名解析到的是内网 IP，GitHub Actions 访问不到。请换成公网可用的接口地址。"
+    # 域名能解析但连不上（例如公网能查到的内网域名）：先试一次连接，免得每次调用都等到超时
+    u = urllib.parse.urlsplit(base)
+    try:
+        socket.create_connection((host, u.port or (443 if u.scheme == "https" else 80)), timeout=8).close()
+    except OSError:
+        return (f"{name}：{who}连不上接口地址（连接超时或被拒绝）。"
+                + ("GitHub Actions 在海外公网上运行，内网接口只能在公司电脑上整理。" if on_ci else "检查这台电脑现在是否连着公司内网（VPN）。"))
     return ""
+
+
+def ssl_ctx():
+    """公司内网接口常用自签证书：在 llm.env 里写 LLM_CA_FILE=证书路径 就用它校验。"""
+    import ssl
+    ca = os.environ.get("LLM_CA_FILE", "").strip()
+    return ssl.create_default_context(cafile=ca) if ca else None
 
 
 class LLM:
@@ -177,7 +210,7 @@ class LLM:
                                        "temperature": 0.2, "max_tokens": max_tokens, "stream": False}).encode()
                     req = urllib.request.Request(base + "/chat/completions", data=body, method="POST",
                                                  headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"})
-                    with urllib.request.urlopen(req, timeout=180) as r:
+                    with urllib.request.urlopen(req, timeout=180, context=ssl_ctx()) as r:
                         j = json.loads(r.read())
                     self.calls += 1
                     text = j["choices"][0]["message"].get("content") or ""
@@ -692,7 +725,7 @@ def main():
     except Exception:
         pass
     ap = argparse.ArgumentParser(description="每周自动更新")
-    ap.add_argument("--stage", choices=["all", "collect", "ai", "auto"], default="all",
+    ap.add_argument("--stage", choices=["all", "collect", "ai", "auto", "ping"], default="all",
                     help="all：采集+整理；collect：只采集候选；ai：只整理（读 data/weekly-candidates.json）；"
                          "auto：先采集，模型接口连得上就接着整理，连不上就只留候选给公司电脑")
     ap.add_argument("--no-ai", action="store_true", help="等同 --stage collect")
@@ -701,6 +734,17 @@ def main():
     ap.add_argument("--force", action="store_true", help="ai 阶段：这一周已经整理过也重新整理")
     a = ap.parse_args()
     stage = "collect" if a.no_ai else a.stage
+    load_env_file()
+
+    if stage == "ping":  # 只测试模型接口能不能用：发一句话
+        llm, why = make_llm()
+        if not llm:
+            print(why); return finish(1)
+        try:
+            out = llm.ask("你是一个测试助手。", "只回复两个字：可以", 20)
+            print(f"模型接口可用，回复：{out[:30]}"); return finish(0)
+        except Exception as e:
+            print(f"模型接口调用失败：{e}"); return finish(1)
 
     if stage in ("all", "collect", "auto"):
         if not P["sources"].exists():

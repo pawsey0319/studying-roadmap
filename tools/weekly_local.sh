@@ -10,6 +10,8 @@
 #   LLM_MODEL=模型名1,模型名2
 # 用法：bash tools/weekly_local.sh          （加 --force 可以重新整理这一周）
 set -euo pipefail
+# 定时任务（launchd）里 PATH 很短，补上 Homebrew 等常见位置
+export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 cd "$(dirname "$0")/.."
 
 ENV_FILE="${LH_ENV_FILE:-$HOME/.config/learning-hub/llm.env}"
@@ -19,13 +21,16 @@ exec > >(tee -a "$LOG_DIR/weekly.log") 2>&1
 echo "==== $(date '+%F %T') 每周整理（本机） ===="
 
 if [ ! -f "$ENV_FILE" ]; then
-  echo "没有找到 $ENV_FILE，先按 UPDATE.md“公司内网模型”一节创建它"; exit 1
+  echo "没有找到 $ENV_FILE，先运行 bash tools/setup_local.sh"; exit 1
 fi
 if [ "$(uname)" = "Darwin" ] || [ "$(uname)" = "Linux" ]; then
   perm=$(stat -f '%Lp' "$ENV_FILE" 2>/dev/null || stat -c '%a' "$ENV_FILE")
   [ "$perm" = "600" ] || { chmod 600 "$ENV_FILE"; echo "已把 $ENV_FILE 的权限改成只有自己能读"; }
 fi
-set -a; . "$ENV_FILE"; set +a
+if grep -q "在这里填" "$ENV_FILE"; then
+  echo "$ENV_FILE 里还有没填的项（“在这里填…”），填好后再跑"; exit 1
+fi
+export LH_ENV_FILE="$ENV_FILE"   # 由 weekly.py 自己读取，容忍空格和引号
 
 PY=python3; command -v python3 >/dev/null 2>&1 || PY=python
 
@@ -36,7 +41,11 @@ fi
 git pull -q --rebase origin main
 
 "$PY" tools/weekly.py --stage ai "$@"
-node --test tests/*.test.js >/dev/null
+if command -v node >/dev/null 2>&1; then
+  node --test tests/*.test.js >/dev/null || { echo "测试没通过，这次不推送"; git checkout -- content; exit 1; }
+else
+  echo "这台电脑没装 Node.js，跳过本机测试（网站部署前 GitHub 还会再测一次）"
+fi
 
 git add content/feed.json content/routes.json content/suggestions.json
 if git diff --cached --quiet; then echo "没有需要发布的变化"; exit 0; fi
