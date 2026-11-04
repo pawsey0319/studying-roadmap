@@ -274,3 +274,5 @@ details.nsplit>summary::after{content:'›';margin-left:auto;transition:transfor
 .tr-sec{margin:8px 0}.tr-sec>b{font-size:12.5px;color:var(--muted)}
 .tr-prev{padding:12px 14px;margin-bottom:10px;border-color:#B9A6DC}
 .tr-pg{margin:8px 0}
+.trb{margin-left:8px;font-size:12px}
+.nav.lang{all:unset;cursor:pointer;display:block;padding:6px 10px;font-size:13px;color:var(--muted)}

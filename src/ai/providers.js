@@ -22,7 +22,11 @@ export const USD_CNY = 7.2;
 // cfg：{ provider, base, model, key, price:[输入, 输出 美元/百万 token] }
 // messages：[{role:'system'|'user'|'assistant', content}]
 // onDelta(文本片段)；返回 { text, usage:{in,out}, estimated }
+import { replyRule } from '../i18n.js';
 export async function chat(cfg, messages, { onDelta, signal, temperature = 0.4, maxTokens = 2048 } = {}) {
+  // 界面是英文时，所有模型回复都用英文（提示词本身是中文）
+  const rule = replyRule();
+  if (rule) messages = messages[0] && messages[0].role === 'system' ? [{ ...messages[0], content: messages[0].content + '\n\n' + rule }, ...messages.slice(1)] : [{ role: 'system', content: rule }, ...messages];
   const p = PROVIDERS[cfg.provider] || PROVIDERS.custom;
   const base = (cfg.base || p.base || '').replace(/\/+$/, '');
   if (!base && !p.hosted) throw new Error('还没有填接口地址');

@@ -41,13 +41,14 @@ fi
 git pull -q --rebase origin main
 
 "$PY" tools/weekly.py --stage ai "$@"
+"$PY" tools/translate.py || echo "翻译失败，英文界面这周显示中文原文"
 if command -v node >/dev/null 2>&1; then
   node --test tests/*.test.js >/dev/null || { echo "测试没通过，这次不推送"; git checkout -- content; exit 1; }
 else
   echo "这台电脑没装 Node.js，跳过本机测试（网站部署前 GitHub 还会再测一次）"
 fi
 
-git add content/feed.json content/routes.json content/suggestions.json
+git add content/feed.json content/routes.json content/suggestions.json src/i18n-en.json
 if git diff --cached --quiet; then echo "没有需要发布的变化"; exit 0; fi
 name=$(git config user.name || true); email=$(git config user.email || true)
 git -c user.name="${name:-pawsey0319}" -c user.email="${email:-pawsey0319@users.noreply.github.com}" \

@@ -6,6 +6,8 @@ import * as store from './store/index.js';
 import * as gist from './store/gist.js';
 import * as cloud from './store/cloud.js';
 import { initNative, isNative, scheduleReminder } from './native.js';
+import { initI18n, isEn, setLang } from './i18n.js';
+import { addBoardButtons } from './ui/translate.js';
 import { setupLive, loadOne } from './live.js';
 import { act, bindActs, setRender, refresh, toast, pickBar } from './ui/kit.js';
 import { renderHome } from './ui/home.js';
@@ -61,6 +63,7 @@ async function render(opts = {}) {
     html = `<p class="note">这个页面出错了：${esc(e.message)}。可以先回到<a href="#/">工作台</a>，或在设置里导出备份后刷新页面。</p>`;
   }
   $('#view').innerHTML = html;
+  addBoardButtons($('#view'));
   renderNav(page, seg);
   after();
   pickBar();
@@ -86,7 +89,7 @@ function renderNav(page, seg) {
     ${M.tracks().length ? '' : '<p class="fnt small" style="padding:2px 10px 6px">还没有方向</p>'}
     <a class="nav" href="#/library" aria-current="${cur('library')}" style="margin-top:4px"><span class="dot" style="background:none;border:1.5px dashed var(--faint)"></span>路线库</a>
     <a class="nav" href="#/import" aria-current="${cur('import')}"><span class="dot" style="background:none;border:1.5px dashed var(--faint)"></span>导入文档</a>
-    <div class="ft"><a class="nav" href="#/settings" aria-current="${cur('settings')}">设置</a><p class="fnt small" id="syncState" style="padding:4px 10px"></p></div>`;
+    <div class="ft"><button class="nav lang" data-act="lang" title="${isEn() ? '切换到中文' : 'Switch to English'}">${isEn() ? '中文' : 'English'}</button><a class="nav" href="#/settings" aria-current="${cur('settings')}">设置</a><p class="fnt small" id="syncState" style="padding:4px 10px"></p></div>`;
   const mt = page === 't' || page === 'r';
   $('#mtop').innerHTML = mt ? `<div class="chips">${M.tracks().map(t => `<a class="chip" href="#/t/${t.id}" aria-pressed="${tid === t.id}" style="text-decoration:none${tid === t.id ? `;background:${t.color};border-color:${t.color}` : ''}">${esc(t.short || t.name)}</a>`).join('')}</div>` : ({ home: '<b>今天</b>', more: '<b>我的</b>' }[page] || '');
   $('#mnav').innerHTML = `<a href="#/" aria-current="${cur('home')}"><b>◉</b>今天</a>
@@ -103,7 +106,7 @@ function renderMore() {
   const later = Object.keys(store.all('later')).filter(id => !M.isRead(id)).length;
   const row = (href, t, n) => `<a class="mi" href="${href}" style="text-decoration:none;display:flex"><b>${t}</b><span class="n" style="margin-left:auto;color:var(--faint)">${n}</span></a>`;
   return `<div class="card" style="margin-top:8px">${row('#/notes', '笔记', `${cards} 张卡片 · ${docs} 篇文档`)}${row('#/later', '稍后在电脑上读', later)}${row('#/biz', '落地与商机', M.C.biz.items.length)}${row('#/search', '搜索', '资讯和笔记')}${row('#/suggestions', '等你确认', '')}${row('#/library', '路线库', '')}${row('#/import', '导入文档', '')}${row('#/tree', '知识树', '')}${row('#/method', '我的学习方法', '')}${cloud.supportsPublic() ? row('#/public', '公共区域', '') : ''}</div>
-    <div class="card" style="margin-top:10px">${row('#/settings', '设置', 'AI 服务、花费、同步、备份')}</div>
+    <div class="card" style="margin-top:10px">${row('#/settings', '设置', 'AI 服务、花费、同步、备份')}<button class="mi" data-act="lang" style="all:unset;cursor:pointer;display:flex;padding:12px 14px"><b>${isEn() ? '中文' : 'English'}</b><span class="n" style="margin-left:auto;color:var(--faint)">${isEn() ? '切换到中文' : 'Switch language'}</span></button></div>
     <p class="fnt small" style="margin-top:10px">阶段长文档和导入在电脑上操作更方便。</p>`;
 }
 
@@ -128,6 +131,7 @@ act('later', el => {
 });
 act('mark-wrong', el => { store.put('marks', el.dataset.id, 'wrong'); toast('已记下，下周的自动整理会参考'); });
 act('qn-open', () => openQuick());
+act('lang', () => setLang(isEn() ? 'zh' : 'en'));
 document.addEventListener('change', e => {
   const cb = e.target.closest && e.target.closest('input[data-done]');
   if (cb) { store.setDone(cb.dataset.done, cb.checked, iso(new Date())); M.invalidate(); setTimeout(() => refresh(), 120); }
@@ -159,6 +163,7 @@ async function boot() {
   }
   M.setContent(C);
   initNative();
+  await initI18n();
   await store.init({ legacyMap: C.legacy, defaultTab: C.tracks[0].id, today: iso(new Date()) });
   cloud.setup(C.config);
   store.ensureAdopted(C.tracks.map(t => t.id));

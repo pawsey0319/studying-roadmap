@@ -6,6 +6,7 @@ import * as store from '../store/index.js';
 import { relatedTo, relatedMine } from '../core/related.js';
 import { act, toast, refresh, lvlTag, trackTag, routeTag, TYPES } from './kit.js';
 import { stageLabel } from './home.js';
+import { addBoardButtons } from './translate.js';
 
 let STACK = [];   // 在面板里依次打开过的条目，用于“返回上一篇”
 const panel = () => { let el = $('#rd'); if (!el) { el = document.createElement('aside'); el.id = 'rd'; el.className = 'rd'; el.setAttribute('aria-label', '阅读'); el.hidden = true; document.body.appendChild(el); } return el; };
@@ -24,6 +25,7 @@ export function openReader(id, { push = true } = {}) {
   STACK = STACK.slice(-20);
   markRead(id);
   render(x);
+  addBoardButtons(panel());
   const el = panel(); el.hidden = false; document.body.classList.add('rd-open');
   el.scrollTop = 0;
   return true;
@@ -48,7 +50,7 @@ function render(x) {
   panel().innerHTML = `<div class="dw-h">${back ? '<button class="btn sm gh" data-act="rd-back" title="返回上一篇">‹ 上一篇</button>' : ''}<h3>阅读</h3><button class="x" data-act="rd-close" aria-label="关闭">×</button></div>
     <div class="rd-b">
       <div class="meta">${(x.k || []).map(trackTag).join('')}${x.type ? `<span class="tag">${TYPES[x.type] || '资讯'}</span>` : ''}${lvlTag(x.lvl)}<span>${esc(x.src || '')}${x.d ? ' · ' + esc(x.d) : ''}${x.via ? ' · 经 ' + esc(x.via) : ''}</span></div>
-      <h2 class="rd-t">${esc(x.t)}</h2>
+      <div class="sh" style="margin:0"><span class="r"></span></div><h2 class="rd-t">${esc(x.t)}</h2>
       ${x.s ? `<p class="rd-s">${esc(x.s)}</p>` : '<p class="fnt small">没有摘要，读原文看完整内容。</p>'}
       ${(x.r || []).length ? `<div class="meta">前沿路线：${x.r.slice(0, 3).map(routeTag).join('')}</div>` : ''}
       <div class="sa"><a class="btn pri" href="${esc(x.u)}" target="_blank" rel="noopener">读原文 ↗</a>

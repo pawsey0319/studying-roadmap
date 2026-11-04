@@ -45,14 +45,16 @@ jobs:
           LLM_MODEL: ${{ secrets.LLM_MODEL }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: python3 tools/weekly.py --stage auto
+        run: |
+          python3 tools/weekly.py --stage auto
+          python3 tools/translate.py || echo "翻译失败，英文界面这周显示中文原文"
       - name: 检查结果（测试不过就不提交）
         if: always()
         run: node --test tests/*.test.js
       - name: 提交并重新部署
         if: success()
         run: |
-          git add content/feed.json content/routes.json content/suggestions.json data/community.json data/weekly-candidates.json
+          git add content/feed.json content/routes.json content/suggestions.json data/community.json data/weekly-candidates.json src/i18n-en.json
           if git diff --cached --quiet; then echo "没有变化"; exit 0; fi
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
             commit -q -m "每周自动更新 $(TZ=Asia/Shanghai date +%F)"

@@ -9,4 +9,4 @@ export const link = (name, url) => safeUrl(url) ? `<a href="${esc(url)}" target=
 // 本地时区的 YYYY-MM-DD
 export const iso = d => new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 export const todayStart = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
-export const ago = d => { const h = Math.round((Date.now() - new Date(d)) / 36e5); return h < 24 ? `${Math.max(h, 1)} 小时前` : `${Math.round(h / 24)} 天前`; };
+export const ago = d => { const h = Math.round((Date.now() - new Date(d)) / 36e5); return h < 24 ? `${Math.max(h, 1)} 小时前` : `${Math.round(h / 24)} 天前`; };  // 英文界面由 i18n 词典换成 3h ago / 2d ago
