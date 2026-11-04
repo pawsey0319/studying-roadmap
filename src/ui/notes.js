@@ -64,6 +64,7 @@ act('qn-close', closeQuick);
 act('qn-save', () => saveQuick());
 act('qn-agent', () => { const id = saveQuick(true); if (id) window.dispatchEvent(new CustomEvent('agent:card', { detail: id })); });
 act('quick-note', el => openQuick(el.dataset.id));
+window.addEventListener('quick-note', e => openQuick(e.detail.at, e.detail.text));
 document.addEventListener('keydown', e => {
   if ((e.metaKey || e.ctrlKey) && (e.key === 'j' || e.key === 'J')) { e.preventDefault(); openQuick(); }
 });

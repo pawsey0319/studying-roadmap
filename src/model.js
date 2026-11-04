@@ -5,6 +5,7 @@ import { trackState } from './core/progress.js';
 import { newsId } from './core/ids.js';
 import { tagNews, visibleRoutes, hasNew } from './core/routes.js';
 import { byDateDesc } from './core/feed.js';
+import { buildIndex } from './core/related.js';
 
 export let C = null;        // 公共内容（content.js 读取的结果）
 export const today = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
@@ -71,6 +72,16 @@ export function news() {
   out.sort(byDateDesc);
   return (cache.news = out);
 }
+// 推荐“接着读”用的池子：全部资讯 + Hugging Face 每日论文（论文不进资讯列表，只在相关推荐里出现）
+export function readingPool() {
+  if (cache.pool) return cache.pool;
+  const seen = new Set(news().map(n => n.u));
+  const papers = ((C.sources && C.sources.hf) || []).map(p => ({ t: p.t, s: (p.s || '').slice(0, 300), d: p.d, u: 'https://arxiv.org/abs/' + p.id, src: 'HF 每日论文', type: 'paper', lvl: 'A', k: [], v: p.v }))
+    .filter(p => !seen.has(p.u)).map(p => ({ ...p, id: newsId(p.u), r: tagNews(p, C.routes.routes), kind: 'paper' }));
+  return (cache.pool = news().concat(papers));
+}
+export const relIndex = () => cache.relIx || (cache.relIx = buildIndex(readingPool()));
+export const findItem = id => readingPool().find(x => x.id === id);
 export const isRead = id => !!store.get('read', id);
 export const isHidden = id => store.get('marks', id) === 'drop';
 // 当前在学阶段相关：资讯所属的前沿路线是从这个方向的当前阶段分出来的

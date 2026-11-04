@@ -25,3 +25,25 @@ test('知识树：方向 → 阶段 → 任务/资源，路线挂在分出它的
   assert.deepEqual(loc.nodes.map(n => n.id).sort(), ['agent.r01', 'agent.s01', 'agent.s02', 'agent.s02#notes', 'agent.s02.i01'].sort());
   assert.equal(buildGraph({ track, st, routes, newsOf: () => [] }, { items: false }).nodes.some(n => n.type === 'item'), false);
 });
+
+import { tokens, buildIndex, relatedTo, sharedPhrases } from '../src/core/related.js';
+test('接着读：同一路线、共同关键词、同一件事，并给出理由', () => {
+  const pool = [
+    { id: 'a', t: 'ChatGPT 侧 MCP 工具调用增长 98 倍', d: '2026-10-01', r: ['agent.r02'], k: ['agent'] },
+    { id: 'b', t: 'MCP 新规范发布：协议核心改为无状态', d: '2026-07-28', r: ['agent.r02'], k: ['agent'], lvl: 'A' },
+    { id: 'c', t: 'DeepSeek 开放搜索 API', d: '2026-10-17', r: [], k: ['llm'] },
+    { id: 'd', t: '百度搜索 API 降价，低于 DeepSeek', d: '2026-10-18', r: [], k: ['llm'] },
+    { id: 'e', t: '量化私募规模下降', d: '2026-10-02', r: [], k: ['quant'] },
+    { id: 'f', t: 'DeepSeek 开放搜索 API 接口', d: '2026-10-18', r: [], k: ['llm'] },
+    { id: 'g', t: '另一条关于 MCP 的报道', d: '2026-09-01', r: [], k: ['agent'] }
+  ];
+  const ix = buildIndex(pool);
+  const r1 = relatedTo(ix, pool[0], { routeName: () => '协议栈' });
+  assert.equal(r1[0].x.id, 'b'); assert.equal(r1[0].why, '都属于前沿路线：协议栈'); assert.equal(r1[0].group, 'deep');
+  assert.ok(!r1.some(o => o.x.id === 'e'), '无关的不推荐');
+  const r2 = relatedTo(ix, pool[2]);
+  assert.equal(r2[0].x.id, 'f'); assert.equal(r2[0].why, '同一件事的其他报道');
+  assert.ok(r2.some(o => o.x.id === 'd' && /DeepSeek|API|搜索/.test(o.why)));
+  assert.ok(tokens('Claude Code 发布').has('claude'));
+  assert.deepEqual(sharedPhrases('工具调用增长', '模型的工具调用能力', () => 3), ['工具调用']);
+});

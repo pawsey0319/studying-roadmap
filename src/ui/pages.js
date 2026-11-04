@@ -25,10 +25,8 @@ export function renderRoute(id) {
     <p class="lede">${esc(r.desc)}</p>
     <div class="dual" style="grid-template-columns:minmax(0,1fr) minmax(0,1.05fr)">
       <div><div class="colh"><b>进展时间线</b>每天自动追加，每周由 AI 整理${news.length >= 2 ? `<button class="btn sm acc" style="margin-left:auto" data-act="route-explain" data-id="${id}" title="把最近 8 条进展交给 Agent，讲清楚这条路线最近发生了什么">一键解析最近进展</button>` : ''}</div>
-        <div class="card" style="padding:14px 16px 4px">${news.length ? `<ul class="tline">${news.slice(0, lim).map(n => `<li class="${n.d >= cut ? 'nw' : ''}">
-          <time>${esc(n.d)}${n.d >= cut ? ' · 新' : ''}${M.isRead(n.id) ? ' · 已读' : ''}</time><a href="${esc(n.u)}" target="_blank" rel="noopener" data-act="read" data-id="${n.id}">${esc(n.t)}</a>
-          <div class="meta">${n.lvl ? `<span class="tag ${n.lvl.toLowerCase()}">${{ A: '一手来源', B: '权威媒体', C: '社区讨论' }[n.lvl]}</span>` : ''}${esc(n.src || '')}${n.rAuto ? '<span class="tag" title="按关键词自动归类，每周一会由 AI 复核">自动归类</span>' : ''}</div></li>`).join('')}</ul>
-          ${news.length > lim ? `<button class="btn gh" style="margin:0 0 10px" data-act="tl-more" data-id="${id}">还有 ${news.length - lim} 条更早的进展</button>` : ''}` : '<p class="empty">还没有进展。新资讯命中这条路线的关键词后会出现在这里。</p>'}</div></div>
+        ${news.length ? tline(news.filter(n => !M.isRead(n.id)), '未读', lim, id, cut, true) + tline(news.filter(n => M.isRead(n.id)), '已读', lim, id, cut, false) : ''}
+        ${news.length ? '' : '<div class="card"><p class="empty">还没有进展。新资讯命中这条路线的关键词后会出现在这里。</p></div>'}</div>
       <div><div class="colh"><b>跟踪学习</b>根据进展整理的学习清单，打勾记录进度</div>
         <div class="card" style="padding:12px 14px">
           <div class="items">${learn.map(i => `<div class="it ${store.isDone(i.id) ? 'on' : ''}"><input type="checkbox" data-done="${i.id}"${store.isDone(i.id) ? ' checked' : ''}><span class="tx">${i.mode === 'practice' ? '<span class="tag">实践验证</span> ' : ''}${i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.text)}</a>` : esc(i.text)}</span></div>`).join('') || '<p class="fnt small">还没有学习清单，每周一的自动更新会补上。</p>'}</div>
@@ -79,10 +77,19 @@ export function renderLibrary() {
 act('lib-add', el => { store.setAdopted(el.dataset.id, true); refresh(); toast('已加入，侧边栏里能看到这个方向'); });
 act('lib-remove', el => { const id = el.dataset.id; store.setAdopted(id, false); refresh(); toast('已移出。进度和笔记都保留，重新加入就能恢复', () => { store.setAdopted(id, true); refresh(); }); });
 
+// 前沿路线的时间线：未读一块、已读一块
+function tline(L, h, lim, id, cut, unread) {
+  const row = n => `<li class="${n.d >= cut ? 'nw' : ''}"><time>${esc(n.d)}${n.d >= cut ? ' · 新' : ''}</time><a href="${esc(n.u)}" target="_blank" rel="noopener" data-act="rd-open" data-id="${n.id}">${esc(n.t)}</a>
+    <div class="meta">${n.lvl ? `<span class="tag ${n.lvl.toLowerCase()}">${{ A: '一手来源', B: '权威媒体', C: '社区讨论' }[n.lvl]}</span>` : ''}${esc(n.src || '')}${n.rAuto ? '<span class="tag" title="按关键词自动归类，每周一会由 AI 复核">自动归类</span>' : ''}</div></li>`;
+  const body = L.length ? `<ul class="tline">${L.slice(0, lim).map(row).join('')}</ul>${L.length > lim ? `<button class="btn gh" style="margin:0 0 10px" data-act="tl-more" data-id="${id}">还有 ${L.length - lim} 条</button>` : ''}` : `<p class="fnt small">${unread ? '这条路线的进展都读过了。' : '还没有读过的。'}</p>`;
+  const open = unread || store.ui().open['tl.' + id];
+  return `<details class="card nsplit" data-gkey="tl.${esc(id)}" style="padding:4px 16px 4px"${open ? ' open' : ''}><summary class="nsh" style="padding-left:0"><b>${h}</b><span class="n">${L.length}</span></summary>${body}</details>`;
+}
+
 export function renderLater() {
   const L = Object.entries(store.all('later')).sort((a, b) => (b[1].at || 0) - (a[1].at || 0));
   return `<div class="ph"><h1>稍后读</h1><span class="mut">在手机上标记的长文和论文，回到电脑上再读</span></div>
-    <div class="card" style="margin-top:14px"><ul class="lst">${L.map(([id, x]) => `<li class="${M.isRead(id) ? 'is-read' : ''}"><a href="${esc(x.u)}" target="_blank" rel="noopener" data-act="read" data-id="${id}">${esc(x.t)}</a>
+    <div class="card" style="margin-top:14px"><ul class="lst">${L.map(([id, x]) => `<li class="${M.isRead(id) ? 'is-read' : ''}"><a href="${esc(x.u)}" target="_blank" rel="noopener" data-act="${M.findItem(id) ? 'rd-open' : 'read'}" data-id="${id}">${esc(x.t)}</a>
       <div class="meta">${new Date(x.at).toLocaleDateString('zh-CN')}<span class="act"><button data-act="later" data-id="${id}">移出</button></span></div></li>`).join('') || '<li class="fnt">没有待读内容。资讯旁的“稍后读”会把它放到这里。</li>'}</ul></div>`;
 }
 

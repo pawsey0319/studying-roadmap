@@ -238,6 +238,7 @@ export async function openAgent(kind = 'free', id = '') {
   const make = KINDS[kind]; if (!make) return;
   const c = make(id); if (!c) { toast('找不到要讨论的内容'); return; }
   CUR = { kind, id, ...c };
+  if (document.body.classList.contains('rd-open')) document.querySelector('[data-act=rd-close]')?.click();   // 阅读面板和 Agent 在同一侧，开 Agent 时先收起阅读面板
   const key = ckey(CUR);
   MSGS = (await store.localGet(key)) || [];
   document.body.classList.add('dw-open'); dw().hidden = false;

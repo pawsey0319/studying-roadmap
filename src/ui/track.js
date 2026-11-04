@@ -7,7 +7,7 @@ import { stageMastery, mastery, isMastered, suggestMastered } from '../core/mast
 import { ankiTsv, ankiNotes } from '../core/anki.js';
 import { groupByAge } from '../core/feed.js';
 import { uid } from '../core/ids.js';
-import { act, refresh, toast, newsRow, resLink, TYPES, LVL, lvlTag, PICK } from './kit.js';
+import { act, refresh, toast, newsRow, resLink, TYPES, LVL, lvlTag, PICK, splitNews } from './kit.js';
 import { applyToStage } from './suggest.js';
 import { LIVE, loadLive } from '../live.js';
 import { saveFile } from '../native.js';
@@ -118,31 +118,27 @@ function newsTab(t) {
   const curated = all.filter(n => n.kind === 'curated');
   const snap = all.filter(n => n.kind === 'snap');
   // 官方、媒体与社区
-  const lvF = U.snapLvl[t.id] || 'all', srcF = U.snapSrc[t.id] || 'all', onlyU = U.onlyUnread && U.onlyUnread[t.id];
-  const sBase = snap.filter(n => !onlyU || !M.isRead(n.id));
+  const lvF = U.snapLvl[t.id] || 'all', srcF = U.snapSrc[t.id] || 'all';
+  const sBase = snap;
   const sLv = sBase.filter(n => lvF === 'all' || n.lvl === lvF), names = [...new Set(sLv.map(n => n.src))];
-  const sShown = sLv.filter(n => srcF === 'all' || n.src === srcF), limit = U.snapMore[t.id] ? 80 : 12;
+  const sShown = sLv.filter(n => srcF === 'all' || n.src === srcF);
   const H = M.C.sources, CM = M.C.community;
   // 精选
   const f = U.filter[t.id] || 'all';
-  const cItems = curated.filter(n => (f === 'all' || n.type === f) && (!onlyU || !M.isRead(n.id)));
-  const groups = groupByAge(cItems, M.today).map(g => {
-    const key = `${t.id}.${g.id}`, open = U.open['feed.' + key] ?? g.open;
-    return `<details class="fgroup" data-gkey="${key}"${open ? ' open' : ''}><summary>${g.name}<small>${g.items.length} 条</small></summary><ul class="nlist">${g.items.map(n => newsRow(n)).join('')}</ul></details>`;
-  }).join('');
-  return `<div class="sh" style="margin-top:14px"><span class="mut small">标题前有黄点的是未读，点开标题或点“标为已读”后变灰；属于某条前沿路线的会标出路线名。</span>
-      <span class="r"><button class="chip" data-act="${PICK.on ? 'pick-cancel' : 'pick-start'}" aria-pressed="${PICK.on}" title="勾选几条你觉得有关联的资讯，让 Agent 讲清楚它们之间的关系">${PICK.on ? '退出多选' : '多选解析'}</button><button class="chip" data-act="only-unread" data-id="${t.id}" aria-pressed="${!!onlyU}">只看未读</button><button class="btn sm gh" data-act="read-all" data-id="${t.id}">本方向全部标为已读</button></span></div>
+  const cItems = curated.filter(n => f === 'all' || n.type === f);
+  const byAge = L => groupByAge(L, M.today).map(g => `<div class="fage"><div class="fnt small">${g.name} · ${g.items.length} 条</div><ul class="nlist">${g.items.map(n => newsRow(n)).join('')}</ul></div>`).join('');
+  return `<div class="sh" style="margin-top:14px"><span class="mut small">每一栏都分成“未读”和“已读”两块，读完的自动移到下面。点标题在旁边打开，能看到相关的其他文章。</span>
+      <span class="r"><button class="chip" data-act="${PICK.on ? 'pick-cancel' : 'pick-start'}" aria-pressed="${PICK.on}" title="勾选几条你觉得有关联的资讯，让 Agent 讲清楚它们之间的关系">${PICK.on ? '退出多选' : '多选解析'}</button><button class="btn sm gh" data-act="read-all" data-id="${t.id}">本方向全部标为已读</button></span></div>
     ${t.live ? `<div class="sh"><h3>实时动态</h3><span class="fnt small">打开页面时从公开接口直接拉取，1 小时内用缓存</span></div>
     <div class="live">${LIVE.map(c => `<div class="card"><h4><span>${esc(c.name)}<em>${esc(c.kind)}</em></span><button data-reload="${c.id}" aria-label="刷新${esc(c.name)}">刷新</button></h4><div id="live-${c.id}" class="msg">加载中…</div></div>`).join('')}</div>` : ''}
     ${t.id === 'quant' ? hotHtml() : ''}
     <div class="sh"><h3>官方博客、权威媒体与社区讨论</h3><span class="fnt small">${H ? `每天 8 点更新（${esc(H.updated)}）` : '每天 8 点由 GitHub 自动抓取'}${CM ? `；Reddit 与 Hacker News 每周更新（${esc(CM.updated)}）` : ''}</span></div>
     <div class="snapbar">${['all', 'A', 'B', 'C'].map(l => `<button class="chip" data-act="snap-lvl" data-id="${l}" aria-pressed="${lvF === l}">${l === 'all' ? '全部' : LVL[l]} ${l === 'all' ? sBase.length : sBase.filter(n => n.lvl === l).length}</button>`).join('')}
       <select data-snapsrc aria-label="按来源筛选"><option value="all">全部来源（${sLv.length}）</option>${names.map(nm => `<option value="${esc(nm)}"${nm === srcF ? ' selected' : ''}>${esc(nm)}（${sLv.filter(n => n.src === nm).length}）</option>`).join('')}</select></div>
-    <div class="card"><ul class="nlist">${sShown.slice(0, limit).map(n => newsRow(n, {})).join('') || `<li><span></span><div class="fnt">${H || CM ? '这个筛选下没有内容。' : '还没有快照。推送到 GitHub 后每天自动生成。'}</div><span></span></li>`}</ul>
-      ${sShown.length > limit ? `<button class="btn gh" style="margin:6px 10px" data-act="snap-more">显示更多（共 ${sShown.length} 条）</button>` : limit > 12 && sShown.length > 12 ? '<button class="btn gh" style="margin:6px 10px" data-act="snap-more">收起</button>' : ''}</div>
+    ${splitNews(sShown, { key: 'snap.' + t.id, empty: H || CM ? '这个筛选下没有未读的。' : '还没有快照。推送到 GitHub 后每天自动生成。' })}
     <div class="sh"><h3>精选资讯与论文</h3><span class="fnt small">一手来源和权威媒体，逐条核对过链接和日期；标“AI 整理”的由每周自动任务整理。最后更新 ${esc(M.C.feed.updated)}</span></div>
     <div class="chips" style="margin-bottom:6px">${['all', ...Object.keys(TYPES)].map(k => `<button class="chip" data-act="feed-filter" data-id="${k}" aria-pressed="${f === k}">${k === 'all' ? '全部' : TYPES[k]} ${k === 'all' ? curated.length : curated.filter(n => n.type === k).length}</button>`).join('')}</div>
-    <div>${groups || '<p class="empty">这个分类暂时没有条目。</p>'}</div>`;
+    ${splitNews(cItems, { key: 'feed.' + t.id, empty: '这个分类没有未读的。', limit: 30, group: byAge })}`;
 }
 
 export function renderTrack(id, sub, q) {
@@ -200,6 +196,6 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('toggle', e => {
   const d = e.target;
-  if (d.matches && d.matches('details[data-gkey]')) { store.ui().open['feed.' + d.dataset.gkey] = d.open; store.saveUi(); }
+  if (d.matches && d.matches('details[data-gkey]')) { store.ui().open[d.dataset.gkey] = d.open; store.saveUi(); }
 }, true);
 export const _iso = iso; export const _uid = uid;

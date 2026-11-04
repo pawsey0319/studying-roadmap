@@ -22,6 +22,7 @@ import { openOnboard } from './ui/onboard.js';
 import './ui/suggest.js';
 import './ui/dragask.js';
 import './ui/export.js';
+import './ui/reader.js';
 import { renderPublic, beforePublic, reportDone, checkUpstream } from './ui/public.js';
 
 /* ---------- 路由：#/  #/t/<方向>[/news][?s=阶段]  #/r/<路线>  #/notes[/<卡片>|/s/<阶段>]  #/biz  #/import  #/settings  #/later  #/suggestions ---------- */

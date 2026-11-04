@@ -70,12 +70,33 @@ export function newsRow(n, opts = {}) {
   const picked = PICK.ids.includes(n.id);
   const lead = PICK.on ? `<input type="checkbox" class="pick" data-act="pick" data-id="${n.id}" aria-label="选择这条"${picked ? ' checked' : ''}>` : `<span class="u" aria-label="${read ? '已读' : '未读'}"></span>`;
   return `<li class="${read ? 'is-read' : ''}${picked ? ' picked' : ''}" data-nid="${n.id}">${lead}
-    <div><div class="tt"><a href="${esc(n.u)}" target="_blank" rel="noopener" data-act="read" data-id="${n.id}">${esc(n.t)}</a></div>
+    <div><div class="tt"><a href="${esc(n.u)}" target="_blank" rel="noopener" data-act="rd-open" data-id="${n.id}" title="在旁边打开：摘要、读原文、接着读相关内容">${esc(n.t)}</a></div>
       ${n.s && !opts.compact ? `<div class="ts">${esc(n.s)}</div>` : ''}
       <div class="meta">${tags}<span>${esc(n.src || '')}${n.d ? ' · ' + esc(n.d.length > 5 ? n.d.slice(n.d.length === 10 ? 5 : 0) : n.d) : ''}</span></div></div>
     <div class="na">${M.isFresh(n) ? `<button type="button" data-act="toggle-read" data-id="${n.id}">${read ? '标为未读' : '标为已读'}</button>` : ''}
       ${opts.compact ? `<button type="button" class="ex" data-act="agent-news" data-id="${n.id}">一键解析</button>` : `<button type="button" data-act="later" data-id="${n.id}">${later ? '已在待读' : '稍后读'}</button><button type="button" class="ex" data-act="agent-news" data-id="${n.id}" title="让学习 Agent 讲清楚这条讲了什么、为什么重要、和你在学的内容有什么关系">一键解析</button>`}
       ${n.ai && !opts.compact ? `<button type="button" data-act="mark-wrong" data-id="${n.id}" title="下周的自动整理会参考你的标记">分错了</button>` : ''}</div></li>`;
 }
+
+// 未读和已读分成两个板块：未读永远在上面，读完的条目移到下面的“已读”里（默认收起），不用每次往下翻找没读的
+// key：记住“已读”展开状态的键；more：未读超过多少条时折叠
+export function splitNews(items, { key, empty = '没有未读的了。', limit = 12, opts = {}, group = null } = {}) {
+  const U = store.ui(), isR = n => M.isRead(n.id) || !M.isFresh(n);
+  const un = items.filter(n => !isR(n)), rd = items.filter(isR);
+  const more = U.splitMore && U.splitMore[key], lim = more ? 200 : limit;
+  const list = L => group ? group(L) : `<ul class="nlist">${L.map(n => newsRow(n, opts)).join('')}</ul>`;
+  const openR = !!(U.open['read.' + key]);
+  return `<div class="card nsplit"><div class="nsh"><b>未读</b><span class="n">${un.length}</span>${un.length ? `<button class="lnk" data-act="read-list" data-ids="${un.slice(0, 200).map(n => n.id).join(',')}">这些全部标为已读</button>` : ''}</div>
+      ${un.length ? list(un.slice(0, lim)) : `<p class="fnt small" style="padding:4px 14px 12px">${esc(empty)}</p>`}
+      ${un.length > limit ? `<button class="btn gh" style="margin:4px 10px 10px" data-act="split-more" data-id="${esc(key)}">${more ? '收起' : `显示全部 ${un.length} 条未读`}</button>` : ''}</div>
+    <details class="card nsplit rdone" data-gkey="read.${esc(key)}"${openR ? ' open' : ''}><summary class="nsh"><b>已读</b><span class="n">${rd.length}</span><span class="fnt small">读过的和 30 天以前的</span></summary>
+      ${rd.length ? list(rd.slice(0, 80)) : '<p class="fnt small" style="padding:4px 14px 12px">还没有已读的。</p>'}${rd.length > 80 ? `<p class="fnt small" style="padding:0 14px 10px">只显示最近 80 条，更早的可以用搜索找。</p>` : ''}</details>`;
+}
+act('split-more', el => { const U = store.ui(); U.splitMore = U.splitMore || {}; U.splitMore[el.dataset.id] = !U.splitMore[el.dataset.id]; store.saveUi(); refresh(); });
+act('read-list', el => {
+  const ids = el.dataset.ids.split(',').filter(Boolean), d = new Date().toISOString().slice(0, 10);
+  ids.forEach(id => store.put('read', id, d)); refresh();
+  toast(`已把 ${ids.length} 条标为已读`, () => { ids.forEach(id => store.put('read', id, null)); refresh(); });
+});
 
 export const resLink = r => r.url ? link(r.name, r.url) : `${esc(r.name)}<span class="fnt small">（无链接，按名称查找）</span>`;
