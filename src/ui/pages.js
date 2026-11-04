@@ -74,7 +74,7 @@ export function renderLibrary() {
         : `<button class="btn sm pri" data-act="lib-add" data-id="${t.id}">加入我的方向</button>`}</div></div>`; };
   return `<div class="ph"><h1>路线库</h1><span class="mut">现成的学习方向。加进来后在方向页里可以跳过、改写、新增任务，或者让 Agent 按你的情况调整</span></div>
     <div class="g2" style="margin-top:14px">${L.map(card).join('')}</div>
-    <p class="fnt small" style="margin-top:12px">没有合适的？<a href="#" data-act="onboard">和 Agent 规划一个新方向</a>，或者<a href="#/import">导入你自己的大纲</a>。以后还会有“公共区域”，可以看其他用户公开的路线。</p>`;
+    <p class="fnt small" style="margin-top:12px">没有合适的？<a href="#" data-act="onboard">和 Agent 规划一个新方向</a>，或者<a href="#/import">导入你自己的大纲</a>。登录后还可以去<a href="#/public">公共区域</a>看其他人公开的路线。</p>`;
 }
 act('lib-add', el => { store.setAdopted(el.dataset.id, true); refresh(); toast('已加入，侧边栏里能看到这个方向'); });
 act('lib-remove', el => { const id = el.dataset.id; store.setAdopted(id, false); refresh(); toast('已移出。进度和笔记都保留，重新加入就能恢复', () => { store.setAdopted(id, true); refresh(); }); });

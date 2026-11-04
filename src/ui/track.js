@@ -152,7 +152,7 @@ export function renderTrack(id, sub, q) {
   const html = `<div class="ph"><span class="sign"><b>${esc(t.name)}</b></span>
       <span class="mut">理论 ${st.doneStages}/${st.stages.length} · 前沿路线 ${rs.filter(r => !r.stopped).length} 条，${rs.filter(r => M.routeHasNew(r.id)).length} 条有新进展</span>
       <span class="r"><button class="btn" data-act="agent-track" data-id="${t.id}">和 Agent 规划这个方向</button></span></div>
-    ${t.goal ? `<p class="lede">${esc(t.goal)}</p>` : ''}${t.note ? `<p class="note">${esc(t.note)}</p>` : ''}
+    ${t.goal ? `<p class="lede">${esc(t.goal)}</p>` : ''}${t.pub ? `<p class="note">采用自公共区域：${esc(t.pub.by)} 的第 ${t.pub.v} 版。${(store.ui().upstream || {})[t.id] ? ` 作者已经更新到第 ${store.ui().upstream[t.id]} 版，<a href="#/public?id=${t.pub.id}">去看看改了什么</a>。` : ''}</p>` : ''}${t.note ? `<p class="note">${esc(t.note)}</p>` : ''}
     <nav class="tabs" aria-label="方向内容"><a href="#/t/${id}" aria-current="${sub !== 'news' ? 'page' : 'false'}">路线</a><a href="#/t/${id}/news" aria-current="${sub === 'news' ? 'page' : 'false'}">资讯动态</a></nav>
     ${sub === 'news' ? newsTab(t) : routeTab(t, q)}`;
   return html;

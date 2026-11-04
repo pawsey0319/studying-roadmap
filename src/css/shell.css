@@ -228,3 +228,5 @@ body.qn-open .fab{display:none}
 .extbl{width:100%;border-collapse:collapse;font-size:13px}.extbl td,.extbl th{padding:4px;border-bottom:1px solid var(--soft);text-align:left}
 .extbl input,.extbl select{width:100%;padding:4px;border:1px solid var(--line);border-radius:6px}
 .exr{display:flex;gap:4px;align-items:center;margin-top:4px}.exr input{flex:1;padding:4px 6px;border:1px solid var(--line);border-radius:6px;font-size:13px}
+.pubst{padding-left:20px}.pubst>li{margin:12px 0}.pubst ul{margin:4px 0;padding-left:18px;font-size:14px}
+#pubDlg{max-width:min(620px,calc(100% - 24px))}

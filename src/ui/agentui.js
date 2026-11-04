@@ -14,6 +14,7 @@ import { act, refresh, toast, PICK, MAX_PICK, pickBar } from './kit.js';
 import { planCard, registerPlan } from './suggest.js';
 import { stageLabel } from './home.js';
 import { openExport } from './export.js';
+import { searchPublic, publicText } from './public.js';
 
 /* ---------- 设置与花费（只存本设备） ---------- */
 // 网站接了云端时，默认用管理员提供的内测模型；否则默认魔搭
@@ -83,6 +84,8 @@ const KINDS = {
   biz: id => { const b = (M.C.biz.items || []).find(x => x.id === id); if (!b) return null;
     return { title: '商机做 demo', bizId: id, text: `商机：${b.title}\n说明：${b.desc}\n参考：${(b.links || []).map(l => l.name + ' ' + l.url).join('；') || '无'}\n${doingText()}`, pills: ['这条商机'], label: '把这条商机做成 demo',
       auto: '我想把这条商机做成一个可演示的 demo，交给 AI 生成工具去做。先问我三件事：给谁用、核心场景是什么、最少要哪几页。每件事给 2–4 个可以直接选的选项（用“· 选项”列出），也允许我自己说。我回答清楚后，再输出需求包，放在 req 代码块里：{"title":"demo 名称","users":"给谁用","scene":"核心场景，一两句","pages":[{"name":"页面名","purpose":"用途","elements":["页面上要有的东西"]}],"data":["要用到的假数据，例如：10 条客户记录，字段有…"],"accept":["验收标准：能演示的具体操作"],"style":"界面风格"}。页面控制在 2–5 个，只做演示需要的。' }; },
+  pub: id => ({ title: '看看这条公共路线', pubId: id, text: '用户在看公共区域的一条内容，ID：' + id + '。需要时用 get_public 工具读取全文。\n' + doingText(), pills: ['这条公共内容', '在学的阶段'],
+    auto: '先用工具读这条公共内容，再结合我的情况说说：适不适合我、和我现有的路线比多了什么少了什么、如果采用要先跳过哪些。最多 300 字。', label: '这条公共路线适不适合我' }),
   track: id => ({ title: '规划这个方向', text: trackCtx(id), pills: ['整个方向'], first: `想怎么调整“${M.track(id).name}”？可以说说你整体学到哪了、目标是什么。我会先问清楚，再对需要调整的阶段各给一份修改方案。` })
 };
 
@@ -328,6 +331,8 @@ const TOOLS = {
     return [doc && '阶段文档：\n' + doc.slice(0, 3000), cs.join('\n')].filter(Boolean).join('\n\n') || '没有笔记';
   },
   get_route: a => routeCtx(a.id) || '没有这条路线',
+  search_public: a => searchPublic(a.query || ''),
+  get_public: a => publicText(a.id),
   search_digests: async a => {
     const all = store.all('digests'), ids = await searchDigests(a.query, 5);
     const q = String(a.query || '').toLowerCase().split(/\s+/).filter(Boolean);
@@ -336,7 +341,7 @@ const TOOLS = {
     return hits.map(g => `## ${new Date(g.c).toLocaleDateString('zh-CN')} ${g.title}\n${g.t.slice(0, 1200)}`).join('\n\n') || '没有找到相关的对话纪要';
   }
 };
-const TOOL_LABEL = { list_tracks: '查看你的学习方向', get_stage: '查看一个阶段', search_news: '搜索资讯', get_notes: '查看你的笔记', get_route: '查看前沿路线', search_digests: '查找过去的对话纪要' };
+const TOOL_LABEL = { list_tracks: '查看你的学习方向', get_stage: '查看一个阶段', search_news: '搜索资讯', get_notes: '查看你的笔记', get_route: '查看前沿路线', search_digests: '查找过去的对话纪要', search_public: '搜索公共区域的路线', get_public: '查看一条公共路线' };
 
 async function send(text, opts = {}) {
   if (busy) return;
@@ -438,6 +443,7 @@ act('blk-req', async el => {
 });
 act('agent-export', () => openExport({ at: ctxAt(), card: CUR && CUR.cardId, biz: CUR && CUR.bizId }));
 act('agent-biz', el => openAgent('biz', el.dataset.id));
+act('agent-public', el => openAgent('pub', el.dataset.id));
 act('att-rm', el => { ATT.splice(+el.dataset.i, 1); renderDrawer(); });
 act('agent-new', async () => {
   if (busy || !MSGS.length) return;

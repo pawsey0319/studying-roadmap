@@ -1,6 +1,6 @@
 // 离线缓存：本站文件一律“网络优先、断网用缓存”，这样每次发布后打开就是新版本，断网时仍能打开看过的页面。
 // 不缓存任何跨站请求（AI 服务商、GitHub、Supabase 等），只缓存本站文件。
-const VER = 'lh-v3-4';
+const VER = 'lh-v3-5';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png',
   'src/css/base.css', 'src/css/pages.css', 'src/css/shell.css'];
 

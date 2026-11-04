@@ -213,3 +213,13 @@ returns table (id text, score float) language sql stable as $$
   where user_id = auth.uid() order by embedding <=> q limit least(greatest(n, 1), 20);
 $$;
 grant execute on function public.match_digests(vector, int) to authenticated;
+
+-- ==== 9. 公共区域：最近 30 天的采用次数（只返回计数，不暴露是谁采用的） ====
+create or replace function public.public_recent(days int default 30)
+returns table (item_id bigint, n bigint) language sql stable security definer set search_path = public as $$
+  select a.item_id, count(*) from adoptions a join public_items p on p.id = a.item_id
+  where p.status = 'published' and a.created_at > now() - make_interval(days => least(greatest(days, 1), 90))
+  group by a.item_id;
+$$;
+revoke all on function public.public_recent(int) from public, anon;
+grant execute on function public.public_recent(int) to authenticated;
