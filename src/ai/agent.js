@@ -7,10 +7,11 @@
 //   ```summary {...}```                                              开局追问时的路线摘要
 //   ```tool {"name":"…","args":{…}}```                               多步模式下调用工具（只读）
 //   ```quiz  {"item":"任务 ID","kind":"memory|procedural|concept","q":"题目","a":"参考答案"}```  自测出题（界面只显示题目）
+//   ```req   {"title","users","scene","pages":[{"name","purpose","elements":[]}],"data":[],"accept":[],"style"}```  商机做 demo 的需求包
 //   ```grade {"item":"任务 ID","score":0.8,"hints":0,"retries":0,"pass":true}```  批改结果（自动记进自测记录）
 import { cleanOps } from '../core/overlay.js';
 
-const BLOCK_RE = /```(plan|route|note|memory|summary|tool|track|next|digest|method|quiz|grade)\s*\n?([\s\S]*?)```/g;
+const BLOCK_RE = /```(plan|route|note|memory|summary|tool|track|next|digest|method|quiz|grade|req)\s*\n?([\s\S]*?)```/g;
 
 // 宽松解析：去掉注释和尾逗号，容忍模型输出的常见小错误
 export function looseJSON(s) {

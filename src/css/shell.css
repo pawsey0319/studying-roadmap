@@ -215,3 +215,16 @@ body.qn-open .fab{display:none}
   .nlist .na{grid-column:2;flex-direction:row;justify-content:flex-start}
   .sa{gap:5px}
 }
+#exDlg{max-width:min(860px,calc(100% - 24px))}
+.ex .exs{margin:0 0 16px}
+.ex .exs>b{display:block;margin-bottom:6px}
+.exi{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:start;padding:6px 0;border-bottom:1px solid var(--soft);font-size:14px}
+.exi small{display:block;color:var(--faint);font-size:12px}
+#exExtra{width:100%;border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin-top:8px;font-size:13.5px}
+#exTool{width:100%;padding:6px;border:1px solid var(--line);border-radius:8px}
+.expart{border:1px solid var(--line);border-radius:8px;margin-top:8px;overflow:hidden}
+.expart .meta{padding:6px 10px;background:var(--soft)}
+.expart pre{margin:0;padding:10px;max-height:260px;overflow:auto;white-space:pre-wrap;font-size:12.5px}
+.extbl{width:100%;border-collapse:collapse;font-size:13px}.extbl td,.extbl th{padding:4px;border-bottom:1px solid var(--soft);text-align:left}
+.extbl input,.extbl select{width:100%;padding:4px;border:1px solid var(--line);border-radius:6px}
+.exr{display:flex;gap:4px;align-items:center;margin-top:4px}.exr input{flex:1;padding:4px 6px;border:1px solid var(--line);border-radius:6px;font-size:13px}

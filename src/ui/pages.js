@@ -43,7 +43,8 @@ export function renderBiz(q) {
   const U = store.ui(), tf = U.bizTrack || 'all', kf = U.bizKind || 'all';
   const items = M.C.biz.items.filter(x => (tf === 'all' || x.track === tf) && (kf === 'all' || x.kind === kf) && M.track(x.track));
   const card = x => `<div class="card mcard"><h4>${esc(x.title)}</h4><p>${esc(x.desc)}</p>
-    <div class="meta">${trackTag(x.track)}${(x.r || []).filter(rid => M.route(rid)).map(routeTag).join('')}${(x.links || []).map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name)}</a>`).join(' · ')}</div></div>`;
+    <div class="meta">${trackTag(x.track)}${(x.r || []).filter(rid => M.route(rid)).map(routeTag).join('')}${(x.links || []).map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name)}</a>`).join(' · ')}</div>
+    <div class="sa"><button class="btn sm acc" data-act="agent-biz" data-id="${esc(x.id)}" title="Agent 先问你三件事，再整理成需求包">做成 demo</button><button class="btn sm gh" data-act="export-open" data-biz="${esc(x.id)}" data-scene="prd">写 PRD / 调研</button></div></div>`;
   return `<div class="ph"><h1>落地与商机</h1><span class="mut">AI 真正落地的机会：新出现的商机，以及老业务怎么用 AI 改造</span></div>
     <div class="chips" style="margin:14px 0">${[['all', '全部方向'], ...M.tracks().map(t => [t.id, t.short || t.name])].map(([k, v]) => `<button class="chip" data-act="biz-track" data-id="${k}" aria-pressed="${tf === k}">${esc(v)}</button>`).join('')}
       <span style="width:12px"></span>${[['all', '全部'], ['new', '新商机'], ['old', '老商机改造']].map(([k, v]) => `<button class="chip" data-act="biz-kind" data-id="${k}" aria-pressed="${kf === k}">${v}</button>`).join('')}</div>

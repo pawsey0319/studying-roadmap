@@ -20,6 +20,7 @@ import { openAgent, closeAgent } from './ui/agentui.js';
 import { openOnboard } from './ui/onboard.js';
 import './ui/suggest.js';
 import './ui/dragask.js';
+import './ui/export.js';
 
 /* ---------- 路由：#/  #/t/<方向>[/news][?s=阶段]  #/r/<路线>  #/notes[/<卡片>|/s/<阶段>]  #/biz  #/import  #/settings  #/later  #/suggestions ---------- */
 function parse() {

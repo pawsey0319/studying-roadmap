@@ -13,6 +13,7 @@ import { indexDigest, searchDigests } from '../ai/embed.js';
 import { act, refresh, toast, PICK, MAX_PICK, pickBar } from './kit.js';
 import { planCard, registerPlan } from './suggest.js';
 import { stageLabel } from './home.js';
+import { openExport } from './export.js';
 
 /* ---------- 设置与花费（只存本设备） ---------- */
 // 网站接了云端时，默认用管理员提供的内测模型；否则默认魔搭
@@ -79,6 +80,9 @@ const KINDS = {
       pills: [`${L.length} 条资讯`, '在学的阶段'], auto: EXPLAIN_MANY }; },
   route: id => { const t = routeCtx(id); return t && { title: '更新跟踪学习清单', routeId: id, text: t, pills: ['这条前沿路线', '最近进展'],
     auto: '根据这条前沿路线的最新进展，补充 2–4 项跟踪学习任务（至少一项实践验证），放在 route 代码块里：{"route":"路线 ID","items":[{"text":"…","mode":"theory 或 practice","url":"确定才填"}]}。不要重复已有清单，并用一两句话说明为什么选这些。' }; },
+  biz: id => { const b = (M.C.biz.items || []).find(x => x.id === id); if (!b) return null;
+    return { title: '商机做 demo', bizId: id, text: `商机：${b.title}\n说明：${b.desc}\n参考：${(b.links || []).map(l => l.name + ' ' + l.url).join('；') || '无'}\n${doingText()}`, pills: ['这条商机'], label: '把这条商机做成 demo',
+      auto: '我想把这条商机做成一个可演示的 demo，交给 AI 生成工具去做。先问我三件事：给谁用、核心场景是什么、最少要哪几页。每件事给 2–4 个可以直接选的选项（用“· 选项”列出），也允许我自己说。我回答清楚后，再输出需求包，放在 req 代码块里：{"title":"demo 名称","users":"给谁用","scene":"核心场景，一两句","pages":[{"name":"页面名","purpose":"用途","elements":["页面上要有的东西"]}],"data":["要用到的假数据，例如：10 条客户记录，字段有…"],"accept":["验收标准：能演示的具体操作"],"style":"界面风格"}。页面控制在 2–5 个，只做演示需要的。' }; },
   track: id => ({ title: '规划这个方向', text: trackCtx(id), pills: ['整个方向'], first: `想怎么调整“${M.track(id).name}”？可以说说你整体学到哪了、目标是什么。我会先问清楚，再对需要调整的阶段各给一份修改方案。` })
 };
 
@@ -253,7 +257,7 @@ async function renderDrawer() {
   const pills = ['学习者档案' + (prof ? '' : '（未填）'), mem ? '长期记忆' : null, nMethod ? '你的学习方法' : null, nDig ? `${nDig} 份过去的纪要` : null, journalText() ? '学习日志' : null, ...(CUR.pills || [])].filter(Boolean);
   dw().innerHTML = `<div class="dw-h"><h3>学习 Agent</h3><span class="fnt small">${esc(CUR.title)}</span>
       <button class="x" data-act="agent-close" aria-label="收起">×</button></div>
-    <div class="mem">它会看到：${pills.map(x => `<span>${esc(x)}</span>`).join('')}<button class="btn sm gh" data-act="agent-new" title="把这段对话整理成纪要，然后开始新话题"${MSGS.length && !busy ? '' : ' disabled'}>新话题</button></div>
+    <div class="mem">它会看到：${pills.map(x => `<span>${esc(x)}</span>`).join('')}<button class="btn sm gh" data-act="agent-export" title="把这次的背景整理给 ChatGPT、Claude Code、v0 等工具用">导出</button><button class="btn sm gh" data-act="agent-new" title="把这段对话整理成纪要，然后开始新话题"${MSGS.length && !busy ? '' : ' disabled'}>新话题</button></div>
     <div class="msgs" id="msgs" aria-live="polite">${ready ? '' : `<div class="ai"><p>${esc(block)}。</p><p><a class="btn sm acc" href="#/settings" data-act="agent-close">去设置</a></p></div>`}
       ${CUR.first && !MSGS.length ? `<div class="ai md">${md(CUR.first)}</div>` : ''}
       ${MSGS.map(msgHtml).join('')}${note ? `<div class="tool">${esc(note)}</div>` : ''}</div>
@@ -301,6 +305,9 @@ function blockHtml(b, key) {
     return `<div class="blk"><b class="small">跟踪学习清单补充</b><ul>${items.map(x => `<li>${x.mode === 'practice' ? '<span class="tag">实践验证</span> ' : ''}${esc(x.text)}${x.url ? ' <span class="tag ai">链接未核实</span>' : ''}</li>`).join('')}</ul>
       <div class="pf"><button class="btn sm acc" data-act="blk-route" data-k="${key}">加入清单</button></div></div>`;
   }
+  if (b.type === 'req') { const r = b.data, pages = (r.pages || []).filter(p => p && p.name);
+    return `<div class="blk"><b class="small">需求包 · ${esc(r.title || '')}</b><p class="small">给谁用：${esc(r.users || '')}<br>核心场景：${esc(r.scene || '')}<br>页面：${pages.map(p => esc(p.name)).join('、')}</p>
+      <div class="pf"><button class="btn sm acc" data-act="blk-req" data-k="${key}">导出给 demo 工具</button></div></div>`; }
   if (b.type === 'quiz') return `<div class="quiz"><div class="k">自测题 · ${esc(QKINDS[b.data.kind] || '记忆')}类${b.data.kind === 'concept' ? '（用你自己的话讲）' : ''}</div><div class="md">${md(String(b.data.q || ''))}</div></div>`;
   if (b.type === 'tool' || b.type === 'summary' || b.type === 'next' || b.type === 'grade') return '';
   return '';
@@ -424,6 +431,13 @@ function recentChanges() {
 
 /* ---------- 动作 ---------- */
 act('agent-close', () => closeAgent());
+act('blk-req', async el => {
+  const b = BLOCKS.get(el.dataset.k); if (!b) return;
+  if (CUR.bizId) await store.localSet('req.' + CUR.bizId, b.data);
+  openExport({ biz: CUR.bizId || null, req: b.data, scene: 'demo' });
+});
+act('agent-export', () => openExport({ at: ctxAt(), card: CUR && CUR.cardId, biz: CUR && CUR.bizId }));
+act('agent-biz', el => openAgent('biz', el.dataset.id));
 act('att-rm', el => { ATT.splice(+el.dataset.i, 1); renderDrawer(); });
 act('agent-new', async () => {
   if (busy || !MSGS.length) return;

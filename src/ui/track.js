@@ -50,6 +50,7 @@ export function stageCard(t, s, idx, cur, openId) {
           <button class="btn sm" data-act="agent-quiz" data-id="${s.id}" title="Agent 出题，按作答情况算掌握度">自测</button>
           <a class="btn sm gh" href="#/notes/s/${encodeURIComponent(s.id)}">笔记 ${notes}</a>
           <button class="btn sm gh" data-act="quick-note" data-id="${s.id}">随手记</button>
+          <button class="btn sm gh" data-act="export-open" data-at="${s.id}" title="整理成给其他 AI 工具用的上下文">导出给 AI</button>
           ${s.mastered ? '' : `<button class="btn sm gh" data-act="master" data-id="${s.id}">标为已掌握</button>`}</div>
       </div></div></li>`;
 }

@@ -129,7 +129,8 @@ function stageDoc(id, C, docs) {
       <div class="sa"><button class="btn sm" data-act="doc-edit" data-id="${esc(id)}">编辑</button>
         <button class="btn sm acc" data-act="agent-doc" data-id="${esc(id)}">和 Agent 聊这篇</button>
         ${cs.length ? `<button class="btn sm" data-act="agent-organize" data-id="${esc(id)}">让 Agent 把 ${cs.length} 张卡片整理进来</button>` : ''}
-        <button class="btn sm gh" data-act="quick-note" data-id="${esc(id)}">＋ 卡片</button></div>`}
+        <button class="btn sm gh" data-act="quick-note" data-id="${esc(id)}">＋ 卡片</button>
+        <button class="btn sm gh" data-act="export-open" data-at="${esc(id)}">导出给 AI</button></div>`}
     <div class="sh"><h3>这个阶段的卡片</h3></div>
     ${cs.map(([cid, c]) => `<div class="mini"><div class="md">${md(c.t)}</div><div class="meta">${new Date(c.c).toLocaleString('zh-CN', { hour12: false })}<span class="act"><a href="#/notes/${cid}">编辑</a><button data-act="agent-card" data-id="${cid}">问 Agent</button></span></div></div>`).join('') || '<p class="fnt small">还没有卡片。</p>'}</div>`;
 }
@@ -143,7 +144,7 @@ function cardView(id, c) {
       <div class="sa"><button class="btn sm pri" data-act="doc-done">完成编辑</button><button class="btn sm gh" data-act="card-del" data-id="${id}">删除这张卡片</button></div>`
     : `<div class="md nbody">${md(c.t)}</div>
       <div class="sa"><button class="btn sm" data-act="doc-edit" data-id="${id}">编辑</button><button class="btn sm acc" data-act="agent-card" data-id="${id}">和 Agent 聊这条</button>
-        <button class="btn sm gh" data-act="card-del" data-id="${id}">删除</button></div>`}</div>`;
+        <button class="btn sm gh" data-act="export-open" data-card="${id}">导出给 AI</button><button class="btn sm gh" data-act="card-del" data-id="${id}">删除</button></div>`}</div>`;
 }
 
 /* ---------- 动作 ---------- */
