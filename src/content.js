@@ -30,6 +30,7 @@ export async function loadContent() {
     get('config.json', true),           // 云端公开配置，没有就只用本地 + Gist
     get('data/hot.json', true),         // 财经快讯快照（云端读不到时兜底）
   ]);
-  const github = await get('data/github.json', true);   // 关键项目新版本、新星项目（Actions 用令牌预取）
-  return { domains, tracks, feed, legacy, routes, biz, suggestions: suggestions || { items: [] }, sources, community, hot, github, config: config || {} };
+  const github = await get('data/github.json', true);
+  const taxonomy = await get('content/taxonomy.json', true);   // 知识树前两层的分类   // 关键项目新版本、新星项目（Actions 用令牌预取）
+  return { domains, tracks, feed, legacy, routes, biz, suggestions: suggestions || { items: [] }, sources, community, hot, github, taxonomy, config: config || {} };
 }

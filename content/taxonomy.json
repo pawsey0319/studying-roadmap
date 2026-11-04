@@ -1,0 +1,1265 @@
+{
+ "note": "知识树的预置分类：方向 → 子方向 → 再细一层。kw 是匹配资讯用的关键词（英文按词边界、中文直接包含），s/r 是关联的理论阶段和前沿路线。更深的层由用户在网站上点“扩散”时让 AI 生成，存在个人数据里。",
+ "tracks": {
+  "llm": [
+   {
+    "id": "llm.arch",
+    "name": "架构与原理",
+    "en": "Architecture",
+    "kw": [],
+    "s": [
+     "llm.s01"
+    ],
+    "r": [],
+    "kids": [
+     {
+      "id": "llm.arch.attn",
+      "name": "注意力与长上下文",
+      "en": "Attention & long context",
+      "kw": [
+       "attention",
+       "long context",
+       "long-context",
+       "KV cache",
+       "长上下文",
+       "注意力",
+       "上下文窗口"
+      ],
+      "s": [],
+      "r": []
+     },
+     {
+      "id": "llm.arch.moe",
+      "name": "混合专家 MoE",
+      "en": "Mixture of Experts",
+      "kw": [
+       "MoE",
+       "mixture of experts",
+       "mixture-of-experts",
+       "混合专家"
+      ],
+      "s": [
+       "llm.s03"
+      ],
+      "r": []
+     },
+     {
+      "id": "llm.arch.newarch",
+      "name": "新架构：SSM 与扩散语言模型",
+      "en": "New architectures",
+      "kw": [
+       "Mamba",
+       "state space",
+       "SSM",
+       "RWKV",
+       "diffusion language",
+       "linear attention",
+       "扩散语言模型",
+       "线性注意力"
+      ],
+      "s": [],
+      "r": []
+     },
+     {
+      "id": "llm.arch.mm",
+      "name": "多模态",
+      "en": "Multimodal",
+      "kw": [
+       "multimodal",
+       "vision-language",
+       "VLM",
+       "omni",
+       "多模态",
+       "视觉语言",
+       "图像生成",
+       "视频生成"
+      ],
+      "s": [],
+      "r": []
+     }
+    ]
+   },
+   {
+    "id": "llm.train",
+    "name": "训练",
+    "en": "Training",
+    "kw": [],
+    "s": [
+     "llm.s02"
+    ],
+    "r": [
+     "llm.r02"
+    ],
+    "kids": [
+     {
+      "id": "llm.train.pre",
+      "name": "预训练与 Scaling",
+      "en": "Pre-training & scaling",
+      "kw": [
+       "pre-train",
+       "pretrain",
+       "scaling law",
+       "scaling",
+       "预训练",
+       "数据配比"
+      ],
+      "s": [
+       "llm.s02"
+      ],
+      "r": []
+     },
+     {
+      "id": "llm.train.post",
+      "name": "后训练与对齐",
+      "en": "Post-training & alignment",
+      "kw": [
+       "post-train",
+       "RLHF",
+       "DPO",
+       "SFT",
+       "alignment",
+       "RLVR",
+       "后训练",
+       "对齐",
+       "强化学习"
+      ],
+      "s": [
+       "llm.s02"
+      ],
+      "r": [
+       "llm.r02"
+      ]
+     },
+     {
+      "id": "llm.train.reason",
+      "name": "推理模型与测试时计算",
+      "en": "Reasoning & test-time compute",
+      "kw": [
+       "reasoning",
+       "test-time",
+       "chain of thought",
+       "chain-of-thought",
+       "thinking",
+       "推理模型",
+       "思维链",
+       "深度思考"
+      ],
+      "s": [],
+      "r": [
+       "llm.r01"
+      ]
+     },
+     {
+      "id": "llm.train.data",
+      "name": "数据与合成数据",
+      "en": "Data & synthetic data",
+      "kw": [
+       "dataset",
+       "synthetic data",
+       "data curation",
+       "数据集",
+       "合成数据",
+       "语料"
+      ],
+      "s": [],
+      "r": []
+     }
+    ]
+   },
+   {
+    "id": "llm.infer",
+    "name": "推理部署与成本",
+    "en": "Inference & cost",
+    "kw": [],
+    "s": [
+     "llm.s03"
+    ],
+    "r": [],
+    "kids": [
+     {
+      "id": "llm.infer.engine",
+      "name": "推理引擎",
+      "en": "Inference engines",
+      "kw": [
+       "vLLM",
+       "SGLang",
+       "TensorRT",
+       "serving",
+       "inference engine",
+       "推理引擎",
+       "推理加速"
+      ],
+      "s": [
+       "llm.s03"
+      ],
+      "r": []
+     },
+     {
+      "id": "llm.infer.compress",
+      "name": "量化与压缩",
+      "en": "Quantization & compression",
+      "kw": [
+       "quantiz",
+       "INT4",
+       "FP8",
+       "FP4",
+       "4-bit",
+       "量化感知",
+       "低比特",
+       "压缩"
+      ],
+      "s": [
+       "llm.s03"
+      ],
+      "r": []
+     },
+     {
+      "id": "llm.infer.price",
+      "name": "价格与成本",
+      "en": "Pricing & cost",
+      "kw": [
+       "price",
+       "pricing",
+       "per token",
+       "价格",
+       "降价",
+       "涨价",
+       "成本"
+      ],
+      "s": [],
+      "r": [
+       "llm.r04"
+      ]
+     },
+     {
+      "id": "llm.infer.chip",
+      "name": "芯片与算力",
+      "en": "Chips & compute",
+      "kw": [
+       "GPU",
+       "NVIDIA",
+       "TPU",
+       "Blackwell",
+       "data center",
+       "datacenter",
+       "芯片",
+       "算力",
+       "数据中心",
+       "英伟达"
+      ],
+      "s": [],
+      "r": []
+     }
+    ]
+   },
+   {
+    "id": "llm.app",
+    "name": "评估与 AI 产品工程",
+    "en": "Evaluation & AI product",
+    "kw": [],
+    "s": [
+     "llm.s04"
+    ],
+    "r": [],
+    "kids": [
+     {
+      "id": "llm.app.bench",
+      "name": "评测与榜单",
+      "en": "Benchmarks & leaderboards",
+      "kw": [
+       "benchmark",
+       "leaderboard",
+       "Arena",
+       "eval",
+       "评测",
+       "榜单",
+       "基准"
+      ],
+      "s": [
+       "llm.s04"
+      ],
+      "r": []
+     },
+     {
+      "id": "llm.app.rag",
+      "name": "RAG 与检索",
+      "en": "RAG & retrieval",
+      "kw": [
+       "RAG",
+       "retrieval",
+       "retrieval-augmented",
+       "检索增强",
+       "检索",
+       "知识库"
+      ],
+      "s": [
+       "llm.s04"
+      ],
+      "r": []
+     },
+     {
+      "id": "llm.app.biz",
+      "name": "产品与商业化",
+      "en": "Product & business",
+      "kw": [
+       "product manager",
+       "pricing plan",
+       "subscription",
+       "ARR",
+       "revenue",
+       "startup",
+       "融资",
+       "商业化",
+       "订阅",
+       "营收",
+       "产品经理"
+      ],
+      "s": [],
+      "r": []
+     },
+     {
+      "id": "llm.app.safety",
+      "name": "安全与可解释性",
+      "en": "Safety & interpretability",
+      "kw": [
+       "interpretab",
+       "safety",
+       "jailbreak",
+       "red team",
+       "可解释",
+       "安全",
+       "越狱"
+      ],
+      "s": [],
+      "r": [
+       "llm.r05"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "llm.land",
+    "name": "模型格局",
+    "en": "Model landscape",
+    "kw": [],
+    "s": [
+     "llm.s05"
+    ],
+    "r": [
+     "llm.r03",
+     "llm.r04"
+    ],
+    "kids": [
+     {
+      "id": "llm.land.open",
+      "name": "开源权重模型",
+      "en": "Open-weight models",
+      "kw": [
+       "open-weight",
+       "open weight",
+       "open source",
+       "Llama",
+       "Qwen",
+       "DeepSeek",
+       "Kimi",
+       "GLM",
+       "MiniMax",
+       "开源"
+      ],
+      "s": [],
+      "r": [
+       "llm.r03"
+      ]
+     },
+     {
+      "id": "llm.land.frontier",
+      "name": "闭源前沿模型",
+      "en": "Frontier closed models",
+      "kw": [
+       "GPT-",
+       "ChatGPT",
+       "Claude",
+       "Gemini",
+       "Grok",
+       "frontier",
+       "前沿模型"
+      ],
+      "s": [],
+      "r": [
+       "llm.r04"
+      ]
+     },
+     {
+      "id": "llm.land.world",
+      "name": "世界模型与具身",
+      "en": "World models & embodied AI",
+      "kw": [
+       "world model",
+       "embodied",
+       "robot",
+       "humanoid",
+       "世界模型",
+       "具身",
+       "机器人"
+      ],
+      "s": [],
+      "r": [
+       "llm.r06"
+      ]
+     }
+    ]
+   }
+  ],
+  "slm": [
+   {
+    "id": "slm.local",
+    "name": "小模型地图与本地运行",
+    "en": "Small models & local runtime",
+    "kw": [],
+    "s": [
+     "slm.s01"
+    ],
+    "r": [],
+    "kids": [
+     {
+      "id": "slm.local.runtime",
+      "name": "本地运行工具",
+      "en": "Local runtimes",
+      "kw": [
+       "Ollama",
+       "llama.cpp",
+       "LM Studio",
+       "MLX",
+       "GGUF",
+       "本地运行",
+       "本地部署"
+      ],
+      "s": [
+       "slm.s01"
+      ],
+      "r": []
+     },
+     {
+      "id": "slm.local.family",
+      "name": "小模型家族",
+      "en": "Small model families",
+      "kw": [
+       "Gemma",
+       "Phi-",
+       "SmolLM",
+       "MiniCPM",
+       "small language model",
+       "SLM",
+       "小模型"
+      ],
+      "s": [
+       "slm.s01"
+      ],
+      "r": []
+     }
+    ]
+   },
+   {
+    "id": "slm.tune",
+    "name": "训练与微调",
+    "en": "Training & fine-tuning",
+    "kw": [],
+    "s": [
+     "slm.s02",
+     "slm.s03"
+    ],
+    "r": [],
+    "kids": [
+     {
+      "id": "slm.tune.mini",
+      "name": "从零训迷你模型",
+      "en": "Train a tiny model",
+      "kw": [
+       "nanoGPT",
+       "from scratch",
+       "tiny model",
+       "从零训练",
+       "迷你模型"
+      ],
+      "s": [
+       "slm.s02"
+      ],
+      "r": []
+     },
+     {
+      "id": "slm.tune.lora",
+      "name": "LoRA / QLoRA 微调",
+      "en": "LoRA / QLoRA",
+      "kw": [
+       "LoRA",
+       "QLoRA",
+       "PEFT",
+       "Unsloth",
+       "LLaMA-Factory",
+       "LlamaFactory",
+       "fine-tun",
+       "微调"
+      ],
+      "s": [
+       "slm.s03"
+      ],
+      "r": []
+     },
+     {
+      "id": "slm.tune.domain",
+      "name": "领域数据",
+      "en": "Domain data",
+      "kw": [
+       "domain data",
+       "instruction data",
+       "data cleaning",
+       "领域数据",
+       "数据清洗",
+       "指令数据"
+      ],
+      "s": [
+       "slm.s03"
+      ],
+      "r": []
+     },
+     {
+      "id": "slm.tune.synth",
+      "name": "合成数据与环境合成",
+      "en": "Synthetic data & environments",
+      "kw": [
+       "synthetic",
+       "environment synthesis",
+       "合成数据",
+       "环境合成"
+      ],
+      "s": [],
+      "r": [
+       "slm.r03"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "slm.compress",
+    "name": "蒸馏、压缩与嵌入",
+    "en": "Distillation, compression & embeddings",
+    "kw": [],
+    "s": [
+     "slm.s04"
+    ],
+    "r": [],
+    "kids": [
+     {
+      "id": "slm.compress.distill",
+      "name": "蒸馏",
+      "en": "Distillation",
+      "kw": [
+       "distill",
+       "蒸馏",
+       "teacher model"
+      ],
+      "s": [
+       "slm.s04"
+      ],
+      "r": []
+     },
+     {
+      "id": "slm.compress.quantize",
+      "name": "量化部署",
+      "en": "Quantized deployment",
+      "kw": [
+       "quantiz",
+       "GGUF",
+       "AWQ",
+       "GPTQ",
+       "4-bit",
+       "INT4",
+       "量化感知",
+       "低比特"
+      ],
+      "s": [],
+      "r": []
+     },
+     {
+      "id": "slm.compress.embed",
+      "name": "嵌入与重排",
+      "en": "Embeddings & reranking",
+      "kw": [
+       "embedding",
+       "rerank",
+       "reranker",
+       "嵌入",
+       "重排",
+       "向量模型"
+      ],
+      "s": [
+       "slm.s04"
+      ],
+      "r": [
+       "slm.r05"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "slm.edge",
+    "name": "端侧与产品化",
+    "en": "On-device & productization",
+    "kw": [],
+    "s": [
+     "slm.s05"
+    ],
+    "r": [
+     "slm.r02"
+    ],
+    "kids": [
+     {
+      "id": "slm.edge.device",
+      "name": "端侧模型与硬件",
+      "en": "On-device models & hardware",
+      "kw": [
+       "on-device",
+       "edge AI",
+       "NPU",
+       "Apple Intelligence",
+       "smartphone",
+       "端侧",
+       "手机",
+       "AI PC"
+      ],
+      "s": [
+       "slm.s05"
+      ],
+      "r": [
+       "slm.r02"
+      ]
+     },
+     {
+      "id": "slm.edge.routing",
+      "name": "大小模型路由",
+      "en": "Model routing",
+      "kw": [
+       "routing",
+       "router",
+       "cascade",
+       "路由",
+       "大小模型"
+      ],
+      "s": [],
+      "r": [
+       "slm.r01"
+      ]
+     },
+     {
+      "id": "slm.edge.vertical",
+      "name": "行业专用模型",
+      "en": "Domain-specific models",
+      "kw": [
+       "domain-specific",
+       "medical",
+       "legal",
+       "clinical",
+       "行业模型",
+       "医疗",
+       "法律",
+       "专用模型"
+      ],
+      "s": [],
+      "r": [
+       "slm.r04"
+      ]
+     }
+    ]
+   }
+  ],
+  "agent": [
+   {
+    "id": "agent.basics",
+    "name": "基本范式",
+    "en": "Agent fundamentals",
+    "kw": [],
+    "s": [
+     "agent.s01"
+    ],
+    "r": [],
+    "kids": [
+     {
+      "id": "agent.basics.react",
+      "name": "ReAct 与规划",
+      "en": "ReAct & planning",
+      "kw": [
+       "ReAct",
+       "planning",
+       "planner",
+       "规划",
+       "推理与行动"
+      ],
+      "s": [
+       "agent.s01"
+      ],
+      "r": []
+     },
+     {
+      "id": "agent.basics.workflow",
+      "name": "工作流与自主智能体",
+      "en": "Workflows vs autonomous agents",
+      "kw": [
+       "workflow",
+       "orchestration",
+       "工作流",
+       "编排"
+      ],
+      "s": [
+       "agent.s01"
+      ],
+      "r": []
+     },
+     {
+      "id": "agent.basics.memory",
+      "name": "记忆与上下文工程",
+      "en": "Memory & context engineering",
+      "kw": [
+       "memory",
+       "context engineering",
+       "记忆",
+       "上下文工程"
+      ],
+      "s": [
+       "agent.s02"
+      ],
+      "r": []
+     }
+    ]
+   },
+   {
+    "id": "agent.proto",
+    "name": "工具与协议",
+    "en": "Tools & protocols",
+    "kw": [],
+    "s": [
+     "agent.s02"
+    ],
+    "r": [
+     "agent.r04"
+    ],
+    "kids": [
+     {
+      "id": "agent.proto.mcp",
+      "name": "MCP",
+      "en": "MCP",
+      "kw": [
+       "MCP",
+       "Model Context Protocol"
+      ],
+      "s": [
+       "agent.s02"
+      ],
+      "r": [
+       "agent.r04"
+      ]
+     },
+     {
+      "id": "agent.proto.a2a",
+      "name": "A2A 与 Agent 互联",
+      "en": "A2A & agent interoperability",
+      "kw": [
+       "A2A",
+       "agent-to-agent",
+       "Agent2Agent",
+       "智能体互联"
+      ],
+      "s": [
+       "agent.s02"
+      ],
+      "r": [
+       "agent.r04"
+      ]
+     },
+     {
+      "id": "agent.proto.skills",
+      "name": "Skills 与工具调用",
+      "en": "Skills & tool calling",
+      "kw": [
+       "Skills",
+       "tool use",
+       "tool calling",
+       "function calling",
+       "工具调用",
+       "技能"
+      ],
+      "s": [
+       "agent.s02"
+      ],
+      "r": []
+     }
+    ]
+   },
+   {
+    "id": "agent.fw",
+    "name": "框架与多智能体",
+    "en": "Frameworks & multi-agent",
+    "kw": [],
+    "s": [
+     "agent.s03"
+    ],
+    "r": [],
+    "kids": [
+     {
+      "id": "agent.fw.sdk",
+      "name": "开发框架",
+      "en": "Agent frameworks",
+      "kw": [
+       "LangGraph",
+       "LangChain",
+       "CrewAI",
+       "AutoGen",
+       "Agents SDK",
+       "smolagents",
+       "Agent SDK",
+       "框架"
+      ],
+      "s": [
+       "agent.s03"
+      ],
+      "r": []
+     },
+     {
+      "id": "agent.fw.multi",
+      "name": "多智能体协作",
+      "en": "Multi-agent systems",
+      "kw": [
+       "multi-agent",
+       "multiagent",
+       "swarm",
+       "多智能体",
+       "多 Agent"
+      ],
+      "s": [
+       "agent.s03"
+      ],
+      "r": []
+     },
+     {
+      "id": "agent.fw.rl",
+      "name": "Agentic RL 与环境",
+      "en": "Agentic RL & environments",
+      "kw": [
+       "agentic RL",
+       "reinforcement learning",
+       "environment",
+       "RL ",
+       "强化学习",
+       "训练环境"
+      ],
+      "s": [],
+      "r": [
+       "agent.r01"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "agent.apps",
+    "name": "Agent 应用",
+    "en": "Agent applications",
+    "kw": [],
+    "s": [
+     "agent.s04"
+    ],
+    "r": [
+     "agent.r03",
+     "agent.r05",
+     "agent.r07"
+    ],
+    "kids": [
+     {
+      "id": "agent.apps.coding",
+      "name": "编程 Agent",
+      "en": "Coding agents",
+      "kw": [
+       "Claude Code",
+       "Codex",
+       "Cursor",
+       "Copilot",
+       "coding agent",
+       "SWE-bench",
+       "编程",
+       "代码"
+      ],
+      "s": [
+       "agent.s04"
+      ],
+      "r": [
+       "agent.r07"
+      ]
+     },
+     {
+      "id": "agent.apps.cua",
+      "name": "Computer Use 与浏览器",
+      "en": "Computer use & browser agents",
+      "kw": [
+       "computer use",
+       "computer-use",
+       "browser",
+       "GUI",
+       "浏览器",
+       "操作电脑"
+      ],
+      "s": [
+       "agent.s04"
+      ],
+      "r": [
+       "agent.r03"
+      ]
+     },
+     {
+      "id": "agent.apps.long",
+      "name": "常驻与长程任务",
+      "en": "Long-running agents",
+      "kw": [
+       "long-running",
+       "long-horizon",
+       "background agent",
+       "长程",
+       "常驻",
+       "后台"
+      ],
+      "s": [],
+      "r": [
+       "agent.r05"
+      ]
+     },
+     {
+      "id": "agent.apps.work",
+      "name": "个人与企业 Agent",
+      "en": "Personal & enterprise agents",
+      "kw": [
+       "personal agent",
+       "enterprise",
+       "assistant",
+       "数字员工",
+       "企业",
+       "个人助理",
+       "Personal Agent"
+      ],
+      "s": [],
+      "r": []
+     }
+    ]
+   },
+   {
+    "id": "agent.ops",
+    "name": "评估、安全与上线",
+    "en": "Evaluation, safety & ops",
+    "kw": [],
+    "s": [
+     "agent.s05"
+    ],
+    "r": [
+     "agent.r02",
+     "agent.r06"
+    ],
+    "kids": [
+     {
+      "id": "agent.ops.eval",
+      "name": "评估与可观测",
+      "en": "Evaluation & observability",
+      "kw": [
+       "eval",
+       "observability",
+       "tracing",
+       "benchmark",
+       "可观测",
+       "评估",
+       "评测"
+      ],
+      "s": [
+       "agent.s05"
+      ],
+      "r": []
+     },
+     {
+      "id": "agent.ops.sec",
+      "name": "安全与治理",
+      "en": "Security & governance",
+      "kw": [
+       "prompt injection",
+       "security",
+       "governance",
+       "permission",
+       "安全",
+       "治理",
+       "权限"
+      ],
+      "s": [
+       "agent.s05"
+      ],
+      "r": [
+       "agent.r06"
+      ]
+     },
+     {
+      "id": "agent.ops.pay",
+      "name": "身份与支付",
+      "en": "Identity & payments",
+      "kw": [
+       "payment",
+       "identity",
+       "x402",
+       "AP2",
+       "支付",
+       "身份",
+       "付款"
+      ],
+      "s": [],
+      "r": [
+       "agent.r02"
+      ]
+     }
+    ]
+   }
+  ],
+  "quant": [
+   {
+    "id": "quant.base",
+    "name": "市场与数据",
+    "en": "Markets & data",
+    "kw": [],
+    "s": [
+     "quant.s01",
+     "quant.s02"
+    ],
+    "r": [],
+    "kids": [
+     {
+      "id": "quant.base.market",
+      "name": "市场与指标常识",
+      "en": "Market basics",
+      "kw": [
+       "stock market",
+       "futures",
+       "ETF",
+       "index",
+       "股票",
+       "期货",
+       "指数",
+       "市盈率",
+       "A 股",
+       "A股"
+      ],
+      "s": [
+       "quant.s01"
+      ],
+      "r": []
+     },
+     {
+      "id": "quant.base.data",
+      "name": "行情数据与开源工具",
+      "en": "Market data & open-source tools",
+      "kw": [
+       "AKShare",
+       "Tushare",
+       "market data",
+       "Qlib",
+       "vn.py",
+       "vectorbt",
+       "行情数据",
+       "行情"
+      ],
+      "s": [
+       "quant.s02"
+      ],
+      "r": [
+       "quant.r05"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "quant.strat",
+    "name": "策略与回测",
+    "en": "Strategies & backtesting",
+    "kw": [],
+    "s": [
+     "quant.s03",
+     "quant.s04"
+    ],
+    "r": [],
+    "kids": [
+     {
+      "id": "quant.strat.bt",
+      "name": "回测与可信度",
+      "en": "Backtesting & reliability",
+      "kw": [
+       "backtest",
+       "look-ahead",
+       "lookahead",
+       "overfit",
+       "回测",
+       "前视偏差",
+       "过拟合"
+      ],
+      "s": [
+       "quant.s03"
+      ],
+      "r": [
+       "quant.r02"
+      ]
+     },
+     {
+      "id": "quant.strat.factor",
+      "name": "多因子与机器学习",
+      "en": "Factors & machine learning",
+      "kw": [
+       "factor",
+       "alpha",
+       "cross-section",
+       "因子",
+       "选股",
+       "机器学习"
+      ],
+      "s": [
+       "quant.s04"
+      ],
+      "r": []
+     },
+     {
+      "id": "quant.strat.ts",
+      "name": "金融时序模型",
+      "en": "Financial time-series models",
+      "kw": [
+       "time series",
+       "time-series",
+       "forecasting",
+       "时序",
+       "预测模型"
+      ],
+      "s": [
+       "quant.s04"
+      ],
+      "r": [
+       "quant.r03"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "quant.ai",
+    "name": "AI + 量化",
+    "en": "AI for quant",
+    "kw": [],
+    "s": [
+     "quant.s06"
+    ],
+    "r": [
+     "quant.r01"
+    ],
+    "kids": [
+     {
+      "id": "quant.ai.agents",
+      "name": "交易与投研智能体",
+      "en": "Trading & research agents",
+      "kw": [
+       "TradingAgents",
+       "trading agent",
+       "research agent",
+       "投研",
+       "交易智能体",
+       "RD-Agent"
+      ],
+      "s": [
+       "quant.s06"
+      ],
+      "r": [
+       "quant.r01"
+      ]
+     },
+     {
+      "id": "quant.ai.text",
+      "name": "大模型读研报与舆情",
+      "en": "LLMs for reports & sentiment",
+      "kw": [
+       "sentiment",
+       "earnings call",
+       "financial report",
+       "研报",
+       "舆情",
+       "财报"
+      ],
+      "s": [
+       "quant.s06"
+      ],
+      "r": []
+     }
+    ]
+   },
+   {
+    "id": "quant.live",
+    "name": "实盘、监管与宏观",
+    "en": "Live trading, rules & macro",
+    "kw": [],
+    "s": [
+     "quant.s05"
+    ],
+    "r": [
+     "quant.r04"
+    ],
+    "kids": [
+     {
+      "id": "quant.live.broker",
+      "name": "券商接口",
+      "en": "Broker APIs",
+      "kw": [
+       "QMT",
+       "PTrade",
+       "broker API",
+       "券商",
+       "程序化接口"
+      ],
+      "s": [
+       "quant.s05"
+      ],
+      "r": []
+     },
+     {
+      "id": "quant.live.rules",
+      "name": "交易规则与程序化监管",
+      "en": "Trading rules & regulation",
+      "kw": [
+       "程序化交易",
+       "监管",
+       "证监会",
+       "交易所",
+       "SEC",
+       "regulation",
+       "规则"
+      ],
+      "s": [
+       "quant.s05"
+      ],
+      "r": [
+       "quant.r04"
+      ]
+     },
+     {
+      "id": "quant.live.macro",
+      "name": "宏观与利率",
+      "en": "Macro & rates",
+      "kw": [
+       "Federal Reserve",
+       "FOMC",
+       "interest rate",
+       "美联储",
+       "降息",
+       "加息",
+       "利率",
+       "宏观"
+      ],
+      "s": [],
+      "r": []
+     }
+    ]
+   }
+  ]
+ }
+}

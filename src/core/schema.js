@@ -48,6 +48,9 @@ export const DOCS = {
     && Array.isArray(v.a) && v.a.length <= 5 && v.a.every(x => isObj(x) && typeof x.s === 'number' && x.s >= 0 && x.s <= 1)
     && (!v.qs || (Array.isArray(v.qs) && v.qs.length <= 5)) && size(v) < 8000,
   // 学习日志：阶段或前沿路线 ID → {last 上次聊到哪, next 下次重点, u 时间}；最多 50 条
+  // 知识树里你让 AI 细分出来的子方向：父节点 ID → {kids:[{k, name, en, kw[]}], u}
+  tree: (k, v) => /^[a-z0-9][a-z0-9-]{1,30}(\.[a-z0-9]{1,12}){0,8}$/.test(k) && isObj(v) && Array.isArray(v.kids) && v.kids.length <= 8
+    && v.kids.every(x => isObj(x) && /^[a-z0-9]{1,12}$/.test(x.k) && str(x.name, 30) && Array.isArray(x.kw) && x.kw.length <= 12) && size(v) < 6000,
   journal: (k, v) => STAGE_RE.test(k) && isObj(v) && str(v.last || '', 400) && str(v.next || '', 400) && typeof v.u === 'number'
 };
 export const DOC_NAMES = Object.keys(DOCS);

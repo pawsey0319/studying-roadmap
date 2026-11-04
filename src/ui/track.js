@@ -11,7 +11,7 @@ import { act, refresh, toast, newsRow, resLink, TYPES, LVL, lvlTag, PICK, splitN
 import { applyToStage } from './suggest.js';
 import { LIVE, loadLive } from '../live.js';
 import { saveFile } from '../native.js';
-import { treeHtml, afterTree } from './tree.js';
+import { treeHtml } from './tree.js';
 
 /* ---------- 理论阶段 ---------- */
 function itemRow(i, s) {
@@ -51,7 +51,6 @@ export function stageCard(t, s, idx, cur, openId) {
           <button class="btn sm" data-act="agent-check" data-id="${s.id}">根据笔记检查</button>
           <button class="btn sm" data-act="agent-quiz" data-id="${s.id}" title="Agent 出题，按作答情况算掌握度">自测</button>
           <a class="btn sm gh" href="#/notes/s/${encodeURIComponent(s.id)}">笔记 ${notes}</a>
-          <a class="btn sm gh" href="#/t/${t.id}/tree?f=${encodeURIComponent(s.id)}" title="这个阶段分出的前沿路线、挂的资讯和笔记">关系图</a>
           <button class="btn sm gh" data-act="quick-note" data-id="${s.id}">随手记</button>
           <button class="btn sm gh" data-act="export-open" data-at="${s.id}" title="整理成给其他 AI 工具用的上下文">导出给 AI</button>
           ${s.mastered ? '' : `<button class="btn sm gh" data-act="master" data-id="${s.id}">标为已掌握</button>`}</div>
@@ -156,7 +155,6 @@ export function renderTrack(id, sub, q) {
 }
 export function afterTrack(id, sub, q) {
   if (sub === 'news' && M.track(id).live) loadLive(M.track(id), false);
-  if (sub === 'tree') afterTree(M.track(id), q);
   if (q.s) { const el = document.getElementById('st-' + q.s.replace(/\./g, '-')); if (el) el.scrollIntoView({ block: 'center' }); }
 }
 

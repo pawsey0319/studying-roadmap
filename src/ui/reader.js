@@ -76,5 +76,5 @@ act('rd-note', el => {
   window.dispatchEvent(new CustomEvent('quick-note', { detail: { at: (x.r || [])[0] || null, text: `[${x.t}](${x.u})\n\n` } }));
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && readerOpen() && !document.querySelector('dialog[open]') && !document.body.classList.contains('dw-open')) closeReader(); });
-window.addEventListener('hashchange', () => { if (readerOpen() && !/^#\/(t|r|search|later|$)/.test(location.hash || '#/')) closeReader(); });
+window.addEventListener('hashchange', () => { if (readerOpen() && !/^#\/(t|r|search|later|tree|$)/.test(location.hash || '#/')) closeReader(); });
 export const _toast = toast;
