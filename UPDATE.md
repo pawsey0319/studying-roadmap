@@ -21,8 +21,10 @@
 - `content/domains.json`：知识领域和它包含的方向。`content/legacy-v1.json`：v1 旧进度 ID 对照表，只用于迁移，不要改。
 - `data/sources.json`：官方博客、媒体、arXiv、项目 Release、AI 资讯日报的快照，每天自动生成，不进仓库。
 - `data/community.json`：Reddit 与 Hacker News 社区讨论，每周自动生成并提交。
-- `src/`：网页代码（浏览器原生 ES 模块，无需构建）。`src/core/` 纯逻辑，`src/store/` 个人数据（IndexedDB，可选 Gist 或 Supabase 同步），`src/ai/` 学习 Agent，`src/import/` 文档导入，`src/ui/` 界面。
-- `vendor/`：pdf.js 和 mammoth（解析 PDF、Word），许可证在同目录。
+- `src/`：网页代码（浏览器原生 ES 模块，无需构建）。`src/core/` 纯逻辑，`src/store/` 个人数据（IndexedDB；同步走 `backend.js` 适配的腾讯云开发 CloudBase 或 Supabase，备用 Gist），`src/ai/` 学习 Agent 和向量检索，`src/import/` 文档导入，`src/ui/` 界面，`src/native.js` 安卓 App 专用的适配。
+  - v3 新增的纯逻辑：`core/mastery.js` 自测掌握度，`core/method.js` 学习方法档案（含证据约束、撤销），`core/anki.js` Anki 导出，`core/ctxpack.js` 导出给其他 AI（工具配置表、拆段），`core/public.js` 公共区域快照与采用，`core/graph.js` 知识树。参考了 DeepTutor 和 mem0 的算法思路，见 `NOTICE`。
+- `vendor/`：pdf.js 和 mammoth（解析 PDF、Word）、Cytoscape.js（知识树），许可证在同目录。
+- `cloudbase/schema.sql`：腾讯云开发 PostgreSQL 的表、权限和触发器（第 1–9 段，重复执行没关系）。`app/`：安卓 App 外壳（Capacitor 8），见 `app/README.md`。
 - `tests/`：单元测试，`node --test tests/*.test.js`。
 - `tools/fetch_sources.py`：每日快照。`tools/weekly.py`：每周整理。`tools/fetch_community.py`：只抓社区讨论。`tools/publish.sh`：提交并推送。
 - `supabase/schema.sql`：内测云端的数据库表和权限。`config.json`（可选）：云端公开配置，格式见 `config.example.json`。
@@ -33,6 +35,8 @@
 | 什么时候 | 工作流 | 做什么 |
 |---|---|---|
 | 每次推送到 main、每天北京时间 8 点 | `.github/workflows/pages.yml` | 跑测试 → 抓每日快照（含 AI 资讯日报）→ 访问一次云端数据库防暂停 → 部署 |
+| 每 2 小时 | `.github/workflows/news.yml` | 抓财经快讯和海外源，配置了 Secrets 时写进腾讯云开发的 `hot_items`、`news_items`（App 和网页打开就能读到，不用等部署）。可选从 Miniflux 拉国内源，见 `deploy/miniflux/README.md` |
+| 手动运行或推送 `v*` 标签 | `.github/workflows/android.yml` | 打出签名的安卓 APK，标签时发布到 Releases |
 | 每周一北京时间 9 点 | `.github/workflows/weekly.yml` | 抓社区讨论 → 核验候选链接 → 免费模型写精选、精修前沿路线、生成待确认建议 → 跑测试 → 提交 → 触发部署。失败时开一个 `weekly-failed` issue，网站保留上周内容 |
 
 每周任务需要仓库 Secrets 里至少有一个模型 Key，按顺序轮换：`MODELSCOPE_KEY`（魔搭，首选，可用 `MODELSCOPE_MODEL` 改模型，逗号分隔多个）→ `SILICONFLOW_KEY` → `ZHIPU_KEY` → `LLM_BASE` + `LLM_KEY` + `LLM_MODEL`（聚合接口用这一组：`LLM_BASE` 填到 `/v1` 为止，`LLM_MODEL` 可以写多个模型、逗号分隔，按顺序备用）。
@@ -86,7 +90,15 @@
 - 量化方向重点关注个人量化：A 股和期货的交易与程序化交易规则、证监会与交易所公告、券商 QMT/PTrade、开源量化工具（Qlib、RD-Agent、vn.py、AKShare、TradingAgents 等）的正式版本、LLM/Agent 用于投研的论文。
 - 每个方向最多保留 45 条，超出时删最旧的；交易所与监管规则类的 `news` 条目保留。
 
-## 内测（Supabase 云端账号）
+## 腾讯云开发（v3 的后端）
+
+- 网页继续放在 GitHub Pages，数据和登录在腾讯云开发（环境 `studyingloop-d4gve2bc779a7d0ea`，上海，PostgreSQL）。`config.json` 里的 `cloudbaseKey` 是公开的 Publishable Key，可以提交。
+- 管理员密钥（服务端 API Key）只放在 GitHub Secrets：`CLOUDBASE_ENV`、`CLOUDBASE_API_KEY`，给 `news.yml` 写资讯表用。不要放进仓库或网页。
+- 改了 `cloudbase/schema.sql` 后，在控制台 → 数据库 → SQL 编辑器里重新执行新增的那几段。
+- 公共区域的举报在 `reports` 表里，只能在控制台看；下架某条内容：把 `public_items.status` 改成 `removed`。
+- 向量检索（对话纪要按意思查找）：用户在网站设置里填向量模型的 Key（默认硅基流动的 BAAI/bge-m3），只存在本设备。
+
+## 内测（Supabase 云端账号，备用）
 
 见 [内测说明.md](内测说明.md)：创建 Supabase 项目、运行 `supabase/schema.sql`、关闭公开注册、邀请测试用户、填 `config.json`、部署模型代理 `supabase/functions/ai`（内测用户用管理员的模型，Key 只存在 Supabase 函数密钥里）。
 

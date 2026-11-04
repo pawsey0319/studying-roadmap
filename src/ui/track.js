@@ -11,6 +11,7 @@ import { act, refresh, toast, newsRow, resLink, TYPES, LVL, lvlTag, PICK } from 
 import { applyToStage } from './suggest.js';
 import { LIVE, loadLive } from '../live.js';
 import { saveFile } from '../native.js';
+import { treeHtml, afterTree } from './tree.js';
 
 /* ---------- 理论阶段 ---------- */
 function itemRow(i, s) {
@@ -50,6 +51,7 @@ export function stageCard(t, s, idx, cur, openId) {
           <button class="btn sm" data-act="agent-check" data-id="${s.id}">根据笔记检查</button>
           <button class="btn sm" data-act="agent-quiz" data-id="${s.id}" title="Agent 出题，按作答情况算掌握度">自测</button>
           <a class="btn sm gh" href="#/notes/s/${encodeURIComponent(s.id)}">笔记 ${notes}</a>
+          <a class="btn sm gh" href="#/t/${t.id}/tree?f=${encodeURIComponent(s.id)}" title="这个阶段分出的前沿路线、挂的资讯和笔记">关系图</a>
           <button class="btn sm gh" data-act="quick-note" data-id="${s.id}">随手记</button>
           <button class="btn sm gh" data-act="export-open" data-at="${s.id}" title="整理成给其他 AI 工具用的上下文">导出给 AI</button>
           ${s.mastered ? '' : `<button class="btn sm gh" data-act="master" data-id="${s.id}">标为已掌握</button>`}</div>
@@ -152,12 +154,13 @@ export function renderTrack(id, sub, q) {
       <span class="mut">理论 ${st.doneStages}/${st.stages.length} · 前沿路线 ${rs.filter(r => !r.stopped).length} 条，${rs.filter(r => M.routeHasNew(r.id)).length} 条有新进展</span>
       <span class="r"><button class="btn" data-act="agent-track" data-id="${t.id}">和 Agent 规划这个方向</button></span></div>
     ${t.goal ? `<p class="lede">${esc(t.goal)}</p>` : ''}${t.pub ? `<p class="note">采用自公共区域：${esc(t.pub.by)} 的第 ${t.pub.v} 版。${(store.ui().upstream || {})[t.id] ? ` 作者已经更新到第 ${store.ui().upstream[t.id]} 版，<a href="#/public?id=${t.pub.id}">去看看改了什么</a>。` : ''}</p>` : ''}${t.note ? `<p class="note">${esc(t.note)}</p>` : ''}
-    <nav class="tabs" aria-label="方向内容"><a href="#/t/${id}" aria-current="${sub !== 'news' ? 'page' : 'false'}">路线</a><a href="#/t/${id}/news" aria-current="${sub === 'news' ? 'page' : 'false'}">资讯动态</a></nav>
-    ${sub === 'news' ? newsTab(t) : routeTab(t, q)}`;
+    <nav class="tabs" aria-label="方向内容"><a href="#/t/${id}" aria-current="${!sub ? 'page' : 'false'}">路线</a><a href="#/t/${id}/tree" aria-current="${sub === 'tree' ? 'page' : 'false'}">知识树</a><a href="#/t/${id}/news" aria-current="${sub === 'news' ? 'page' : 'false'}">资讯动态</a></nav>
+    ${sub === 'news' ? newsTab(t) : sub === 'tree' ? treeHtml(t, q) : routeTab(t, q)}`;
   return html;
 }
 export function afterTrack(id, sub, q) {
   if (sub === 'news' && M.track(id).live) loadLive(M.track(id), false);
+  if (sub === 'tree') afterTree(M.track(id), q);
   if (q.s) { const el = document.getElementById('st-' + q.s.replace(/\./g, '-')); if (el) el.scrollIntoView({ block: 'center' }); }
 }
 

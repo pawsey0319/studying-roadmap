@@ -14,4 +14,4 @@ mem0 — https://github.com/mem0ai/mem0
   Licensed under the Apache License, Version 2.0
   参考内容：给模型的条目用短编号、新增前查重、修改历史与撤销。见 src/core/method.js。
 
-第三方库（vendor/ 目录，各自附带许可证文件）：pdf.js（Apache-2.0）、mammoth.js（BSD-2-Clause）。
+第三方库（vendor/ 目录，各自附带许可证文件）：pdf.js（Apache-2.0）、mammoth.js（BSD-2-Clause）、Cytoscape.js（MIT）。
