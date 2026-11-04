@@ -9,6 +9,7 @@ import { masteryLines } from '../core/mastery.js';
 import { SCENES, KIND_NAME, build, prefillUrl, mergeTools, bestCombo, reqSections } from '../core/ctxpack.js';
 import { uid } from '../core/ids.js';
 import { act, toast } from './kit.js';
+import { saveFile } from '../native.js';
 import { stageLabel } from './home.js';
 
 let X = null;   // 面板状态：{ at, card, biz, scene, tool, picks:Set, extra, out, tab }
@@ -130,8 +131,7 @@ act('ex-best', () => { const b = bestCombo(LOG, X.scene); if (b) { X.picks = new
 act('ex-make', () => { compose(); render(); });
 act('ex-copy', async el => { if (await copy(X.out.parts[+el.dataset.i])) { el.textContent = '已复制'; toast(X.out.parts.length > 1 ? `已复制第 ${+el.dataset.i + 1} 段` : '已复制，去目标工具里粘贴'); } await logExport(); });
 act('ex-file', async el => {
-  const blob = new Blob([X.out.parts[+el.dataset.i]], { type: 'text/markdown' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = X.out.file; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  await saveFile(X.out.file, X.out.parts[+el.dataset.i], 'text/markdown');
   await logExport();
 });
 act('ex-open', async () => { if (X.out && X.out.parts.length === 1) await copy(X.out.parts[0]); await logExport(); });

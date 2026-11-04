@@ -8,12 +8,13 @@ import { PROVIDERS, chat } from '../ai/providers.js';
 import { act, refresh, toast } from './kit.js';
 import { aiCfg, saveCfg, usage } from './agentui.js';
 import { embedCfg, saveEmbed, embedReady, embed } from '../ai/embed.js';
+import { isNative, saveFile, scheduleReminder } from '../native.js';
 
 let hostedInfo = null;  // 内测模型的可选模型和用量，进设置页时取一次
 
 export async function renderSettings() {
   document.documentElement.style.setProperty('--c', '#1B2430');
-  const ec = await embedCfg();
+  const ec = await embedCfg(), rm = (await store.localGet('remind')) || { on: false, hour: 21, minute: 0 };
   const c = await aiCfg(), u = await usage(), p = PROVIDERS[c.provider] || PROVIDERS.custom, hosted = c.provider === 'hosted';
   if (hosted && cloud.signedIn()) hostedInfo = await cloud.aiInfo().catch(e => ({ error: e.message }));
   const prof = store.get('meta', 'profile') || '', mem = store.get('meta', 'memory') || '';
@@ -66,6 +67,7 @@ export async function renderSettings() {
       <form id="gistForm" class="addit"><input id="gistTok" type="password" autocomplete="off" placeholder="github_pat_…（只需要 Gists 读写权限）"><button class="btn sm">${gist.enabled() ? '更换令牌' : '开启'}</button></form>
       ${gist.enabled() ? '<div class="sa"><button class="btn sm" data-act="gist-sync">立即同步</button><button class="btn sm gh" data-act="gist-off">关闭</button></div>' : ''}
       <p class="hint">在 <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub 新建细粒度令牌</a>，Account permissions 里只把 Gists 设为 Read and write。</p></section>
+    ${isNative() ? remindHtml(rm) : ''}
     <section class="card set"><h3>备份</h3>
       <p class="hint">导出一份包含所有进度、调整、笔记和导入内容的文件，可以在任何设备上导入恢复。</p>
       <div class="sa"><button class="btn" data-act="exp">导出备份</button><button class="btn" data-act="imp">导入备份</button><input type="file" id="impBak" accept="application/json" hidden></div>
@@ -74,6 +76,22 @@ export async function renderSettings() {
   </div>`;
 }
 
+function remindHtml(r) {
+  const t = `${String(r.hour).padStart(2, '0')}:${String(r.minute).padStart(2, '0')}`;
+  return `<section class="card set"><h3>每天提醒</h3><p class="hint">在这台手机上每天定时提醒一次，内容是你当前在学的阶段。不经过服务器。</p>
+    <form data-remind class="addit"><label class="small"><input type="checkbox" name="on"${r.on ? ' checked' : ''}> 开启</label><input name="t" type="time" value="${t}"><button class="btn sm">保存</button></form><p id="rmMsg" class="small"></p></section>`;
+}
+export function remindBody() {
+  const d = M.doing()[0];
+  return d ? (d.kind === 'stage' ? `${d.t.short || d.t.name} · ${d.s.title}（${d.s.prog.n}/${d.s.prog.total}）` : `前沿：${d.r.title}`) : '打开看看今天学什么';
+}
+document.addEventListener('submit', async e => {
+  const f = e.target; if (!(f.matches && f.matches('form[data-remind]'))) return;
+  e.preventDefault(); const [h, m] = (f.t.value || '21:00').split(':').map(Number), cfg = { on: f.on.checked, hour: h, minute: m };
+  await store.localSet('remind', cfg);
+  const err = await scheduleReminder(cfg, remindBody()).catch(x => x.message);
+  $('#rmMsg').innerHTML = err ? `<span class="err">${esc(err)}</span>` : cfg.on ? `已设好：每天 ${f.t.value} 提醒` : '已关闭提醒';
+});
 function hostedHtml(c) {
   if (!cloud.signedIn()) return '<p class="small err">先在右边“账号与云端同步”里用邮箱登录，才能用内测模型。</p>';
   const h = hostedInfo || {};
@@ -116,9 +134,7 @@ act('cloud-out', () => { cloud.signOut(); refresh(); });
 act('gist-sync', async () => { await gist.syncNow(); refresh(); });
 act('gist-off', () => { gist.disable(); refresh(); });
 act('exp', () => {
-  const blob = new Blob([JSON.stringify(store.exportData(), null, 1)], { type: 'application/json' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `学习路线备份-${iso(new Date())}.json`; a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  saveFile(`学习路线备份-${iso(new Date())}.json`, JSON.stringify(store.exportData(), null, 1), 'application/json').catch(e => toast('保存失败：' + e.message));
 });
 act('imp', () => $('#impBak').click());
 act('em-save', async () => {

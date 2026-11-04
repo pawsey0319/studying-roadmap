@@ -5,13 +5,14 @@ import * as M from './model.js';
 import * as store from './store/index.js';
 import * as gist from './store/gist.js';
 import * as cloud from './store/cloud.js';
+import { initNative, isNative, scheduleReminder } from './native.js';
 import { setupLive, loadOne } from './live.js';
 import { act, bindActs, setRender, refresh, toast, pickBar } from './ui/kit.js';
 import { renderHome } from './ui/home.js';
 import { renderTrack, afterTrack } from './ui/track.js';
 import { renderRoute, renderBiz, renderSuggestions, renderLater, renderLibrary } from './ui/pages.js';
 import { renderNotes, openQuick } from './ui/notes.js';
-import { renderSettings, afterSettings } from './ui/settings.js';
+import { renderSettings, afterSettings, remindBody } from './ui/settings.js';
 import { renderImport, afterImport } from './ui/importui.js';
 import { renderSearch } from './ui/search.js';
 import { renderMethod, beforeMethod } from './ui/method.js';
@@ -153,6 +154,7 @@ async function boot() {
     return;
   }
   M.setContent(C);
+  initNative();
   await store.init({ legacyMap: C.legacy, defaultTab: C.tracks[0].id, today: iso(new Date()) });
   cloud.setup(C.config);
   store.ensureAdopted(C.tracks.map(t => t.id));
@@ -180,12 +182,14 @@ async function boot() {
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncNow(); });
   await render();
   syncNow();
+  // App：每次打开都按当前在学的阶段更新提醒内容
+  if (isNative()) store.localGet('remind').then(r => r && r.on && scheduleReminder(r, remindBody())).catch(() => {});
   if (linked) toast('已登录，正在同步');
   setTimeout(() => sweepSessions().catch(() => {}), 3000);
   setTimeout(() => checkUpstream().then(() => { if (Object.keys(store.ui().upstream || {}).length) refresh(); }).catch(() => {}), 4000);
   // 第一次使用：开局规划（可以跳过）
   if (!store.get('meta', 'onboarded') && !store.ui().obSeen && !location.hash.includes('settings')) setTimeout(() => openOnboard(), 400);
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  if ('serviceWorker' in navigator && location.protocol === 'https:' && !isNative()) {
     // 旧版缓存规则会让发布后的第一次打开仍是旧代码：新的缓存程序接管时自动刷新一次
     const had = !!navigator.serviceWorker.controller;
     navigator.serviceWorker.addEventListener('controllerchange', () => { if (had && !window.__swReloaded) { window.__swReloaded = true; location.reload(); } });

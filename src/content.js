@@ -1,5 +1,13 @@
 // 公共内容：从 content/ 和 data/ 读取 JSON。线上由 GitHub Pages 提供；本地预览要先运行 python3 -m http.server。
+import { isNative, REMOTE } from './native.js';
+// App 里：每天、每周更新的内容先从网站取最新的（4 秒超时），取不到用安装包里的
+const LIVE = /^(content\/(feed|routes|biz|suggestions)|data\/)/;
+async function remote(url) {
+  const c = new AbortController(), t = setTimeout(() => c.abort(), 4000);
+  try { const r = await fetch(REMOTE + url, { cache: 'no-cache', signal: c.signal }); return r.ok ? await r.json() : null; } catch (e) { return null; } finally { clearTimeout(t); }
+}
 const get = async (url, optional) => {
+  if (isNative() && LIVE.test(url)) { const j = await remote(url); if (j) return j; }
   try {
     const r = await fetch(url, { cache: 'no-cache' });
     if (!r.ok) throw new Error(url + ' 返回 ' + r.status);

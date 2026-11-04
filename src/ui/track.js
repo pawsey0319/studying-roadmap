@@ -10,6 +10,7 @@ import { uid } from '../core/ids.js';
 import { act, refresh, toast, newsRow, resLink, TYPES, LVL, lvlTag, PICK } from './kit.js';
 import { applyToStage } from './suggest.js';
 import { LIVE, loadLive } from '../live.js';
+import { saveFile } from '../native.js';
 
 /* ---------- 理论阶段 ---------- */
 function itemRow(i, s) {
@@ -71,9 +72,7 @@ function journalBar(id) {
 export function downloadAnki(at) {
   const notes = ankiNotes({ tests: store.all('tests'), cards: store.all('cards'), withCards: !at, at, label: id => { const f = M.findStage(id); return f ? (f.t.short || f.t.name) + '_' + f.s.title : id; } });
   if (!notes.length) { toast('还没有可导出的自测题'); return; }
-  const blob = new Blob([ankiTsv(notes)], { type: 'text/tab-separated-values' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `学习路线-Anki-${iso(new Date())}.txt`; a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  saveFile(`学习路线-Anki-${iso(new Date())}.txt`, ankiTsv(notes), 'text/tab-separated-values').catch(e => toast('保存失败：' + e.message));
   toast(`已导出 ${notes.length} 张卡。在 Anki 里“文件 → 导入”选这个文件`);
 }
 act('anki', el => downloadAnki(el.dataset.id || null));

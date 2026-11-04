@@ -1,0 +1,12 @@
+{
+  "appId": "io.github.pawsey0319.learninghub",
+  "appName": "学习路线",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https",
+    "hostname": "localhost"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "learning-hub-app",
+  "private": true,
+  "description": "安卓 App 外壳（Capacitor 8）。网页文件由 app/build-web.sh 从仓库根目录复制到 app/www，打包进安装包。",
+  "scripts": {
+    "web": "bash build-web.sh",
+    "sync": "bash build-web.sh && npx cap sync android",
+    "open": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/browser": "^8.0.5",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/share": "^8.0.3"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^4.0.0",
+    "@capacitor/cli": "^8.6.0"
+  }
+}
