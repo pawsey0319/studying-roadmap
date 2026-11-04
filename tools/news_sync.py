@@ -1,13 +1,7 @@
 #!/usr/bin/env python3
-"""把资讯同步进云端（CloudBase 的 news_items 表），App 打开就能读到最新资讯，不用等网站重新部署。
-
-来源：每日快照（海外和官方源）；部署了 Miniflux 时，再调用数据库函数 sync_miniflux 把国内源整理进来。
-旧的做法（按配置自动选）：
-  1. Miniflux（部署在 CloudBase 云托管，抓国内 RSS）：配置 MINIFLUX_URL + MINIFLUX_TOKEN 时，从它的 API 拉最近 2 天的条目；
-     同时可以把 GitHub Actions 抓到的海外条目推给 Miniflux（--push-overseas），由它统一去重。
-  2. 没有 Miniflux：直接读 data/sources.json（每天的快照）写进 news_items。
-写云端需要 CLOUDBASE_ENV + CLOUDBASE_API_KEY（secret 级别的 API Key，只放在 GitHub Secrets 或本机环境变量）。
-只用标准库。用法：python3 tools/news_sync.py [--push-overseas]
+"""把每日快照（data/sources.json）里最近 3 天的资讯写进云端（CloudBase 的 news_items 表），App 打开就能读到，不用等网站重新部署。
+写云端需要 CLOUDBASE_ENV + CLOUDBASE_API_KEY（服务端 API Key，只放在 GitHub Secrets 或本机环境变量）。
+只用标准库。用法：python3 tools/news_sync.py
 """
 import json
 import os
@@ -33,47 +27,6 @@ def req(url, method="GET", body=None, headers=None, timeout=30):
     return json.loads(raw) if raw else None
 
 
-# ---------- Miniflux ----------
-def mf(path, method="GET", body=None):
-    return req(env("MINIFLUX_URL").rstrip("/") + "/v1" + path, method, body, {"X-Auth-Token": env("MINIFLUX_TOKEN")})
-
-
-def from_miniflux():
-    after = int((datetime.now(timezone.utc) - timedelta(days=2)).timestamp())
-    feeds = {f["id"]: f for f in mf("/feeds")}
-    out, offset = [], 0
-    while True:
-        page = mf(f"/entries?after={after}&limit=200&offset={offset}&order=published_at&direction=desc")
-        for e in page.get("entries", []):
-            f = feeds.get(e["feed_id"], {})
-            cat = (f.get("category") or {}).get("title", "")      # 分类名约定：方向 ID，用逗号分隔，例如 "llm,agent"
-            lvl = "A" if "[A]" in f.get("title", "") else "C" if "[C]" in f.get("title", "") else "B"
-            out.append({"d": e["published_at"][:10], "src": f.get("title", "").replace("[A]", "").replace("[B]", "").replace("[C]", "").strip(),
-                        "lvl": lvl, "k": [k for k in cat.split(",") if k], "t": e["title"][:160], "u": e["url"]})
-        offset += 200
-        if offset >= page.get("total", 0) or offset > 2000:
-            break
-    return out
-
-
-def push_overseas():
-    """把 data/sources.json 里的海外源条目推进 Miniflux 同名的停用订阅（Miniflux ≥ 2.2.19 的导入接口，按 external_id 去重）。"""
-    snap = json.loads((ROOT / "data" / "sources.json").read_text(encoding="utf-8")).get("items", [])
-    feeds = {f["title"]: f["id"] for f in mf("/feeds")}
-    n = 0
-    for x in snap:
-        fid = feeds.get(x["src"])
-        if not fid:
-            continue
-        try:
-            mf(f"/feeds/{fid}/entries/import", "POST", {"url": x["u"], "title": x["t"], "external_id": news_id(x["u"]),
-                                                       "published_at": int(datetime.strptime(x["d"], "%Y-%m-%d").replace(tzinfo=CST).timestamp())})
-            n += 1
-        except Exception:
-            pass
-    return n
-
-
 def from_snapshot():
     p = ROOT / "data" / "sources.json"
     cut = (datetime.now(CST) - timedelta(days=3)).strftime("%Y-%m-%d")
@@ -86,12 +39,7 @@ def main():
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
         pass
-    if env("MINIFLUX_URL") and env("MINIFLUX_TOKEN"):
-        if "--push-overseas" in sys.argv:
-            print(f"推给 Miniflux 的海外条目：{push_overseas()} 条")
-        items, src = from_miniflux(), "Miniflux"
-    else:
-        items, src = from_snapshot(), "每日快照"
+    items, src = from_snapshot(), "每日快照"
     rows, seen = [], set()
     for x in items:
         nid = news_id(x["u"])
@@ -112,12 +60,6 @@ def main():
     cut = (datetime.now(CST) - timedelta(days=45)).strftime("%Y-%m-%d")
     req(base + "/news_items?d=lt." + cut, "DELETE", None, h)
     print(f"已写入云端 news_items：{len(rows)} 条")
-    # 部署了 Miniflux 时，让数据库把它抓到的国内源整理进 news_items（schema.sql 第 10 段；没部署时函数直接返回 0）
-    try:
-        n = req(base + "/rpc/sync_miniflux", "POST", {"n_days": 2}, h)
-        print(f"Miniflux 国内源同步进 news_items：{n} 条")
-    except Exception as e:
-        print(f"没有调用 Miniflux 同步（还没部署或没执行第 10 段）：{type(e).__name__}")
 
 
 if __name__ == "__main__":

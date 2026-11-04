@@ -75,7 +75,7 @@ SOURCES = [
     ("vLLM Release", "https://github.com/vllm-project/vllm/releases.atom", "A", ["slm"], False, 4),
     ("MLX-LM Release", "https://github.com/ml-explore/mlx-lm/releases.atom", "A", ["slm"], False, 4),
     ("Unsloth Release", "https://github.com/unslothai/unsloth/releases.atom", "A", ["slm"], False, 4),
-    ("LLaMA-Factory Release", "https://github.com/hiyouga/LLaMA-Factory/releases.atom", "A", ["slm"], False, 4),
+    ("LLaMA-Factory Release", "https://github.com/hiyouga/LlamaFactory/releases.atom", "A", ["slm"], False, 4),
     ("OpenAI Agents SDK Release", "https://github.com/openai/openai-agents-python/releases.atom", "A", ["agent"], False, 3),
     ("LangGraph Release", "https://github.com/langchain-ai/langgraph/releases.atom", "A", ["agent"], False, 3),
     ("MCP 规范 Release", "https://github.com/modelcontextprotocol/modelcontextprotocol/releases.atom", "A", ["agent"], False, 3),
@@ -133,6 +133,37 @@ SOURCES = [
     ("X · elvis（omarsar0）", "https://api.xgo.ing/rss/user/931d6e88e067496cac6bf23f69d60f33", "B", [], True, 5),
     ("X · 宝玉", "https://api.xgo.ing/rss/user/97f1484ae48c430fbbf3438099743674", "C", [], True, 5),
     ("X · 歸藏", "https://api.xgo.ing/rss/user/831fac36aa0a49a9af79f35dc1c9b5d9", "C", [], True, 5),
+    # ---- 2026-11 二次审查补充 ----
+    # 官方：Anthropic、Mistral、Cursor 没有官方 RSS，用开源项目 Olshansk/rss-feeds（MIT）每小时从官网生成的 RSS，链接都指向官网原文
+    ("Anthropic 新闻", "https://raw.githubusercontent.com/Olshansk/rss-feeds/main/feeds/feed_anthropic_news.xml", "A", ["llm"], False, 10),
+    ("Anthropic 研究", "https://raw.githubusercontent.com/Olshansk/rss-feeds/main/feeds/feed_anthropic_research.xml", "A", ["llm"], False, 8),
+    ("Anthropic 工程博客", "https://raw.githubusercontent.com/Olshansk/rss-feeds/main/feeds/feed_anthropic_engineering.xml", "A", ["agent"], False, 6),
+    ("Mistral 新闻", "https://raw.githubusercontent.com/Olshansk/rss-feeds/main/feeds/feed_mistral.xml", "A", ["llm"], False, 8),
+    ("Cursor 博客", "https://raw.githubusercontent.com/Olshansk/rss-feeds/main/feeds/feed_cursor.xml", "A", ["agent"], False, 6),
+    ("Google Research", "https://research.google/blog/rss/", "A", ["llm"], False, 10),
+    ("Apple 机器学习研究", "https://machinelearning.apple.com/rss.xml", "A", ["slm"], False, 8),
+    ("Google Cloud AI 博客", "https://cloudblog.withgoogle.com/products/ai-machine-learning/rss/", "A", [], True, 10),
+    ("NVIDIA 开发者博客", "https://developer.nvidia.com/blog/feed/", "A", [], True, 10),
+    ("PyTorch 博客", "https://pytorch.org/feed/", "A", ["slm"], False, 6),
+    ("Ollama 博客", "https://ollama.com/blog/rss.xml", "A", ["slm"], False, 6),
+    ("GitHub 博客 · AI", "https://github.blog/ai-and-ml/feed/", "A", ["agent"], False, 8),
+    # 论文：多智能体（cs.MA）每天几十篇，只收命中关键词的
+    ("arXiv 多智能体", "https://rss.arxiv.org/rss/cs.MA", "A", ["agent"], False, 12, r"agent|LLM|language model|tool|planning"),
+    # 产品与商业：AI 产品经理视角（产品设计、增长、商业模式、投资判断）
+    ("Lenny's Newsletter", "https://www.lennysnewsletter.com/feed", "B", [], True, 8),
+    ("Product Growth（Aakash Gupta）", "https://www.news.aakashg.com/feed", "B", [], True, 8),
+    ("Stratechery", "https://stratechery.com/feed/", "B", [], True, 8),
+    ("The Information", "https://www.theinformation.com/feed", "B", [], True, 15),
+    ("Sequoia", "https://sequoiacap.com/feed/", "B", [], True, 8),
+    ("Y Combinator 博客", "https://www.ycombinator.com/blog/rss/", "B", [], True, 6),
+    ("人人都是产品经理", "https://www.woshipm.com/feed", "B", [], True, 10),
+    # 国内科技商业媒体（只收和 AI 相关的）
+    ("虎嗅", "https://rss.huxiu.com/", "B", [], True, 12),
+    ("钛媒体", "https://www.tmtpost.com/rss", "B", [], True, 10),
+    ("极客公园", "https://www.geekpark.net/rss", "B", [], True, 10),
+    # 量化：实践型研究博客、国内财经长文
+    ("Robot Wealth", "https://robotwealth.com/feed/", "B", ["quant"], False, 6),
+    ("华尔街见闻 文章", "https://dedicated.wallstreetcn.com/rss.xml", "B", ["quant"], False, 10, r"量化|AI|人工智能|大模型|算法|程序化|高频|对冲|私募|基金|券商|证监会|交易所|美联储|降息|加息"),
     # ---- 量化：美联储新闻稿只收货币政策相关 ----
     ("美联储新闻稿", "https://www.federalreserve.gov/feeds/press_all.xml", "A", ["quant"], False, 6, r"FOMC|monetary policy|federal funds|interest rate|Beige Book|minutes"),
 ]
@@ -175,7 +206,10 @@ def parse_date(s):
         d = parsedate_to_datetime(s)
     except (TypeError, ValueError):
         try:
-            d = datetime.fromisoformat(s.replace("Z", "+00:00"))
+            # 36氪 这类写法：2026-11-04 14:03:06  +0800
+            t = re.sub(r"\s+", " ", s.replace("Z", "+00:00"))
+            t = re.sub(r" ([+-]\d{2}):?(\d{2})$", r"\1:\2", t)
+            d = datetime.fromisoformat(t)
         except ValueError:
             return None
     return d if d.tzinfo else d.replace(tzinfo=timezone.utc)

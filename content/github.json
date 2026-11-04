@@ -1,0 +1,9 @@
+{
+  "note": "关键项目新版本（rel）和近 30 天新星项目（gh）。tools/fetch_github.py 每 2 小时用 GitHub Actions 的令牌抓取，写 data/github.json 和云端 live_cache；网页先读这份预取结果，读不到才直接调 GitHub 接口。",
+  "repos": {
+    "llm": ["vllm-project/vllm", "sgl-project/sglang", "huggingface/transformers", "huggingface/trl"],
+    "slm": ["ollama/ollama", "ggml-org/llama.cpp", "ml-explore/mlx-lm", "unslothai/unsloth", "hiyouga/LlamaFactory", "huggingface/peft"],
+    "agent": ["openai/openai-agents-python", "langchain-ai/langgraph", "modelcontextprotocol/python-sdk", "browser-use/browser-use", "OpenHands/OpenHands", "huggingface/smolagents"],
+    "quant": ["TauricResearch/TradingAgents", "microsoft/qlib", "microsoft/RD-Agent", "vnpy/vnpy", "akfamily/akshare", "polakowo/vectorbt"]
+  }
+}

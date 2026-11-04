@@ -172,7 +172,7 @@ create policy hot_read on public.hot_items for select to anon, authenticated usi
 revoke all on public.hot_items from anon, authenticated;
 grant select on public.hot_items to anon, authenticated;
 
--- ==== 7. 资讯条目（tools/miniflux_sync.py 从 Miniflux 同步过来，所有人可读） ====
+-- ==== 7. 资讯条目（tools/news_sync.py 从每日快照写入，所有人可读） ====
 create table if not exists public.news_items (
   id         text        primary key,            -- 'n' + 链接哈希，和网页里的资讯 ID 一致
   d          date        not null,
@@ -223,47 +223,15 @@ returns table (item_id bigint, n bigint) language sql stable security definer se
 $$;
 revoke all on function public.public_recent(int) from public, anon;
 grant execute on function public.public_recent(int) to authenticated;
--- ==== 10. Miniflux → news_items：在数据库里直接同步（部署好 Miniflux、导入订阅之后再执行） ====
--- Miniflux 的表在同一个数据库的 miniflux schema 里，所以不需要它的 API Token，也不需要从外网访问它。
--- 分类名：方向 ID（可以逗号分隔，如 llm,slm）原样归类；分类名是 auto 的，按关键词判断方向，和 AI 无关的条目丢掉。
--- 订阅名里带 [A] 表示一手来源，[C] 表示社区讨论，默认 [B]。关键词和 tools/fetch_sources.py 的 KW 保持一致。
--- 前提（见 deploy/miniflux/README.md）：Miniflux 已经启动过一次（建好了表），并且已经用 miniflux_app 账号授权管理员读这些表。
-create or replace function public.sync_miniflux(n_days int default 2) returns int
-language plpgsql security definer set search_path = public as $$
-declare n int;
-begin
-  if to_regclass('miniflux.entries') is null then return 0; end if;
-  with src as (
-    select distinct on (e.url) e.url, e.title, e.published_at, f.title as feed, f.feed_url, c.title as cat,
-      btrim(regexp_replace(regexp_replace(coalesce(e.content, ''), '<[^>]+>', ' ', 'g'), '\s+', ' ', 'g')) as body
-    from miniflux.entries e join miniflux.feeds f on f.id = e.feed_id join miniflux.categories c on c.id = f.category_id
-    where e.published_at > now() - make_interval(days => least(greatest(n_days, 1), 30)) and e.url ~ '^https?://'
-    order by e.url, e.published_at desc
-  ), tagged as (
-    select s.*, case when s.cat = 'auto' then array_remove(array[
-        case when (s.title || ' ' || left(s.body, 400)) ~* '\yLLMs?\y|language model|GPT|Claude|Gemini|DeepSeek|Qwen|Llama|Kimi|GLM|reasoning|frontier model|pre-?train|post-?train|RLHF|inference|大模型|模型发布|推理模型' then 'llm' end,
-        case when (s.title || ' ' || left(s.body, 400)) ~* 'small (language )?model|\ySLMs?\y|on-device|edge AI|local model|fine-?tun|LoRA|distill|quantiz|Gemma|Phi-|SmolLM|MiniCPM|llama\.cpp|Ollama|\yMLX\y|embedding|端侧|小模型|微调|蒸馏' then 'slm' end,
-        case when (s.title || ' ' || left(s.body, 400)) ~* '\yagents?\y|agentic|\yMCP\y|\yA2A\y|tool use|computer use|browser use|Codex|Claude Code|copilot|智能体|Agent' then 'agent' end,
-        case when s.title ~* '\yquant(itative)?\y|trading|hedge fund|stock market|\ystocks?\y|asset manag|investment research|portfolio|量化|证券|股票|投研|基金(?!会)|券商'
-              and (s.title || ' ' || left(s.body, 400)) ~* '\yAI\y|machine learning|model|LLM|agent|人工智能|模型|智能' then 'quant' end], null)
-      else array(select btrim(x) from unnest(string_to_array(s.cat, ',')) x where btrim(x) ~ '^[a-z0-9][a-z0-9-]{1,30}$') end as k
-    from src s
-  )
-  insert into public.news_items (id, d, src, lvl, k, t, s, u, via, fetched_at)
-  select 'm' || left(md5(lower(url)), 12), (published_at at time zone 'Asia/Shanghai')::date,
-    left(btrim(regexp_replace(feed, '\[[ABC]\]', '', 'g')), 80),
-    case when feed like '%[A]%' then 'A' when feed like '%[C]%' then 'C' else 'B' end,
-    k, left(title, 160), left(body, 200), url, case when feed_url ~ 'wechat2rss' then 'wechat2rss' end, now()
-  from tagged where cardinality(k) > 0
-  on conflict (id) do update set d = excluded.d, src = excluded.src, lvl = excluded.lvl, k = excluded.k, t = excluded.t, s = excluded.s, fetched_at = excluded.fetched_at;
-  get diagnostics n = row_count;
-  delete from public.news_items where d < (now() at time zone 'Asia/Shanghai')::date - 45;
-  return n;
-end $$;
-revoke all on function public.sync_miniflux(int) from public;
-do $$ begin
-  if exists (select 1 from pg_roles where rolname = 'service_role') then execute 'grant execute on function public.sync_miniflux(int) to service_role'; end if;
-end $$;
-select public.sync_miniflux(7) as "同步了多少条";
--- 可选：每 30 分钟在数据库里自动同步一次（用 pg_cron）。报错就跳过，GitHub Actions 每 2 小时也会调一次。
--- select cron.schedule('miniflux-to-news', '*/30 * * * *', $$select public.sync_miniflux(2)$$);
+
+-- ==== 10. 预取的实时数据（tools/fetch_github.py 每 2 小时写入：关键项目新版本、新星项目；所有人可读） ====
+create table if not exists public.live_cache (
+  k          text        primary key check (k ~ '^[a-z0-9_-]{2,30}$'),
+  data       jsonb       not null check (pg_column_size(data) < 512 * 1024),
+  updated_at timestamptz not null default now()
+);
+alter table public.live_cache enable row level security;
+drop policy if exists lc_read on public.live_cache;
+create policy lc_read on public.live_cache for select to anon, authenticated using (true);
+revoke all on public.live_cache from anon, authenticated;
+grant select on public.live_cache to anon, authenticated;

@@ -36,6 +36,8 @@ async function hfJSON(path) {
 }
 const hfLink = p => (HF_BASE || 'https://huggingface.co') + p;
 const snap = () => (C.sources && C.sources.items) || [];
+// 预取数据 6 小时内算新
+const fresh = () => C.github && C.github.updated && (Date.now() - new Date(C.github.updated.replace(' ', 'T') + ':00+08:00')) < 6 * 3600e3;
 
 const SOURCES = {
   async hf(t) {
@@ -71,6 +73,8 @@ const SOURCES = {
       .map(h => ({ t: h.title, u: h.url || `https://news.ycombinator.com/item?id=${h.objectID}`, m: `${h.points} 分 · ${ago(h.created_at)}` }));
   },
   async gh(t) {
+    const pre = fresh() && (C.github.gh || {})[t.id];
+    if (pre && pre.length) return pre.map(r => ({ t: r.t, u: r.u, m: `★ ${r.stars}${r.desc ? ' · ' + r.desc.slice(0, 60) : ''}` }));
     const since = iso(new Date(Date.now() - 30 * 864e5));
     const d = await getJSON(`https://api.github.com/search/repositories?sort=stars&order=desc&per_page=6&q=${encodeURIComponent(`topic:${t.live.gh} created:>${since}`)}`);
     return d.items.map(r => ({ t: r.full_name, u: r.html_url, m: `★ ${r.stargazers_count}${r.description ? ' · ' + r.description.slice(0, 60) : ''}` }));
@@ -108,10 +112,15 @@ const SOURCES = {
   },
   // 关键开源项目的正式版本发布（一手来源）
   async rel(t) {
+    // 先用 Actions 预取的结果（带令牌，不受网页匿名 60 次的限制），太旧或没有时才直接调接口
+    const pre = fresh() && (C.github.rel || {})[t.id];
+    if (pre && pre.length) return pre.map(x => ({ t: x.t, u: x.u, m: `${ago(x.at)} · ${x.r}` }));
     const repos = REPOS[t.id];
     let failed = 0;
     const res = await Promise.all(repos.map(r => getJSON(`https://api.github.com/repos/${r}/releases?per_page=3`).catch(() => { failed++; return []; })));
-    if (failed === repos.length) {  // 全部失败（多半是匿名次数用完），改用每日快照
+    if (failed === repos.length) {  // 全部失败（多半是匿名次数用完）：先用旧一点的预取结果，再用每日快照
+      const old = C.github && (C.github.rel || {})[t.id];
+      if (old && old.length) return old.map(x => ({ t: x.t, u: x.u, m: `${ago(x.at)} · ${x.r} · ${C.github.updated} 抓取` }));
       const its = snap().filter(x => / Release$/.test(x.src) && x.k.includes(t.id)).slice(0, 7);
       if (!its.length) throw new Error('GitHub 匿名访问次数已用完，约 1 小时后恢复');
       return its.map(x => ({ t: `${x.src.replace(/ Release$/, '')} ${x.t}`.slice(0, 80), u: x.u, m: `${x.d} · 来自每日快照` }));
@@ -167,7 +176,7 @@ export async function loadOne(t, src, force) {
       if (curTab() !== t.id) return;
       el.className = 'msg';
       const why = /Failed to fetch|NetworkError|Load failed|连接超时/.test(e.message) ? '当前网络连不上这个接口' : e.message;
-      el.textContent = `没有拉取到数据：${why}。` + (src === 'gh' || src === 'rel' ? 'GitHub 未登录时每小时最多 60 次请求，过一会儿再点刷新。' : '换个网络或稍后再点刷新。')
+      el.textContent = `没有拉取到数据：${why}。换个网络或稍后再点刷新。`
         + `（${new Date().toLocaleTimeString('zh-CN', { hour12: false })} 尝试）`;
       return;
     } finally { if (btn) { btn.disabled = false; btn.textContent = '刷新'; } }

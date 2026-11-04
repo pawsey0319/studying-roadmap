@@ -34,6 +34,10 @@ jobs:
       - name: 抓取官方博客与媒体快照
         # 个别来源失败不影响部署，脚本会把失败情况写进快照
         run: python3 tools/fetch_sources.py || echo "部分来源抓取失败"
+      - name: 关键项目新版本和新星项目（用 Actions 自带的令牌，不受网页匿名次数限制）
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 tools/fetch_github.py || echo "GitHub 数据抓取失败"
       - name: 财经快讯快照（网站读不到云端时的兜底）
         run: python3 tools/fetch_hot.py || echo "快讯抓取失败"
       - name: 访问一次云端数据库，避免 Supabase 免费版因 7 天无访问被暂停

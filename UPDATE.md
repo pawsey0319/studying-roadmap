@@ -35,7 +35,7 @@
 | 什么时候 | 工作流 | 做什么 |
 |---|---|---|
 | 每次推送到 main、每天北京时间 8 点 | `.github/workflows/pages.yml` | 跑测试 → 抓每日快照（含 AI 资讯日报）→ 访问一次云端数据库防暂停 → 部署 |
-| 每 2 小时 | `.github/workflows/news.yml` | 抓财经快讯和海外源，配置了 Secrets 时写进腾讯云开发的 `hot_items`、`news_items`（App 和网页打开就能读到，不用等部署）。可选从 Miniflux 拉国内源，见 `deploy/miniflux/README.md` |
+| 每 2 小时 | `.github/workflows/news.yml` | 抓财经快讯和海外源，配置了 Secrets 时写进腾讯云开发的 `hot_items`、`news_items`（App 和网页打开就能读到，不用等部署） |
 | 手动运行或推送 `v*` 标签 | `.github/workflows/android.yml` | 打出签名的安卓 APK，标签时发布到 Releases |
 | 每周一北京时间 9 点 | `.github/workflows/weekly.yml` | 抓社区讨论 → 核验候选链接 → 免费模型写精选、精修前沿路线、生成待确认建议 → 跑测试 → 提交 → 触发部署。失败时开一个 `weekly-failed` issue，网站保留上周内容 |
 

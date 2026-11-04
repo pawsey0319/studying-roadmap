@@ -28,6 +28,7 @@ jobs:
         run: |
           python3 tools/fetch_sources.py || echo "部分来源抓取失败"
           python3 tools/fetch_hot.py || echo "快讯抓取失败"
+          GITHUB_TOKEN=${{ github.token }} python3 tools/fetch_github.py || echo "GitHub 数据抓取失败"
       - name: 生成安卓工程
         working-directory: app
         run: |

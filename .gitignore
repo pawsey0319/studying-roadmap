@@ -10,3 +10,4 @@ data/weekly-report.txt
 config.local.json
 # 快讯快照每天由 Actions 生成
 data/hot.json
+data/github.json

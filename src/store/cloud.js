@@ -86,11 +86,12 @@ export async function rest(path, opt = {}) {
 export async function pullPublic() {
   if (!B || B.kind !== 'cloudbase') return null;
   const since = new Date(Date.now() - 10 * 864e5).toISOString().slice(0, 10);
-  const [news, hot] = await Promise.all([
+  const [news, hot, live] = await Promise.all([
     rest(`/news_items?select=d,src,lvl,k,t,s,u,via&d=gte.${since}&order=d.desc&limit=600`).catch(() => null),
-    rest('/hot_items?select=source,title,url,time,rank,fetched_at&order=fetched_at.desc,rank.asc&limit=240').catch(() => null)
+    rest('/hot_items?select=source,title,url,time,rank,fetched_at&order=fetched_at.desc,rank.asc&limit=240').catch(() => null),
+    rest('/live_cache?select=k,data,updated_at').catch(() => null)
   ]);
-  return { news, hot };
+  return { news, hot, live };
 }
 
 /* ---------- 同步 ---------- */

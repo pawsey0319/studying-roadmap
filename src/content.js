@@ -28,7 +28,8 @@ export async function loadContent() {
     get('data/sources.json', true),     // 每天由 GitHub Actions 生成，本地可能没有
     get('data/community.json', true),   // 每周生成
     get('config.json', true),           // 云端公开配置，没有就只用本地 + Gist
-    get('data/hot.json', true)          // 财经快讯快照（云端读不到时兜底）
+    get('data/hot.json', true),         // 财经快讯快照（云端读不到时兜底）
   ]);
-  return { domains, tracks, feed, legacy, routes, biz, suggestions: suggestions || { items: [] }, sources, community, hot, config: config || {} };
+  const github = await get('data/github.json', true);   // 关键项目新版本、新星项目（Actions 用令牌预取）
+  return { domains, tracks, feed, legacy, routes, biz, suggestions: suggestions || { items: [] }, sources, community, hot, github, config: config || {} };
 }

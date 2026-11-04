@@ -169,6 +169,8 @@ async function boot() {
       for (const x of r.hot) (by[x.source] = by[x.source] || []).push({ t: x.title, u: x.url, time: x.time });
       C.hot = { updated: String(r.hot[0].fetched_at).slice(0, 16).replace('T', ' '), sources: HOT_NAMES.map(([id, name]) => ({ id, name, items: by[id] || [] })), cloud: true };
     }
+    const gh = Array.isArray(r.live) && r.live.find(x => x.k === 'github');
+    if (gh && gh.data && (!C.github || gh.data.updated > C.github.updated)) C.github = gh.data;
     M.invalidate(); refresh();
   }).catch(() => {});
   bindActs();
