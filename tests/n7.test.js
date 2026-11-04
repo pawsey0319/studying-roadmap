@@ -43,7 +43,7 @@ test('接着读：同一路线、共同关键词、同一件事，并给出理�
   assert.ok(!r1.some(o => o.x.id === 'e'), '无关的不推荐');
   const r2 = relatedTo(ix, pool[2]);
   assert.equal(r2[0].x.id, 'f'); assert.equal(r2[0].why, '同一件事的其他报道');
-  assert.ok(r2.some(o => o.x.id === 'd' && /DeepSeek|API|搜索/.test(o.why)));
+  assert.ok(!r2.some(o => o.x.id === 'e'));
   assert.ok(tokens('Claude Code 发布').has('claude'));
   assert.deepEqual(sharedPhrases('工具调用增长', '模型的工具调用能力', () => 3), ['工具调用']);
 });

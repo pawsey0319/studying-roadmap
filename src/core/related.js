@@ -55,7 +55,7 @@ export function relatedTo(index, item, { routeName = id => id, limit = 8 } = {})
   if (!me.norm) me.norm = Math.sqrt([...me.tk].reduce((a, w) => a + index.idf(w) ** 2, 0)) || 1;
   const myR = new Set(item.r || []), out = [];
   for (const d of index.docs) {
-    if (d.x.id === item.id || d.x.u === item.u) continue;
+    if (d.x.id === item.id || (item.u && d.x.u === item.u)) continue;
     const shared = [...me.tk].filter(w => d.tk.has(w));
     let cos = shared.reduce((a, w) => a + index.idf(w) ** 2, 0) / (me.norm * d.norm);
     const sameR = (d.x.r || []).filter(r => myR.has(r));
