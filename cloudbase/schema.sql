@@ -227,7 +227,7 @@ grant execute on function public.public_recent(int) to authenticated;
 -- Miniflux 的表在同一个数据库的 miniflux schema 里，所以不需要它的 API Token，也不需要从外网访问它。
 -- 分类名：方向 ID（可以逗号分隔，如 llm,slm）原样归类；分类名是 auto 的，按关键词判断方向，和 AI 无关的条目丢掉。
 -- 订阅名里带 [A] 表示一手来源，[C] 表示社区讨论，默认 [B]。关键词和 tools/fetch_sources.py 的 KW 保持一致。
-grant miniflux_app to current_user;   -- 让下面的函数能读 Miniflux 的表
+-- 前提（见 deploy/miniflux/README.md）：Miniflux 已经启动过一次（建好了表），并且已经用 miniflux_app 账号授权管理员读这些表。
 create or replace function public.sync_miniflux(n_days int default 2) returns int
 language plpgsql security definer set search_path = public as $$
 declare n int;

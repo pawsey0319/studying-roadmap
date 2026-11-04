@@ -18,18 +18,22 @@ openssl rand -hex 16
 - 密码 1：数据库账号 `miniflux_app` 用
 - 密码 2：Miniflux 网页登录（admin）用
 
-## 1. 建数据库账号（SQL 编辑器）
+## 1. 建数据库账号
 
-控制台 → 数据库 → PostgreSQL → SQL 编辑器，把 `密码1` 换掉后执行：
+SQL 编辑器里的“管理员”角色没有建账号的权限（会报 `permission denied to create role`），账号要在控制台建：
+
+1. 控制台 → PostgreSQL → **数据库设置** → **账号管理** → 创建账号。
+   - 账号名：`miniflux_app`
+   - 主机：`%`（如果有这一项）
+   - 密码：密码 1
+2. 回到 **SQL 编辑器**（角色保持“管理员”），执行：
 
 ```sql
 create schema if not exists miniflux;
-create role miniflux_app login password '密码1';
 grant usage, create on schema miniflux to miniflux_app;
-alter role miniflux_app set search_path = miniflux;
 ```
 
-这个账号只能在 `miniflux` 区里建表和读写，碰不到 `docs`、`public_items` 这些业务表。
+这个账号只能在 `miniflux` 区里建表，碰不到 `docs`、`public_items` 这些业务表。
 
 ## 2. 找到数据库的连接地址
 
@@ -83,13 +87,22 @@ alter role miniflux_app set search_path = miniflux;
 
 导入完可以把这个服务的**公网访问关掉**：同步走数据库，不经过 Miniflux 的网页。以后想加订阅时再临时打开。
 
-## 5. 接到网站（SQL 编辑器）
+## 5. 让管理员能读 Miniflux 的表（用 miniflux_app 登录执行）
 
-执行 `cloudbase/schema.sql` 的**第 10 段**（从 `-- ==== 10.` 开始到文件末尾）。最后一行会返回“同步了多少条”，大于 0 就通了。
+Miniflux 的表属于 `miniflux_app`，管理员默认读不到，要由这个账号自己授权。要在第 3 步部署成功、日志里出现 `Starting HTTP server` 之后做（那时表已经建好）。
+
+控制台 → PostgreSQL → 数据库设置 → 账号管理 → 点 **数据库管理** 进入 DMC，用 `miniflux_app` / 密码 1 登录，在 SQL 窗口执行下面两行。“管理员账号”换成你在 SQL 编辑器（角色选“管理员”）里执行 `select current_user;` 显示的名字：
+
+```sql
+grant select on all tables in schema miniflux to "管理员账号";
+alter default privileges in schema miniflux grant select on tables to "管理员账号";
+```
+
+## 6. 接到网站（SQL 编辑器）
+
+执行 `cloudbase/schema.sql` 的**第 10 段**（从 `-- ==== 10.` 开始到文件末尾）。最后一行会返回“同步了多少条”，大于 0 就通了（订阅刚导入、还没抓完时可能是 0，过几分钟再执行最后一行 `select public.sync_miniflux(7);`）。
 
 之后不用再管：GitHub Actions 的“资讯与快讯同步到云端”每 2 小时会调用一次 `sync_miniflux`。想更及时，可以执行第 10 段末尾注释掉的那条 `cron.schedule`（每 30 分钟，在数据库里跑）。
-
-如果第 10 段第一句 `grant miniflux_app to current_user` 报权限错误，把报错截图发我，换一种授权写法。
 
 ## 费用
 
