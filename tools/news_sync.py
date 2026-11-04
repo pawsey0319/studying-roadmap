@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """把资讯同步进云端（CloudBase 的 news_items 表），App 打开就能读到最新资讯，不用等网站重新部署。
 
-两种来源，按配置自动选：
+来源：每日快照（海外和官方源）；部署了 Miniflux 时，再调用数据库函数 sync_miniflux 把国内源整理进来。
+旧的做法（按配置自动选）：
   1. Miniflux（部署在 CloudBase 云托管，抓国内 RSS）：配置 MINIFLUX_URL + MINIFLUX_TOKEN 时，从它的 API 拉最近 2 天的条目；
      同时可以把 GitHub Actions 抓到的海外条目推给 Miniflux（--push-overseas），由它统一去重。
   2. 没有 Miniflux：直接读 data/sources.json（每天的快照）写进 news_items。
@@ -111,6 +112,12 @@ def main():
     cut = (datetime.now(CST) - timedelta(days=45)).strftime("%Y-%m-%d")
     req(base + "/news_items?d=lt." + cut, "DELETE", None, h)
     print(f"已写入云端 news_items：{len(rows)} 条")
+    # 部署了 Miniflux 时，让数据库把它抓到的国内源整理进 news_items（schema.sql 第 10 段；没部署时函数直接返回 0）
+    try:
+        n = req(base + "/rpc/sync_miniflux", "POST", {"n_days": 2}, h)
+        print(f"Miniflux 国内源同步进 news_items：{n} 条")
+    except Exception as e:
+        print(f"没有调用 Miniflux 同步（还没部署或没执行第 10 段）：{type(e).__name__}")
 
 
 if __name__ == "__main__":

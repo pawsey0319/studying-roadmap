@@ -3,7 +3,8 @@ name: 资讯与快讯同步到云端
 # 每 2 小时：抓财经快讯（财联社、华尔街见闻、金十、雪球热股）和每日快照，写进腾讯云开发的 hot_items / news_items 表。
 # App 和网站打开时直接读这两张表，不用等网站重新部署。
 # 需要仓库 Secrets：CLOUDBASE_ENV（环境 ID）、CLOUDBASE_API_KEY（云开发控制台 → API Key 配置 → 服务端 API Key，管理员权限，只放这里）。
-# 可选：MINIFLUX_URL + MINIFLUX_TOKEN（部署了 Miniflux 后，从它拉国内 RSS，并把这里抓到的海外条目推给它）。
+# 部署了 Miniflux（deploy/miniflux/README.md）后，news_sync.py 会调用数据库函数 sync_miniflux，把国内源整理进 news_items，不需要额外的 Secrets。
+# MINIFLUX_URL + MINIFLUX_TOKEN 是旧的做法（经 Miniflux 的 API 拉取），可以不配。
 on:
   schedule:
     - cron: "17 */2 * * *"
