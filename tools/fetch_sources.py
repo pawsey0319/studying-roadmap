@@ -134,11 +134,14 @@ SOURCES = [
     ("X · 宝玉", "https://api.xgo.ing/rss/user/97f1484ae48c430fbbf3438099743674", "C", [], True, 5),
     ("X · 歸藏", "https://api.xgo.ing/rss/user/831fac36aa0a49a9af79f35dc1c9b5d9", "C", [], True, 5),
     # ---- 2026-11 二次审查补充 ----
-    # 官方：Anthropic、Mistral、Cursor 没有官方 RSS，用开源项目 Olshansk/rss-feeds（MIT）每小时从官网生成的 RSS，链接都指向官网原文
+    # 官方：Anthropic、Mistral、xAI、Meta AI、Cursor 没有官方 RSS，用开源项目 Olshansk/rss-feeds（MIT）每小时从官网生成的 RSS，链接都指向官网原文
     ("Anthropic 新闻", "https://raw.githubusercontent.com/Olshansk/rss-feeds/main/feeds/feed_anthropic_news.xml", "A", ["llm"], False, 10),
     ("Anthropic 研究", "https://raw.githubusercontent.com/Olshansk/rss-feeds/main/feeds/feed_anthropic_research.xml", "A", ["llm"], False, 8),
     ("Anthropic 工程博客", "https://raw.githubusercontent.com/Olshansk/rss-feeds/main/feeds/feed_anthropic_engineering.xml", "A", ["agent"], False, 6),
     ("Mistral 新闻", "https://raw.githubusercontent.com/Olshansk/rss-feeds/main/feeds/feed_mistral.xml", "A", ["llm"], False, 8),
+    ("xAI 新闻", "https://raw.githubusercontent.com/Olshansk/rss-feeds/main/feeds/feed_xainews.xml", "A", ["llm"], False, 8),
+    ("Meta AI 博客", "https://raw.githubusercontent.com/Olshansk/rss-feeds/main/feeds/feed_meta_ai.xml", "A", ["llm"], False, 8),
+    ("Meta 工程博客", "https://engineering.fb.com/feed/", "A", [], True, 8),
     ("Cursor 博客", "https://raw.githubusercontent.com/Olshansk/rss-feeds/main/feeds/feed_cursor.xml", "A", ["agent"], False, 6),
     ("Google Research", "https://research.google/blog/rss/", "A", ["llm"], False, 10),
     ("Apple 机器学习研究", "https://machinelearning.apple.com/rss.xml", "A", ["slm"], False, 8),
@@ -154,6 +157,7 @@ SOURCES = [
     ("Product Growth（Aakash Gupta）", "https://www.news.aakashg.com/feed", "B", [], True, 8),
     ("Stratechery", "https://stratechery.com/feed/", "B", [], True, 8),
     ("The Information", "https://www.theinformation.com/feed", "B", [], True, 15),
+    ("a16z", "https://www.a16z.news/feed", "B", [], True, 10),
     ("Sequoia", "https://sequoiacap.com/feed/", "B", [], True, 8),
     ("Y Combinator 博客", "https://www.ycombinator.com/blog/rss/", "B", [], True, 6),
     ("人人都是产品经理", "https://www.woshipm.com/feed", "B", [], True, 10),
