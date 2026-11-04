@@ -22,8 +22,9 @@
 - `data/sources.json`：官方博客、媒体、arXiv、项目 Release、AI 资讯日报的快照，每天自动生成，不进仓库。
 - `data/community.json`：Reddit 与 Hacker News 社区讨论，每周自动生成并提交。
 - `src/`：网页代码（浏览器原生 ES 模块，无需构建）。`src/core/` 纯逻辑，`src/store/` 个人数据（IndexedDB；同步走 `backend.js` 适配的腾讯云开发 CloudBase 或 Supabase，备用 Gist），`src/ai/` 学习 Agent 和向量检索，`src/import/` 文档导入，`src/ui/` 界面，`src/native.js` 安卓 App 专用的适配。
-  - v3 新增的纯逻辑：`core/mastery.js` 自测掌握度，`core/method.js` 学习方法档案（含证据约束、撤销），`core/anki.js` Anki 导出，`core/ctxpack.js` 导出给其他 AI（工具配置表、拆段），`core/public.js` 公共区域快照与采用，`core/graph.js` 知识树。参考了 DeepTutor 和 mem0 的算法思路，见 `NOTICE`。
-- `vendor/`：pdf.js 和 mammoth（解析 PDF、Word）、Cytoscape.js（知识树），许可证在同目录。
+  - 后加的：`core/related.js` 接着读（不用 AI 的相关推荐），`core/taxonomy.js` 知识树（分类在 `content/taxonomy.json`），`src/i18n.js` + `src/i18n-en.json` 中英双语（`tools/translate.py` 每周补翻新内容），`tools/fetch_github.py` 关键项目新版本和新星项目（Actions 用令牌预取，写 `data/github.json` 和云端 `live_cache`）。
+  - v3 新增的纯逻辑：`core/mastery.js` 自测掌握度，`core/method.js` 学习方法档案（含证据约束、撤销），`core/anki.js` Anki 导出，`core/ctxpack.js` 导出给其他 AI（工具配置表、拆段），`core/public.js` 公共区域快照与采用，`core/taxonomy.js` 知识树。参考了 DeepTutor 和 mem0 的算法思路，见 `NOTICE`。
+- `vendor/`：pdf.js 和 mammoth（解析 PDF、Word），许可证在同目录。
 - `cloudbase/schema.sql`：腾讯云开发 PostgreSQL 的表、权限和触发器（第 1–9 段，重复执行没关系）。`app/`：安卓 App 外壳（Capacitor 8），见 `app/README.md`。
 - `tests/`：单元测试，`node --test tests/*.test.js`。
 - `tools/fetch_sources.py`：每日快照。`tools/weekly.py`：每周整理。`tools/fetch_community.py`：只抓社区讨论。`tools/publish.sh`：提交并推送。
