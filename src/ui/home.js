@@ -3,6 +3,7 @@ import { esc } from '../util.js';
 import * as M from '../model.js';
 import * as store from '../store/index.js';
 import { stageStatus } from '../core/progress.js';
+import { nextItems } from '../core/mastery.js';
 import { newsRow, trackTag, routeTag, PICK } from './kit.js';
 import { pendingSuggestions } from './suggest.js';
 
@@ -59,9 +60,12 @@ export function renderHome() {
   const cards = store.all('cards'), recent = Object.entries(cards).sort((a, b) => b[1].c - a[1].c).slice(0, 4);
   const doingHtml = doing.map(x => {
     if (x.kind === 'stage') {
-      const next = x.s.items.filter(i => !i.skipped && !store.isDone(i.id)).slice(0, 2);
+      // 先是等批改的自测题，再是第一个没掌握的任务（参考 DeepTutor 的下一步优先级）
+      const pend = store.ui().quizPending || {}, next = nextItems(x.s, store.all('tests'), store.done(), pend).slice(0, 2);
+      const waiting = Object.values(pend).filter(p => p.at === x.s.id).length;
       return `<div class="card dc" style="--lc:${x.t.color}"><div class="k">${esc(x.t.short || x.t.name)} · 理论阶段 ${x.idx}</div><h4>${esc(x.s.title)}</h4>
-        ${next.map(i => `<label class="it"><input type="checkbox" data-done="${i.id}"><span class="tx">${i.mode === 'practice' ? '<span class="tag">实践</span> ' : ''}${esc(i.text)}</span></label>`).join('')}
+        ${waiting ? `<p class="small"><button class="lnk" data-act="agent-quiz" data-id="${x.s.id}">有 ${waiting} 道自测题等你作答</button></p>` : ''}
+        ${next.map(i => `<label class="it"><input type="checkbox" data-done="${i.id}"><span class="tx">${pend[i.id] ? '<span class="tag ai">待作答</span> ' : ''}${i.mode === 'practice' ? '<span class="tag">实践</span> ' : ''}${esc(i.text)}</span></label>`).join('')}
         <div class="row"><a class="btn sm" href="#/t/${x.t.id}?s=${encodeURIComponent(x.s.id)}">打开</a><button class="btn sm gh" data-act="agent-stage" data-id="${x.s.id}">和 Agent 聊</button><span class="pg">${x.s.prog.n}/${x.s.prog.total} 项</span></div></div>`;
     }
     const left = x.r.learn.filter(i => !store.isDone(i.id));

@@ -5,7 +5,8 @@ import { $, esc } from '../util.js';
 import * as store from '../store/index.js';
 import { md } from '../core/md.js';
 import { uid } from '../core/ids.js';
-import { DIMS, ACTIVE, rate } from '../core/method.js';
+import { DIMS, ACTIVE, rate, MAX_TOTAL, undoOps } from '../core/method.js';
+import { dropDigest } from '../ai/embed.js';
 import { act, refresh, toast } from './kit.js';
 import { stageLabel } from './home.js';
 import { idleHours } from './agentui.js';
@@ -13,16 +14,31 @@ import { idleHours } from './agentui.js';
 const pct = w => Math.round(w * 100);
 const level = w => w >= 0.7 ? '很有把握' : w >= ACTIVE ? '较有把握，会用来调整讲法' : '待观察，还不会用';
 
+let LOG = [];
+export async function beforeMethod() { LOG = (await store.localGet('methodLog')) || []; }
+const OPW = { add: '新增', reinforce: '印证', revise: '改写', weaken: '削弱', delete: '删除' };
+function logHtml() {
+  if (!LOG.length) return '';
+  const row = (h, i) => {
+    const ch = h.log.map(l => !l.before ? `新增：${esc(l.after.t)}` : !l.after ? `删除：${esc(l.before.t)}` : l.before.t !== l.after.t ? `改写：${esc(l.before.t)} → ${esc(l.after.t)}` : `${l.after.w >= l.before.w ? '印证' : '削弱'}：${esc(l.after.t)}`);
+    const rj = (h.rejected || []).map(r => `<span class="fnt">没采纳（${esc(r.why)}）：${esc(r.t)}</span>`);
+    return `<li><div class="meta">${new Date(h.t).toLocaleString('zh-CN', { hour12: false })} · 整理“${esc(h.title || '')}”时${h.undone ? ' · <b>已撤销</b>' : ''}
+      ${h.undone || !h.log.length ? '' : `<span class="act"><button data-act="method-undo" data-i="${i}">撤销这次修改</button></span>`}</div>
+      <div class="small">${[...ch, ...rj].join('<br>') || '没有修改'}</div></li>`;
+  };
+  return `<h3 style="margin-top:16px">最近的修改</h3><ul class="lst">${LOG.slice(0, 10).map(row).join('')}</ul>`;
+}
 export function renderMethod(q = {}) {
   document.documentElement.style.setProperty('--c', '#1B2430');
   const tab = q.tab === 'digests' ? 'digests' : 'method';
   const E = Object.entries(store.all('method')), n = store.get('meta', 'methodN') || 0;
-  const head = `<div class="ph"><h1>我的学习方法</h1><span class="mut">学习 Agent 从你们的每段对话里，慢慢总结出你适合怎么学</span></div>
+  const head = `<div class="ph"><h1>我的学习方法</h1><span class="mut">学习 Agent 从你们的每段对话里，慢慢总结出你适合怎么学</span>
+    <span class="r"><button class="btn sm gh" data-act="anki" title="自测题和卡片笔记（第一行当正面），重复导入只更新不新建">导出 Anki</button></span></div>
     <nav class="tabs" style="margin-top:10px"><a href="#/method" aria-current="${tab === 'method' ? 'page' : 'false'}">学习方法档案</a><a href="#/method?tab=digests" aria-current="${tab === 'digests' ? 'page' : 'false'}">对话纪要 ${Object.keys(store.all('digests')).length || ''}</a></nav>`;
   if (tab === 'digests') return head + digestsHtml();
   const edit = store.ui().methodEdit;
   const row = ([id, x]) => edit === id
-    ? `<li class="mrow"><form data-method-edit="${id}" class="addit"><select name="d">${DIMS.map(d => `<option${d === x.d ? ' selected' : ''}>${d}</option>`).join('')}</select><input name="t" value="${esc(x.t)}" maxlength="300"><button class="btn sm pri">保存</button><button type="button" class="btn sm gh" data-act="method-cancel">取消</button></form></li>`
+    ? `<li class="mrow"><form data-method-edit="${id}" class="addit"><select name="d">${DIMS.map(d => `<option${d === x.d ? ' selected' : ''}>${d}</option>`).join('')}</select><input name="t" value="${esc(x.t)}" maxlength="240"><button class="btn sm pri">保存</button><button type="button" class="btn sm gh" data-act="method-cancel">取消</button></form></li>`
     : `<li class="mrow"><div class="mw" title="${level(x.w)}"><i style="width:${pct(x.w)}%;opacity:${x.w >= ACTIVE ? 1 : 0.45}"></i></div>
       <div><div>${esc(x.t)}${x.by === 'user' ? ' <span class="tag">你改过</span>' : ''}</div>
         <div class="meta">${level(x.w)} · 印证 ${x.n || 1} 次 · ${new Date(x.u || x.c).toLocaleDateString('zh-CN')} 更新${(x.src || []).length ? ` · <a href="#/method?tab=digests&g=${x.src[x.src.length - 1]}">来源</a>` : ''}
@@ -31,11 +47,13 @@ export function renderMethod(q = {}) {
   return head + `<div class="g2" style="margin-top:14px;align-items:start">
     <div>${groups.length ? groups.map(([d, xs]) => `<div class="sh"><h3>${d}</h3></div><div class="card"><ul class="lst">${xs.map(row).join('')}</ul></div>`).join('')
       : `<div class="card" style="padding:18px 20px"><p class="lede" style="margin:0">还是一张白纸。</p><p class="mut small">和学习 Agent 聊几次后，这里会自动出现它观察到的东西，比如“先给类比再讲公式时你理解更快”“容易把 A 和 B 混淆”。前几段对话变化最快，之后会越来越稳定。</p></div>`}
-      <form data-method-add class="addit" style="margin-top:12px"><select name="d" aria-label="维度">${DIMS.map(d => `<option>${d}</option>`).join('')}</select><input name="t" placeholder="自己补一条，例如：我需要先动手跑通再看原理" maxlength="300"><button class="btn sm">添加</button></form></div>
+      <form data-method-add class="addit" style="margin-top:12px"><select name="d" aria-label="维度">${DIMS.map(d => `<option>${d}</option>`).join('')}</select><input name="t" placeholder="自己补一条，例如：我需要先动手跑通再看原理" maxlength="240"><button class="btn sm">添加</button></form></div>
     <div><div class="card set"><h3>它是怎么形成的</h3>
       <p class="small">每段对话结束时，Agent 把对话整理成一份纪要，并对这份档案做最多 3 处小修改：新增一条观察、再次印证已有的、修正描述不准的、削弱和这次表现相反的。</p>
       <p class="small">已经整理了 <b>${n}</b> 段对话。现在每次修改的幅度是 <b>${pct(rate(n))}%</b>（从 100% 开始，随对话增多降到 15%），所以越往后越稳定。把握程度达到“较有把握”的条目，才会带进对话，用来调整讲法和出题方式。</p>
       <p class="small">你改过或自己加的条目，Agent 只会印证或削弱它，不会改写文字，也不会自动删掉。</p>
+      <p class="small">为了少一些空话和误判：关于偏好的条目（呈现偏好、节奏、动手偏好）必须引用你说过的原话，程序会核对；不用“总是、完全”这类绝对的词；档案最多 ${MAX_TOTAL} 条；删除只能是因为被反驳、被取代、过时或证据太弱。看不出新东西时就不改。现在 ${E.length}/${MAX_TOTAL} 条。</p>
+      ${logHtml()}
       <h3 style="margin-top:16px">一段对话什么时候结束</h3>
       <form data-idle class="addit"><span class="small">离开超过</span><input name="h" type="number" min="1" max="720" step="1" value="${idleHours()}" style="width:80px"><span class="small">小时再打开，就整理上一段</span><button class="btn sm">保存</button></form>
       <p class="hint">也可以随时在 Agent 窗口点“新话题”。原对话不再发给模型，只在这台设备上存档；纪要和学习方法会同步到你的其他设备。</p></div></div></div>`;
@@ -54,7 +72,14 @@ function digestsHtml() {
 act('method-edit', el => { store.ui().methodEdit = el.dataset.id; store.saveUi(); refresh(); });
 act('method-cancel', () => { store.ui().methodEdit = null; store.saveUi(); refresh(); });
 act('method-del', el => { const id = el.dataset.id, before = store.get('method', id); store.del('method', id); refresh(); toast('已删除', () => { store.put('method', id, before); refresh(); }); });
-act('digest-del', el => { const id = el.dataset.id, before = store.get('digests', id); store.del('digests', id); refresh(); toast('已删除', () => { store.put('digests', id, before); refresh(); }); });
+act('digest-del', el => { const id = el.dataset.id, before = store.get('digests', id); store.del('digests', id); dropDigest(id); refresh(); toast('已删除', () => { store.put('digests', id, before); refresh(); }); });
+act('method-undo', async el => {
+  const h = LOG[+el.dataset.i]; if (!h || h.undone) return;
+  const r = undoOps(h.log);
+  for (const [id, x] of Object.entries(r.set)) store.put('method', id, x);
+  for (const id of r.del) store.del('method', id);
+  h.undone = true; await store.localSet('methodLog', LOG); refresh(); toast('已撤销这次修改');
+});
 act('digest-note', el => {
   const d = store.get('digests', el.dataset.id); if (!d) return;
   const id = 'c' + uid('');

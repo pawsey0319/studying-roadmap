@@ -3,6 +3,8 @@ import { esc, iso } from '../util.js';
 import * as M from '../model.js';
 import * as store from '../store/index.js';
 import { stageStatus } from '../core/progress.js';
+import { stageMastery, mastery, isMastered, suggestMastered } from '../core/mastery.js';
+import { ankiTsv, ankiNotes } from '../core/anki.js';
 import { groupByAge } from '../core/feed.js';
 import { uid } from '../core/ids.js';
 import { act, refresh, toast, newsRow, resLink, TYPES, LVL, lvlTag, PICK } from './kit.js';
@@ -12,10 +14,11 @@ import { LIVE, loadLive } from '../live.js';
 /* ---------- 理论阶段 ---------- */
 function itemRow(i, s) {
   const on = store.isDone(i.id) || s.mastered;
+  const tr = store.get('tests', i.id), tm = tr && tr.a && tr.a.length ? `<span class="tag${isMastered(tr) ? ' mine' : ''}" title="自测 ${tr.a.length} 次">自测 ${Math.round(mastery(tr) * 100)}%</span> ` : '';
   const cls = ['it', on && !i.skipped ? 'on' : '', i.skipped ? 'skip' : ''].join(' ');
   const badge = i.added ? `<span class="tag ${i.ai ? 'ai' : 'mine'}">${i.ai ? 'Agent 加的' : '你加的'}</span> ` : i.edited ? '<span class="tag mine">已改写</span> ' : '';
   return `<div class="${cls}"><input type="checkbox" data-done="${i.id}"${on ? ' checked' : ''}${i.skipped || s.mastered ? ' disabled' : ''} aria-label="完成">
-    <span class="tx">${badge}${esc(i.text)}</span>
+    <span class="tx">${badge}${tm}${esc(i.text)}</span>
     <span class="ops">${i.skipped ? `<button data-act="unskip" data-s="${s.id}" data-id="${i.id}">恢复</button>`
       : `<button data-act="skip" data-s="${s.id}" data-id="${i.id}" title="这一项你已经会了，不计入进度；随时可以恢复">跳过</button>`}
       ${i.added ? `<button data-act="remove-item" data-s="${s.id}" data-id="${i.id}">删除</button>` : ''}</span></div>`;
@@ -35,6 +38,7 @@ export function stageCard(t, s, idx, cur, openId) {
       <div class="bd">
         ${s.mastered ? `<div class="pbar"><b>你标为已掌握</b><span>这个阶段不计入待学，所有任务按完成计算。</span><span class="sp"><button class="btn sm" data-act="unmaster" data-id="${s.id}">恢复为未掌握</button></span></div>` : ''}
         ${s.personalized && !s.mastered ? `<div class="pbar"><b>已个性化</b><span>${skipped ? `跳过了 ${skipped} 项` : ''}${s.goalEdited ? ' 目标已调整' : ''}</span><span class="sp"><button class="btn sm gh" data-act="reset-stage" data-id="${s.id}">恢复原版</button></span></div>` : ''}
+        ${testBar(s)}${journalBar(s.id)}
         <p class="goal">${s.goalEdited ? `<span class="was">${esc(M.track(t.id).stages.find(x => x.id === s.id)?.goal || '')}</span>` : ''}${esc(s.goal)}</p>
         <div class="items">${theory.map(i => itemRow(i, s)).join('')}</div>
         ${prac.length ? `<div class="prac"><b>实践验证</b>${prac.map(i => itemRow(i, s)).join('')}</div>` : ''}
@@ -43,11 +47,35 @@ export function stageCard(t, s, idx, cur, openId) {
         ${s.output ? `<div class="out"><b>阶段产出</b>${esc(s.output)}</div>` : ''}
         <div class="sa"><button class="btn sm acc" data-act="agent-adjust" data-id="${s.id}">和 Agent 调整这个阶段</button>
           <button class="btn sm" data-act="agent-check" data-id="${s.id}">根据笔记检查</button>
+          <button class="btn sm" data-act="agent-quiz" data-id="${s.id}" title="Agent 出题，按作答情况算掌握度">自测</button>
           <a class="btn sm gh" href="#/notes/s/${encodeURIComponent(s.id)}">笔记 ${notes}</a>
           <button class="btn sm gh" data-act="quick-note" data-id="${s.id}">随手记</button>
           ${s.mastered ? '' : `<button class="btn sm gh" data-act="master" data-id="${s.id}">标为已掌握</button>`}</div>
       </div></div></li>`;
 }
+
+// 自测掌握度和学习日志
+function testBar(s) {
+  const recs = store.all('tests'), m = stageMastery(s, recs);
+  if (!m.tested) return '';
+  const sug = suggestMastered(s, recs, store.done());
+  return `<div class="mbar"><span>自测 ${m.tested}/${m.items} 项，达标 ${m.mastered} 项</span><div class="mw"><i style="width:${Math.round(m.avg * 100)}%"></i></div><span>平均 ${Math.round(m.avg * 100)}%</span>
+    <button class="lnk" data-act="anki" data-id="${s.id}" title="导出这个阶段的自测题，重复导入只更新不新建">导出 Anki</button>
+    ${sug ? `<button class="btn sm acc" data-act="master" data-id="${s.id}">自测都达标了，标为已掌握？</button>` : ''}</div>`;
+}
+function journalBar(id) {
+  const j = store.get('journal', id); if (!j) return '';
+  return `<div class="jn"><b>上次聊到</b> ${esc(j.last || '—')}${j.next ? `<br><b>下次重点</b> ${esc(j.next)}` : ''}</div>`;
+}
+export function downloadAnki(at) {
+  const notes = ankiNotes({ tests: store.all('tests'), cards: store.all('cards'), withCards: !at, at, label: id => { const f = M.findStage(id); return f ? (f.t.short || f.t.name) + '_' + f.s.title : id; } });
+  if (!notes.length) { toast('还没有可导出的自测题'); return; }
+  const blob = new Blob([ankiTsv(notes)], { type: 'text/tab-separated-values' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `学习路线-Anki-${iso(new Date())}.txt`; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast(`已导出 ${notes.length} 张卡。在 Anki 里“文件 → 导入”选这个文件`);
+}
+act('anki', el => downloadAnki(el.dataset.id || null));
 
 export function routeCard(r) {
   const n = M.routeNews(r.id), nw = M.routeHasNew(r.id), from = M.findStage(r.from);

@@ -7,7 +7,9 @@ import { uid, hash } from '../core/ids.js';
 import { chat, cost, PROVIDERS } from '../ai/providers.js';
 import * as cloud from '../store/cloud.js';
 import { systemPrompt, stageContext, extractBlocks, cleanPlan, digestPrompt, digestText } from '../ai/agent.js';
-import { applyMethodOps, activeMethod } from '../core/method.js';
+import { applyMethodOps, activeMethod, methodView } from '../core/method.js';
+import { addAttempt, isMastered, mastery, masteryLines, suggestMastered, KINDS as QKINDS } from '../core/mastery.js';
+import { indexDigest, searchDigests } from '../ai/embed.js';
 import { act, refresh, toast, PICK, MAX_PICK, pickBar } from './kit.js';
 import { planCard, registerPlan } from './suggest.js';
 import { stageLabel } from './home.js';
@@ -41,7 +43,7 @@ function stageCtx(id) {
   const cards = Object.values(store.all('cards')).filter(c => c.at === id).map(c => '- ' + c.t).join('\n');
   const notes = [store.note(id), cards].filter(Boolean).join('\n');
   const lib = Object.values(store.all('library')).filter(d => d.at === id).map(d => `【导入资料：${d.title}】\n${d.text.slice(0, 3000)}`).join('\n\n');
-  return { stage: f.s, track: f.t, text: stageContext(s, f.t, notes) + (lib ? '\n\n' + lib : ''), notes: !!notes };
+  return { stage: f.s, track: f.t, text: stageContext(s, f.t, notes) + (lib ? '\n\n' + lib : ''), notes: !!notes, tests: masteryLines(f.s, store.all('tests')) };
 }
 function routeCtx(id) {
   const r = M.routes().find(x => x.id === id); if (!r) return null;
@@ -58,7 +60,9 @@ const KINDS = {
   free: () => ({ title: '自由对话', text: '用户正在看的页面：' + (document.title || '') + '\n在学：' + M.doing().map(d => d.kind === 'stage' ? `${d.t.name} / ${d.s.title}（${d.s.id}）` : `${d.t.name} / 前沿：${d.r.title}`).join('；'), pills: ['在学的阶段'] }),
   adjust: id => { const c = stageCtx(id); return c && { title: '调整阶段', stageId: id, text: c.text, pills: ['这个阶段', c.notes ? '相关笔记' : null], first: `说说你在“${c.stage.title}”上的情况：哪些已经会了、哪里卡住、想做出什么。我会先问清楚，再在原有阶段上给出修改方案，你逐条确认后才生效。` }; },
   check: id => { const c = stageCtx(id); return c && { title: '根据笔记检查', stageId: id, text: c.text, pills: ['这个阶段', '相关笔记'], auto: '请根据我在这个阶段的笔记，找出可能的卡点或理解偏差，再判断哪些任务我可能已经会了。如果需要调整，用 plan 代码块给出修改方案（跳过只作为建议）。如果笔记太少无法判断，就直接说，并告诉我应该记些什么。' }; },
-  stage: id => { const c = stageCtx(id); return c && { title: '阶段对话', stageId: id, text: c.text, pills: ['这个阶段', c.notes ? '相关笔记' : null] }; },
+  stage: id => { const c = stageCtx(id); return c && { title: '阶段对话', stageId: id, text: c.text, tests: c.tests, pills: ['这个阶段', c.notes ? '相关笔记' : null] }; },
+  quiz: id => { const c = stageCtx(id); return c && { title: '自测', stageId: id, text: c.text, tests: c.tests, pills: ['这个阶段', '自测记录'],
+    auto: '考考我这个阶段。先挑一个还没自测或没达标的任务出一道题；我答完你批改，再出下一道。', label: '开始自测' }; },
   card: id => { const c = store.get('cards', id); if (!c) return null; const s = c.at ? stageCtx(c.at) : null;
     return { title: '消化笔记', stageId: c.at && M.findStage(c.at) ? c.at : null, cardId: id, text: (s ? s.text + '\n\n' : '') + '用户想讨论的这条笔记：\n' + c.t, pills: ['这条笔记', c.at ? stageLabel(c.at) : null],
       auto: '这是我刚记下的一条笔记。帮我消化它：指出理解对不对、有没有偏差，补一个具体例子；需要的话问我一个检验理解的问题。最后把值得留下的内容放在 note 代码块里。' }; },
@@ -155,7 +159,8 @@ async function closeSession(key, msgs, info, manual) {
   const cfg = await aiCfg();
   if (aiBlock(cfg)) return null;
   const transcript = talk.map(m => `${m.role === 'user' ? '用户' : 'Agent'}：${(m.show || extractBlocks(m.content).text).slice(0, 1500)}`).join('\n\n').slice(-12000);
-  const lines = Object.entries(store.all('method')).sort((a, b) => b[1].w - a[1].w).slice(0, 40).map(([id, x]) => `${id}｜${x.d}｜${x.t}｜${x.w >= 0.7 ? '很有把握' : x.w >= 0.35 ? '较有把握' : '待观察'}`).join('\n');
+  const view = methodView(store.all('method')), lines = view.lines;
+  const userText = talk.filter(m => m.role === 'user' && !m.auto).map(m => m.show || m.content).join('\n');
   let d = null, ops = [];
   try {
     const res = await chat(cfg, [{ role: 'system', content: digestPrompt(lines) }, { role: 'user', content: `对话主题：${info.title}${info.at ? '（' + stageLabel(info.at) + '）' : ''}\n\n${transcript}` }], { maxTokens: 1500, temperature: 0.2 });
@@ -170,15 +175,33 @@ async function closeSession(key, msgs, info, manual) {
     d = { title: info.title, learned: [], open: [], wrong: [], next: '（自动整理失败，原对话已在这台设备上存档）' };
   }
   const gid = 'g' + uid('');
-  store.put('digests', gid, { title: String(d.title || info.title).slice(0, 60), t: digestText(d) || '（这段对话没有可沉淀的内容）', at: info.at || null, kind: info.kind, c: Date.now(), n: talk.length });
+  const dg = { title: String(d.title || info.title).slice(0, 60), t: digestText(d) || '（这段对话没有可沉淀的内容）', at: info.at || null, kind: info.kind, c: Date.now(), n: talk.length };
+  store.put('digests', gid, dg);
   await store.localSet('arch.' + gid, msgs);
+  if (info.at) writeJournal(info.at, d);
+  indexDigest(gid, dg);
   const n = store.get('meta', 'methodN') || 0;
-  const r = applyMethodOps(store.all('method'), ops, { n, src: gid, idGen: () => 'm' + uid('') });
+  const r = applyMethodOps(store.all('method'), ops, { n, src: gid, idGen: () => 'm' + uid(''), map: view.map, userText });
   for (const [id, x] of Object.entries(r.set)) store.put('method', id, x);
   for (const id of r.del) store.del('method', id);
   store.put('meta', 'methodN', n + 1);
+  if (r.log.length || r.rejected.length) {
+    const H = (await store.localGet('methodLog')) || [];
+    H.unshift({ g: gid, t: Date.now(), title: dg.title, log: r.log, rejected: r.rejected.map(x => ({ t: String((x.op && (x.op.t || x.op.op)) || ''), why: x.why })) });
+    await store.localSet('methodLog', H.slice(0, 30));
+  }
   await done();
+  refresh();
   return gid;
+}
+// 学习日志：每个阶段一条“上次聊到哪 / 下次重点”，最多保留 50 条（参考 DeepTutor 的学习日志）
+function writeJournal(at, d) {
+  const last = [d.title, ...(d.learned || []).slice(0, 2)].filter(Boolean).join('；').slice(0, 400);
+  const next = String(d.next || (d.open || [])[0] || '').slice(0, 400);
+  if (!last && !next) return;
+  store.put('journal', at, { last, next, u: Date.now() });
+  const J = Object.entries(store.all('journal')).sort((a, b) => b[1].u - a[1].u);
+  for (const [k] of J.slice(50)) store.del('journal', k);
 }
 // 打开网站时，把离开太久的对话在后台整理掉（每次最多 3 段）
 export async function sweepSessions() {
@@ -218,7 +241,7 @@ export async function openAgent(kind = 'free', id = '') {
     MSGS = (await store.localGet(key)) || []; note = '';
   }
   await renderDrawer();
-  if (!MSGS.length && CUR.auto) send(CUR.auto, { auto: true, label: kind === 'news' ? '一键解析这条资讯' : kind === 'multi' ? `一键解析这 ${String(id).split(',').length} 条资讯的关联` : '' });
+  if (!MSGS.length && CUR.auto) send(CUR.auto, { auto: true, label: CUR.label || (kind === 'news' ? '一键解析这条资讯' : kind === 'multi' ? `一键解析这 ${String(id).split(',').length} 条资讯的关联` : '') });
 }
 export function closeAgent() { document.body.classList.remove('dw-open'); if (dw()) dw().hidden = true; if (ctl) ctl.abort(); }
 
@@ -227,7 +250,7 @@ async function renderDrawer() {
   const block = aiBlock(cfg), ready = !block;
   const prof = store.get('meta', 'profile'), mem = store.get('meta', 'memory');
   const nMethod = activeMethod(store.all('method')).length, nDig = relatedDigests().length;
-  const pills = ['学习者档案' + (prof ? '' : '（未填）'), mem ? '长期记忆' : null, nMethod ? '你的学习方法' : null, nDig ? `${nDig} 份过去的纪要` : null, ...(CUR.pills || [])].filter(Boolean);
+  const pills = ['学习者档案' + (prof ? '' : '（未填）'), mem ? '长期记忆' : null, nMethod ? '你的学习方法' : null, nDig ? `${nDig} 份过去的纪要` : null, journalText() ? '学习日志' : null, ...(CUR.pills || [])].filter(Boolean);
   dw().innerHTML = `<div class="dw-h"><h3>学习 Agent</h3><span class="fnt small">${esc(CUR.title)}</span>
       <button class="x" data-act="agent-close" aria-label="收起">×</button></div>
     <div class="mem">它会看到：${pills.map(x => `<span>${esc(x)}</span>`).join('')}<button class="btn sm gh" data-act="agent-new" title="把这段对话整理成纪要，然后开始新话题"${MSGS.length && !busy ? '' : ' disabled'}>新话题</button></div>
@@ -256,7 +279,7 @@ function msgHtml(m, i) {
   if (m.role === 'tool') return `<div class="tool">${esc(m.content)}</div>`;
   if (m.role === 'err') return `<div class="ai err">${esc(m.content)}</div>`;
   const { text, blocks } = extractBlocks(m.content);
-  const extra = blocks.map((b, k) => blockHtml(b, `${i}.${k}`)).join('');
+  const extra = blocks.map((b, k) => blockHtml(b, `${i}.${k}`)).join('') + gradeHtml(m, i);
   const save = blocks.some(b => b.type === 'note') ? '' : `<button class="lnk" data-act="msg-note" data-i="${i}">存进笔记</button>`;
   return `<div class="ai"><div class="md">${md(text)}</div>${extra}<div class="fnt small mfoot">${save}${m.cost != null ? `<span>约 ${m.tin + m.tout} token · ¥${m.cost.toFixed(4)}${m.est ? '（估算）' : ''}</span>` : ''}</div></div>`;
 }
@@ -278,7 +301,8 @@ function blockHtml(b, key) {
     return `<div class="blk"><b class="small">跟踪学习清单补充</b><ul>${items.map(x => `<li>${x.mode === 'practice' ? '<span class="tag">实践验证</span> ' : ''}${esc(x.text)}${x.url ? ' <span class="tag ai">链接未核实</span>' : ''}</li>`).join('')}</ul>
       <div class="pf"><button class="btn sm acc" data-act="blk-route" data-k="${key}">加入清单</button></div></div>`;
   }
-  if (b.type === 'tool' || b.type === 'summary' || b.type === 'next') return '';
+  if (b.type === 'quiz') return `<div class="quiz"><div class="k">自测题 · ${esc(QKINDS[b.data.kind] || '记忆')}类${b.data.kind === 'concept' ? '（用你自己的话讲）' : ''}</div><div class="md">${md(String(b.data.q || ''))}</div></div>`;
+  if (b.type === 'tool' || b.type === 'summary' || b.type === 'next' || b.type === 'grade') return '';
   return '';
 }
 
@@ -297,9 +321,11 @@ const TOOLS = {
     return [doc && '阶段文档：\n' + doc.slice(0, 3000), cs.join('\n')].filter(Boolean).join('\n\n') || '没有笔记';
   },
   get_route: a => routeCtx(a.id) || '没有这条路线',
-  search_digests: a => {
+  search_digests: async a => {
+    const all = store.all('digests'), ids = await searchDigests(a.query, 5);
     const q = String(a.query || '').toLowerCase().split(/\s+/).filter(Boolean);
-    const hits = Object.values(store.all('digests')).filter(g => q.every(w => (g.title + ' ' + g.t).toLowerCase().includes(w))).sort((x, y) => y.c - x.c).slice(0, 5);
+    const hits = ids && ids.length ? ids.map(id => all[id]).filter(Boolean)
+      : Object.values(all).filter(g => q.every(w => (g.title + ' ' + g.t).toLowerCase().includes(w))).sort((x, y) => y.c - x.c).slice(0, 5);
     return hits.map(g => `## ${new Date(g.c).toLocaleDateString('zh-CN')} ${g.title}\n${g.t.slice(0, 1200)}`).join('\n\n') || '没有找到相关的对话纪要';
   }
 };
@@ -323,7 +349,8 @@ async function send(text, opts = {}) {
   const box = $('#msgs');
   const sys = systemPrompt({ profile: store.get('meta', 'profile'), memory: store.get('meta', 'memory'), recent: recentChanges(),
     method: activeMethod(store.all('method')).map(([, x]) => `- ${x.d}：${x.t}`).join('\n'),
-    digests: relatedDigests().map(g => `- ${new Date(g.c).toLocaleDateString('zh-CN')} ${g.title}：${g.t.replace(/\s+/g, ' ').slice(0, 700)}`).join('\n') });
+    digests: relatedDigests().map(g => `- ${new Date(g.c).toLocaleDateString('zh-CN')} ${g.title}：${g.t.replace(/\s+/g, ' ').slice(0, 700)}`).join('\n'),
+    journal: journalText(), tests: CUR.tests || '' });
   const steps = 6;
   try {
     for (let step = 0; step < steps; step++) {
@@ -336,10 +363,11 @@ async function send(text, opts = {}) {
       const c = cost(cfg, res.usage); await addUsage(cfg, res.usage);
       MSGS.push({ role: 'assistant', ts: Date.now(), content: res.text, cost: c, tin: res.usage.in, tout: res.usage.out, est: res.estimated });
       const { blocks } = extractBlocks(res.text);
+      recordQuiz(blocks, MSGS.length - 1);
       const tool = blocks.find(b => b.type === 'tool');
       if (!tool) break;
       const fn = TOOLS[tool.data.name];
-      const out = fn ? String(fn(tool.data.args || {})).slice(0, 6000) : '没有这个工具';
+      const out = fn ? String(await fn(tool.data.args || {})).slice(0, 6000) : '没有这个工具';
       MSGS.push({ role: 'tool', ts: Date.now(), content: TOOL_LABEL[tool.data.name] || `调用 ${tool.data.name}`, result: out });
       await renderDrawer();
     }
@@ -352,6 +380,41 @@ async function send(text, opts = {}) {
   await indexSession(ckey(CUR), sessionInfo());
   await renderDrawer();
 }
+
+function journalText() {
+  const at = ctxAt(); const j = at && store.get('journal', at);
+  return j ? `${stageLabel(at)}（${new Date(j.u).toLocaleDateString('zh-CN')}）上次：${j.last || '—'}；下次重点：${j.next || '—'}` : '';
+}
+/* ---------- 自测 ---------- */
+// 出的题先记在本机“待批改”里（参考答案不显示）；收到批改结果后记一次作答，算掌握度
+const quizItem = id => { const f = CUR && CUR.stageId && M.findStage(CUR.stageId); if (!f) return null; return f.s.items.some(i => i.id === id) ? id : f.s.id; };
+function recordQuiz(blocks, mi) {
+  const U = store.ui(); U.quizPending = U.quizPending || {};
+  for (const b of blocks) {
+    if (b.type === 'quiz' && b.data.q) {
+      const item = quizItem(b.data.item); if (!item) continue;
+      U.quizPending[item] = { q: String(b.data.q).slice(0, 400), a: String(b.data.a || '').slice(0, 600), k: QKINDS[b.data.kind] ? b.data.kind : 'memory', t: Date.now(), at: CUR.stageId };
+    } else if (b.type === 'grade') {
+      const item = quizItem(b.data.item); if (!item) continue;
+      const pend = U.quizPending[item] || {};
+      const rec = addAttempt(store.get('tests', item), { kind: pend.k || b.data.kind, s: +b.data.score, h: +b.data.hints || 0, r: +b.data.retries || 0, p: b.data.pass !== false && +b.data.score >= 0.6, q: pend.q ? { t: pend.q, a: pend.a } : null });
+      store.put('tests', item, rec);
+      delete U.quizPending[item];
+      MSGS[mi].graded = { item, m: mastery(rec), ok: isMastered(rec) };
+    }
+  }
+  store.saveUi();
+  if (blocks.some(b => b.type === 'quiz' || b.type === 'grade')) refresh();   // 阶段卡片上的掌握度跟着更新
+}
+function gradeHtml(m, i) {
+  const g = m.graded; if (!g) return '';
+  const f = M.findStage(CUR.stageId), it = f && f.s.items.find(x => x.id === g.item);
+  const recs = store.all('tests'), whole = f && suggestMastered(f.s, recs, store.done());
+  return `<div class="quiz"><div class="k">自测记录 · ${esc(it ? it.text.slice(0, 40) : '这个阶段')}</div>掌握度 <b>${Math.round(g.m * 100)}%</b>${g.ok ? ' · 已达标' : ''}
+    ${g.ok && it && !store.isDone(it.id) ? `<div class="pf"><button class="btn sm" data-act="quiz-done" data-id="${it.id}">把这项勾为完成</button></div>` : ''}
+    ${whole ? `<div class="pf"><span class="small">这个阶段每一项都完成了或自测达标。</span><button class="btn sm acc" data-act="master" data-id="${f.s.id}">标为已掌握</button></div>` : ''}</div>`;
+}
+act('quiz-done', el => { store.setDone(el.dataset.id, true, new Date().toISOString().slice(0, 10)); el.disabled = true; el.textContent = '已勾为完成'; refresh(); });
 
 function recentChanges() {
   const ov = store.all('overlay');
@@ -408,6 +471,7 @@ act('blk-route', el => {
 act('agent-adjust', el => openAgent('adjust', el.dataset.id));
 act('agent-check', el => openAgent('check', el.dataset.id));
 act('agent-stage', el => openAgent('stage', el.dataset.id));
+act('agent-quiz', el => openAgent('quiz', el.dataset.id));
 act('agent-card', el => openAgent('card', el.dataset.id));
 act('agent-doc', el => openAgent('doc', el.dataset.id));
 act('agent-organize', el => openAgent('organize', el.dataset.id));

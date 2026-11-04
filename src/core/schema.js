@@ -42,7 +42,13 @@ export const DOCS = {
   digests: (k, v) => /^g[0-9a-z]{6,24}$/.test(k) && isObj(v) && str(v.title, 200) && str(v.t, 20000) && (v.at == null || STAGE_RE.test(v.at)) && typeof v.c === 'number',
   // 学习方法档案：m<随机> → {d 维度, t 描述, w 权重 0–1, n 印证次数, c, u, src[纪要 ID], by ai|user}
   method: (k, v) => /^m[0-9a-z]{6,24}$/.test(k) && isObj(v) && str(v.d, 20) && str(v.t, 600) && typeof v.w === 'number' && v.w >= 0 && v.w <= 1
-    && (v.by === 'ai' || v.by === 'user') && (!v.src || (Array.isArray(v.src) && v.src.length <= 8))
+    && (v.by === 'ai' || v.by === 'user') && (!v.src || (Array.isArray(v.src) && v.src.length <= 8)),
+  // 自测记录：任务 ID（或阶段 ID）→ {k 类型, a[最近 5 次作答 {s,h,r,p,t}], qs[最近 5 道题 {t,a}]}
+  tests: (k, v) => (ITEM_RE.test(k) || STAGE_RE.test(k)) && isObj(v) && ['memory', 'procedural', 'concept'].includes(v.k)
+    && Array.isArray(v.a) && v.a.length <= 5 && v.a.every(x => isObj(x) && typeof x.s === 'number' && x.s >= 0 && x.s <= 1)
+    && (!v.qs || (Array.isArray(v.qs) && v.qs.length <= 5)) && size(v) < 8000,
+  // 学习日志：阶段或前沿路线 ID → {last 上次聊到哪, next 下次重点, u 时间}；最多 50 条
+  journal: (k, v) => STAGE_RE.test(k) && isObj(v) && str(v.last || '', 400) && str(v.next || '', 400) && typeof v.u === 'number'
 };
 export const DOC_NAMES = Object.keys(DOCS);
 export const validFor = name => DOCS[name] || (() => false);

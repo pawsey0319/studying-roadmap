@@ -7,11 +7,13 @@ import * as cloud from '../store/cloud.js';
 import { PROVIDERS, chat } from '../ai/providers.js';
 import { act, refresh, toast } from './kit.js';
 import { aiCfg, saveCfg, usage } from './agentui.js';
+import { embedCfg, saveEmbed, embedReady, embed } from '../ai/embed.js';
 
 let hostedInfo = null;  // 内测模型的可选模型和用量，进设置页时取一次
 
 export async function renderSettings() {
   document.documentElement.style.setProperty('--c', '#1B2430');
+  const ec = await embedCfg();
   const c = await aiCfg(), u = await usage(), p = PROVIDERS[c.provider] || PROVIDERS.custom, hosted = c.provider === 'hosted';
   if (hosted && cloud.signedIn()) hostedInfo = await cloud.aiInfo().catch(e => ({ error: e.message }));
   const prof = store.get('meta', 'profile') || '', mem = store.get('meta', 'memory') || '';
@@ -35,7 +37,13 @@ export async function renderSettings() {
       <div${hosted ? ' hidden' : ''}><h3 style="margin-top:18px">花费</h3>
       <p class="small">本月（${esc(u.m)}）已用约 ¥${u.cny.toFixed(2)}，${u.calls} 次调用，${(u.tin + u.tout).toLocaleString()} token。</p>
       <label class="field"><span>每月上限（元，0 表示不限）</span><input id="aiBudget" type="number" min="0" step="1" value="${c.budget ?? 30}"></label>
-      <p class="hint">用到 80% 时提醒；超过后每次调用前都要你确认。</p></div></section>
+      <p class="hint">用到 80% 时提醒；超过后每次调用前都要你确认。</p></div>
+      <h3 style="margin-top:18px">向量模型（可选）</h3>
+      <p class="hint">用来按意思查找过去的对话纪要。不填时按关键词查找。默认是硅基流动的免费模型 BAAI/bge-m3，需要在 cloud.siliconflow.cn 注册后创建 API Key 填在这里；也可以填你的聚合接口地址和它的 bge-m3 模型名（向量要 1024 维）。只在登录腾讯云开发后生效。Key 只存在这台设备。</p>
+      <label class="field"><span>接口地址</span><input id="emBase" value="${esc(ec.base)}" placeholder="https://…/v1"></label>
+      <label class="field"><span>模型</span><input id="emModel" value="${esc(ec.model)}"></label>
+      <label class="field"><span>API Key</span><input id="emKey" type="password" autocomplete="off" spellcheck="false" value="${esc(ec.key)}" placeholder="sk-…（明天填）"></label>
+      <div class="sa"><button class="btn" data-act="em-save">保存并测试</button><span id="emMsg" class="small">${embedReady(ec) ? '已启用' : cloud.signedIn() ? '未启用：还没有填 Key' : '未启用：需要先登录腾讯云开发'}</span></div></section>
     <section class="card set"><h3>学习者档案</h3>
       <p class="hint">每次对话都会带给学习 Agent。开局规划时会自动生成，也可以直接改。</p>
       <textarea id="prof" rows="6" placeholder="还没有。开局规划时会自动生成，例如：会 Python，懂 Transformer；在准备 AI 产品经理求职……">${esc(prof)}</textarea>
@@ -113,3 +121,10 @@ act('exp', () => {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 });
 act('imp', () => $('#impBak').click());
+act('em-save', async () => {
+  const c = { base: $('#emBase').value.trim(), model: $('#emModel').value.trim(), key: $('#emKey').value.trim() }, m = $('#emMsg');
+  await saveEmbed(c); m.textContent = '已保存，正在测试…';
+  if (!c.key && /siliconflow/.test(c.base)) { m.textContent = '已保存。还没有填 Key，先按关键词查找'; return; }
+  try { await embed(c, ['测试']); m.innerHTML = `<span style="color:var(--ok)">可以用（1024 维）${cloud.signedIn() ? '' : '，登录腾讯云开发后生效'}</span>`; }
+  catch (e) { m.innerHTML = `<span class="err">${esc(e.message)}</span>`; }
+});

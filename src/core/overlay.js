@@ -68,3 +68,22 @@ export function cleanOps(ops, stage) {
 
 // 用户手动跳过只能由人发起：Agent 给出的 skip / mastered 默认不勾选
 export const needsManualConfirm = op => op.op === 'skip' || op.op === 'mastered';
+
+// 修改方案每一项对进度的影响（先预览后提交，参考 DeepTutor 的做法）。stage 是当前生效的阶段（含 prog），done 是完成记录，tests 是自测记录
+export function opImpact(op, stage, done = {}, tests = {}) {
+  if (!stage) return '';
+  const it = op.id && stage.items.find(i => i.id === op.id);
+  const n = stage.prog ? stage.prog.n : 0, total = stage.prog ? stage.prog.total : stage.items.length;
+  if (stage.mastered && op.op !== 'unmastered') return '这个阶段你已标为已掌握，不建议再改';
+  switch (op.op) {
+    case 'skip': return it && done[it.id] ? `这项已完成，跳过后不再计入进度（${n}/${total} → ${n - 1}/${total - 1}）` : `不再计入进度（${n}/${total} → ${n}/${Math.max(0, total - 1)}）`;
+    case 'unskip': return `重新计入进度（共 ${total + 1} 项）`;
+    case 'edit': return it && done[it.id] ? '这项已完成：改写后仍算完成。内容变化大的话，建议取消勾选重新学' : it && tests[it.id] ? '这项有自测记录，改写后记录保留，但旧题目可能对不上' : '只改文字，不影响进度';
+    case 'add': return `新增一项未完成的任务（${n}/${total} → ${n}/${total + 1}）`;
+    case 'mastered': return `整个阶段按完成计算（${n}/${total} → ${total}/${total}），不再出现在“在学”里`;
+    case 'unmastered': return '恢复成按实际完成情况计算进度';
+    case 'goal': return '只改阶段目标，不影响进度';
+    case 'res': return '只加资源，不影响进度';
+    default: return '';
+  }
+}

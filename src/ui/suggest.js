@@ -3,7 +3,7 @@
 import { esc } from '../util.js';
 import * as M from '../model.js';
 import * as store from '../store/index.js';
-import { applyOps, needsManualConfirm } from '../core/overlay.js';
+import { applyOps, needsManualConfirm, opImpact } from '../core/overlay.js';
 import { uid } from '../core/ids.js';
 import { act, refresh, toast } from './kit.js';
 
@@ -49,7 +49,8 @@ export function planCard(plan, opts = {}) {
   const f = plan.stage ? M.findStage(plan.stage) : null;
   const rows = (plan.ops || []).map((op, i) => `<label class="drow"><input type="checkbox" data-op="${i}"${needsManualConfirm(op) ? '' : ' checked'}>
     <div><span class="op ${OPC[op.op] || 'c'}">${OPN[op.op] || op.op}</span>${op.op === 'res' ? opText(op, f && f.s, plan.from === 'weekly') : esc(opText(op, f && f.s))}
-    ${op.why ? `<span class="why">${esc(op.why)}</span>` : ''}${needsManualConfirm(op) ? '<span class="why">跳过只能由你决定，需要的话勾上这一项</span>' : ''}</div></label>`).join('');
+    ${op.why ? `<span class="why">${esc(op.why)}</span>` : ''}${needsManualConfirm(op) ? '<span class="why">跳过只能由你决定，需要的话勾上这一项</span>' : ''}
+    ${f && opImpact(op, f.s, store.done(), store.all('tests')) ? `<span class="impact">影响：${esc(opImpact(op, f.s, store.done(), store.all('tests')))}</span>` : ''}</div></label>`).join('');
   return `<div class="plan" data-plan="${esc(plan.id)}"><div class="ph2">修改方案 · ${esc(f ? f.s.title : plan.title)}<span>${plan.ops.length} 项</span></div>
     ${rows || '<p class="empty">这份方案没有具体修改。</p>'}
     <div class="pf">${opts.later ? `<button class="btn sm gh" data-act="plan-later" data-id="${esc(plan.id)}">稍后决定</button>` : ''}

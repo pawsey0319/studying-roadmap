@@ -1,0 +1,17 @@
+studying-roadmap
+Copyright 2026 pawsey0319
+
+本项目的部分算法思路参考了以下开源项目，相关代码按本项目的数据结构用 JavaScript 重写，没有复制原代码：
+
+DeepTutor — https://github.com/HKUDS/DeepTutor
+  Licensed under the Apache License, Version 2.0
+  Copyright (c) HKUDS
+  参考内容：自测掌握度（最近 5 次加权、作答次数上限、提示与重试扣分、掌握门槛）、下一步优先级、
+  学习者档案的证据约束（引用原话、条目上限、删除理由、禁止绝对化用词）、修改前预览影响、学习日志。
+  见 src/core/mastery.js、src/core/method.js、src/core/overlay.js（opImpact）。
+
+mem0 — https://github.com/mem0ai/mem0
+  Licensed under the Apache License, Version 2.0
+  参考内容：给模型的条目用短编号、新增前查重、修改历史与撤销。见 src/core/method.js。
+
+第三方库（vendor/ 目录，各自附带许可证文件）：pdf.js（Apache-2.0）、mammoth.js（BSD-2-Clause）。

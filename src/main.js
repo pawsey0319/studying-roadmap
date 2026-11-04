@@ -14,7 +14,7 @@ import { renderNotes, openQuick } from './ui/notes.js';
 import { renderSettings, afterSettings } from './ui/settings.js';
 import { renderImport, afterImport } from './ui/importui.js';
 import { renderSearch } from './ui/search.js';
-import { renderMethod } from './ui/method.js';
+import { renderMethod, beforeMethod } from './ui/method.js';
 import { sweepSessions } from './ui/agentui.js';
 import { openAgent, closeAgent } from './ui/agentui.js';
 import { openOnboard } from './ui/onboard.js';
@@ -43,7 +43,7 @@ async function render(opts = {}) {
     else if (page === 'later') html = renderLater();
     else if (page === 'library') html = renderLibrary();
     else if (page === 'search') html = renderSearch(q);
-    else if (page === 'method') { html = renderMethod(q); if (q.g) after = () => { const el = document.getElementById('dg-' + q.g); if (el) el.scrollIntoView({ block: 'center' }); }; }
+    else if (page === 'method') { await beforeMethod(); html = renderMethod(q); if (q.g) after = () => { const el = document.getElementById('dg-' + q.g); if (el) el.scrollIntoView({ block: 'center' }); }; }
     else if (page === 'suggestions') { html = renderSuggestions(q); if (q.id) after = () => { const el = document.getElementById('sug-' + q.id); if (el) setTimeout(() => el.scrollIntoView({ block: 'center' }), 30); }; }
     else if (page === 'import') { html = renderImport(); after = afterImport; }
     else if (page === 'settings') { html = await renderSettings(); after = afterSettings; }

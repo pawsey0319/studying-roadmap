@@ -6,9 +6,11 @@
 //   ```memory {"text":"…"}```                                        建议记住的长期信息
 //   ```summary {...}```                                              开局追问时的路线摘要
 //   ```tool {"name":"…","args":{…}}```                               多步模式下调用工具（只读）
+//   ```quiz  {"item":"任务 ID","kind":"memory|procedural|concept","q":"题目","a":"参考答案"}```  自测出题（界面只显示题目）
+//   ```grade {"item":"任务 ID","score":0.8,"hints":0,"retries":0,"pass":true}```  批改结果（自动记进自测记录）
 import { cleanOps } from '../core/overlay.js';
 
-const BLOCK_RE = /```(plan|route|note|memory|summary|tool|track|next|digest|method)\s*\n?([\s\S]*?)```/g;
+const BLOCK_RE = /```(plan|route|note|memory|summary|tool|track|next|digest|method|quiz|grade)\s*\n?([\s\S]*?)```/g;
 
 // 宽松解析：去掉注释和尾逗号，容忍模型输出的常见小错误
 export function looseJSON(s) {
@@ -40,7 +42,7 @@ export function stageContext(s, t, notes) {
   return lines.join('\n');
 }
 
-export function systemPrompt({ profile, memory, recent, method, digests }) {
+export function systemPrompt({ profile, memory, recent, method, digests, journal, tests }) {
   return [
     '你是一个学习网站里的个人学习 Agent，用中文回答，语气平实、直接，不说客套话。',
     '用户自驱力强，目标是进入一个新领域或在领域里持续深耕；不要督促打卡，要帮他把路线调到最适合他的样子。',
@@ -49,6 +51,8 @@ export function systemPrompt({ profile, memory, recent, method, digests }) {
     recent ? `最近的调整：${clip(recent, 800)}` : '',
     method ? `你观察到的这个用户的学习方式（越靠前越有把握），讲解和出题时照着调整，不要向用户复述这份清单：\n${clip(method, 1500)}` : '',
     digests ? `和这次话题相关的过去对话纪要（只在相关时引用）：\n${clip(digests, 2400)}` : '',
+    journal ? `学习日志（上次聊到哪、下次重点），接着上次继续，不要从头讲：\n${clip(journal, 800)}` : '',
+    tests ? `这个阶段的自测掌握度（出题时优先考没自测或没达标的任务）：\n${clip(tests, 1200)}` : '',
     '规则：',
     '1. 用户描述模糊时先追问，每次最多 3 个问题，并尽量给出可以直接选的选项；清楚了再给方案。',
     '2. 修改路线时只在现有阶段上裁剪和改写（改目标、新增或改写任务、加资源、建议跳过、建议标为已掌握），不重排阶段。修改方案放在 ```plan``` 代码块里，格式：{"stage":"阶段 ID","title":"一句话标题","ops":[{"op":"goal","text":"新目标","why":"原因"},{"op":"skip","id":"任务 ID","why":"…"},{"op":"add","text":"新任务","mode":"theory 或 practice","why":"…"},{"op":"edit","id":"任务 ID","text":"改写后的内容","why":"…"},{"op":"res","name":"资源名","url":"链接（不确定就留空）","why":"…"},{"op":"mastered","why":"…"}]}。',
@@ -57,6 +61,7 @@ export function systemPrompt({ profile, memory, recent, method, digests }) {
     '5. 建议存进笔记的内容放在 ```note``` 代码块：{"text":"Markdown 内容","at":"阶段 ID"}。值得长期记住的用户信息放在 ```memory``` 代码块：{"text":"…"}。用户确认后才会保存。',
     '6. 工具：只有当前上下文里没有、又确实需要用户自己的数据（其他阶段、笔记、资讯、过去的对话纪要）时才调用；概念解释、一般问题直接回答，不要调用。调用时每次只调一个，格式：```tool\n{"name":"工具名","args":{…}}\n```，然后停下等结果。可用工具：list_tracks{}；get_stage{"id"}；search_news{"query","track"}；get_notes{"at" 或 "query"}；get_route{"id"}；search_digests{"query"}。最多 6 步。',
     '7. 每次回答的最后，附上用户接下来可能想做的 3 件事，放在 ```next``` 代码块：{"q":["…","…","…"]}。用用户的口吻，每条 18 字以内，紧扣刚才讲的内容，不要泛泛的“讲简单点”；其中 1 条是检验理解的（例如“考我一道……的题”“我复述一遍……你看对不对”）。',
+    '8. 自测：用户要你考他时，一次只出一道题，放在 ```quiz``` 代码块：{"item":"任务 ID","kind":"memory、procedural 或 concept","q":"题目","a":"参考答案（界面不显示）"}。记忆类问事实和定义，步骤类问怎么做，概念类请用户用自己的话讲一遍。用户作答后先讲评，再输出 ```grade``` 代码块：{"item":"任务 ID","score":0 到 1 的得分,"hints":这道题给过几次提示,"retries":重答了几次,"pass":概念类讲得是否到位（其他类可省略）}。用户要提示时只给提示、不给答案，提示次数会扣分。不要在出题时泄露答案。',
     '回答尽量短，先给结论。'
   ].filter(Boolean).join('\n');
 }
@@ -123,12 +128,13 @@ export function draftTrackPrompt(name, summary) {
 export function digestPrompt(methodLines) {
   return [
     '你在整理一段学习对话。用中文，只根据对话内容，不要编造。输出两个代码块：',
-    '1) ```digest``` 代码块，JSON：{"title":"这段对话在学什么，16 字以内","learned":["用户弄懂了的要点，最多 5 条"],"open":["还没解决的疑问"],"wrong":["出现过的误解 → 正确理解"],"next":"建议的下一步，一句话"}。没有的项给空数组或空字符串。',
+    '1) ```digest``` 代码块，JSON：{"title":"这段对话在学什么，16 字以内","learned":["用户弄懂了的要点，最多 5 条"],"open":["还没解决的疑问"],"wrong":["出现过的误解 → 正确理解"],"next":"下次重点，一句话"}。没有的项给空数组或空字符串。',
     '2) ```method``` 代码块，JSON：{"ops":[…]}。这是用户的“学习方法档案”：记录他“怎么学”，不是“学了什么”。比如适合先看例子还是先看定义、会不会追问为什么、能不能用自己的话讲回来、做自测的表现、反复出现的误区类型、喜欢的节奏、是不是动手才记得住。',
     '   维度只能从这些里选：呈现偏好、提取练习、自我解释、深加工、元认知、常见误区、节奏、动手偏好、其他。',
-    '   操作：{"op":"add","d":"维度","t":"一句具体的观察"}；{"op":"reinforce","id":"已有条目 ID"}（这次对话又印证了它）；{"op":"revise","id":"…","t":"修正后的描述"}（这次的表现说明原来的描述不准）；{"op":"weaken","id":"…"}（这次的表现和它相反）。',
-    '   最多 3 个操作。只写这次对话里有直接证据的；没有就给空数组。描述要具体到能指导讲法，例如“先给生活类比再讲公式时理解更快”，不要“学习认真”这种空话。',
-    '现有的学习方法档案（ID｜维度｜描述｜把握程度）：',
+    '   操作（id 用下面清单里的编号）：{"op":"add","d":"维度","t":"一句具体的观察","q":"用户的原话"}；{"op":"reinforce","id":编号}（又印证了它）；{"op":"revise","id":编号,"t":"修正后的描述"}；{"op":"weaken","id":编号}（这次表现和它相反）；{"op":"delete","id":编号,"why":"contradicted、superseded、stale 或 low_signal"}。',
+    '   规则：最多 3 个操作。只写这次对话里有直接证据的。“呈现偏好、节奏、动手偏好”这三类必须在 q 里一字不差地引用用户说过的一句话，否则会被丢弃。每条 240 字以内，要具体到能指导讲法，例如“先给生活类比再讲公式时理解更快”；不要用“深刻、总是、从不、完全、彻底”这类绝对化的词。和已有条目意思相同就用 reinforce，不要重复新增。',
+    '   这次对话看不出什么新东西时，给空数组 {"ops":[]}，这是正常结果。',
+    '现有的学习方法档案（编号｜维度｜描述｜把握程度）：',
     methodLines || '（空白，还没有任何条目）'
   ].join('\n');
 }
