@@ -70,6 +70,17 @@ function routeTab(t, q) {
       <p class="fnt small">每天按关键词把新资讯归到路线上，每周一由 AI 合并、命名、拆分。进展少于 2 条的话题先不成路线。</p></div></div>`;
 }
 
+/* ---------- 财经快讯（量化方向） ---------- */
+export function hotHtml() {
+  const H = M.C.hot; if (!H || !H.sources) return '';
+  const tab = store.ui().hotTab || H.sources.find(s => s.items.length)?.id;
+  const cur = H.sources.find(s => s.id === tab) || H.sources[0];
+  return `<div class="sh"><h3>财经快讯</h3><span class="fnt small">${H.cloud ? '每 2 小时更新' : '每天更新'}（${esc(H.updated || '')}）；只显示标题，点开看原文</span></div>
+    <div class="card"><div class="chips" style="padding:10px 12px 0">${H.sources.map(s => `<button class="chip" data-act="hot-tab" data-id="${s.id}" aria-pressed="${s.id === cur.id}">${esc(s.name)} ${s.items.length}</button>`).join('')}</div>
+      <ul class="lst hot">${cur.items.slice(0, 20).map(x => `<li><a href="${esc(x.u)}" target="_blank" rel="noopener">${esc(x.t)}</a><span class="fnt small">${esc(String(x.time || '').slice(5))}</span></li>`).join('') || '<li class="fnt">暂时没有内容。</li>'}</ul></div>`;
+}
+act('hot-tab', el => { store.ui().hotTab = el.dataset.id; store.saveUi(); refresh(); });
+
 /* ---------- 资讯动态 ---------- */
 function newsTab(t) {
   const U = store.ui();
@@ -93,6 +104,7 @@ function newsTab(t) {
       <span class="r"><button class="chip" data-act="${PICK.on ? 'pick-cancel' : 'pick-start'}" aria-pressed="${PICK.on}" title="勾选几条你觉得有关联的资讯，让 Agent 讲清楚它们之间的关系">${PICK.on ? '退出多选' : '多选解析'}</button><button class="chip" data-act="only-unread" data-id="${t.id}" aria-pressed="${!!onlyU}">只看未读</button><button class="btn sm gh" data-act="read-all" data-id="${t.id}">本方向全部标为已读</button></span></div>
     ${t.live ? `<div class="sh"><h3>实时动态</h3><span class="fnt small">打开页面时从公开接口直接拉取，1 小时内用缓存</span></div>
     <div class="live">${LIVE.map(c => `<div class="card"><h4><span>${esc(c.name)}<em>${esc(c.kind)}</em></span><button data-reload="${c.id}" aria-label="刷新${esc(c.name)}">刷新</button></h4><div id="live-${c.id}" class="msg">加载中…</div></div>`).join('')}</div>` : ''}
+    ${t.id === 'quant' ? hotHtml() : ''}
     <div class="sh"><h3>官方博客、权威媒体与社区讨论</h3><span class="fnt small">${H ? `每天 8 点更新（${esc(H.updated)}）` : '每天 8 点由 GitHub 自动抓取'}${CM ? `；Reddit 与 Hacker News 每周更新（${esc(CM.updated)}）` : ''}</span></div>
     <div class="snapbar">${['all', 'A', 'B', 'C'].map(l => `<button class="chip" data-act="snap-lvl" data-id="${l}" aria-pressed="${lvF === l}">${l === 'all' ? '全部' : LVL[l]} ${l === 'all' ? sBase.length : sBase.filter(n => n.lvl === l).length}</button>`).join('')}
       <select data-snapsrc aria-label="按来源筛选"><option value="all">全部来源（${sLv.length}）</option>${names.map(nm => `<option value="${esc(nm)}"${nm === srcF ? ' selected' : ''}>${esc(nm)}（${sLv.filter(n => n.src === nm).length}）</option>`).join('')}</select></div>

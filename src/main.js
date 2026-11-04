@@ -138,6 +138,8 @@ function setSyncStatus(msg) {
 }
 const syncNow = () => cloud.signedIn() ? cloud.syncNow() : gist.syncNow();
 
+const HOT_NAMES = [['cls', '财联社电报'], ['wallstreet', '华尔街见闻快讯'], ['jin10', '金十快讯'], ['xueqiu', '雪球热股']];
+
 /* ---------- 启动 ---------- */
 async function boot() {
   let C;
@@ -152,6 +154,17 @@ async function boot() {
   store.ensureAdopted(C.tracks.map(t => t.id));
   const linked = await cloud.consumeLink();
   setupLive(C, () => parse().seg[1]);
+  // 云端的资讯和快讯：后台拉取，拿到后刷新（拉不到就用静态快照）
+  cloud.pullPublic().then(r => {
+    if (!r) return;
+    if (Array.isArray(r.news) && r.news.length) C.cloudNews = r.news.map(x => ({ ...x, d: String(x.d).slice(0, 10) }));
+    if (Array.isArray(r.hot) && r.hot.length) {
+      const by = {};
+      for (const x of r.hot) (by[x.source] = by[x.source] || []).push({ t: x.title, u: x.url, time: x.time });
+      C.hot = { updated: String(r.hot[0].fetched_at).slice(0, 16).replace('T', ' '), sources: HOT_NAMES.map(([id, name]) => ({ id, name, items: by[id] || [] })), cloud: true };
+    }
+    M.invalidate(); refresh();
+  }).catch(() => {});
   bindActs();
   store.onChange(what => {
     M.invalidate();

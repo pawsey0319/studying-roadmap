@@ -82,6 +82,17 @@ export async function rest(path, opt = {}) {
   return r.data;
 }
 
+/* ---------- 公共数据：云端的资讯和快讯（不用登录也能读） ---------- */
+export async function pullPublic() {
+  if (!B || B.kind !== 'cloudbase') return null;
+  const since = new Date(Date.now() - 10 * 864e5).toISOString().slice(0, 10);
+  const [news, hot] = await Promise.all([
+    rest(`/news_items?select=d,src,lvl,k,t,s,u,via&d=gte.${since}&order=d.desc&limit=600`).catch(() => null),
+    rest('/hot_items?select=source,title,url,time,rank,fetched_at&order=fetched_at.desc,rank.asc&limit=240').catch(() => null)
+  ]);
+  return { news, hot };
+}
+
 /* ---------- 同步 ---------- */
 export async function syncNow() {
   if (!signedIn() || syncing) return;

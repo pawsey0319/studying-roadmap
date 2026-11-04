@@ -154,3 +154,62 @@ grant usage, select on sequence public.reports_id_seq to authenticated;
 --   where name in ('vector', 'pg_jieba', 'zhparser', 'pg_cron') order by name;
 -- 管理员下架一条公开内容：update public_items set status = 'removed' where id = <ID>;
 -- 管理员查看举报：select r.*, p.title from reports r join public_items p on p.id = r.item_id order by r.created_at desc;
+
+-- ==== 6. 财经快讯与热榜（tools/fetch_hot.py 写入，所有人可读） ====
+create table if not exists public.hot_items (
+  id         text        primary key,
+  source     text        not null,
+  title      text        not null,
+  url        text        not null check (url ~ '^https?://'),
+  time       text        not null default '',
+  rank       int         not null default 0,
+  fetched_at timestamptz not null default now()
+);
+create index if not exists hot_items_src on public.hot_items (source, fetched_at desc, rank);
+alter table public.hot_items enable row level security;
+drop policy if exists hot_read on public.hot_items;
+create policy hot_read on public.hot_items for select to anon, authenticated using (true);
+revoke all on public.hot_items from anon, authenticated;
+grant select on public.hot_items to anon, authenticated;
+
+-- ==== 7. 资讯条目（tools/miniflux_sync.py 从 Miniflux 同步过来，所有人可读） ====
+create table if not exists public.news_items (
+  id         text        primary key,            -- 'n' + 链接哈希，和网页里的资讯 ID 一致
+  d          date        not null,
+  src        text        not null,
+  lvl        text        not null default 'B' check (lvl in ('A', 'B', 'C')),
+  k          text[]      not null default '{}',
+  t          text        not null,
+  s          text        not null default '',
+  u          text        not null check (u ~ '^https?://'),
+  via        text,
+  fetched_at timestamptz not null default now()
+);
+create index if not exists news_items_d on public.news_items (d desc);
+alter table public.news_items enable row level security;
+drop policy if exists news_read on public.news_items;
+create policy news_read on public.news_items for select to anon, authenticated using (true);
+revoke all on public.news_items from anon, authenticated;
+grant select on public.news_items to anon, authenticated;
+
+-- ==== 8. 对话纪要的向量（语义检索；向量由浏览器用 bge-m3 算好后写入） ====
+create extension if not exists vector;
+create table if not exists public.digest_vecs (
+  user_id    varchar(64) not null default auth.uid(),
+  id         text        not null check (id ~ '^g[0-9a-z]{6,24}$'),
+  embedding  vector(1024) not null,
+  updated_at timestamptz not null default now(),
+  primary key (user_id, id)
+);
+alter table public.digest_vecs enable row level security;
+drop policy if exists dv_own on public.digest_vecs;
+create policy dv_own on public.digest_vecs for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+revoke all on public.digest_vecs from anon;
+grant select, insert, update, delete on public.digest_vecs to authenticated;
+-- 按意思找最相近的几份纪要（只在自己的数据里找）
+create or replace function public.match_digests(q vector(1024), n int default 5)
+returns table (id text, score float) language sql stable as $$
+  select id, 1 - (embedding <=> q) as score from public.digest_vecs
+  where user_id = auth.uid() order by embedding <=> q limit least(greatest(n, 1), 20);
+$$;
+grant execute on function public.match_digests(vector, int) to authenticated;

@@ -8,3 +8,5 @@ data/sources.json
 data/weekly-report.txt
 # 云端公开配置可以提交；本地测试用的配置不要提交
 config.local.json
+# 快讯快照每天由 Actions 生成
+data/hot.json

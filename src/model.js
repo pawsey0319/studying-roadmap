@@ -58,7 +58,8 @@ export function news() {
   if (cache.news) return cache.news;
   const R = C.routes.routes;
   const curated = C.feed.items.map(x => ({ ...x, kind: 'curated', k: [x.k] }));
-  const snap = [...((C.community && C.community.items) || []), ...((C.sources && C.sources.items) || [])].map(x => ({ ...x, kind: 'snap' }));
+  const cloudNews = (C.cloudNews || []).map(x => ({ ...x, s: x.s || undefined, via: x.via || undefined }));
+  const snap = [...((C.community && C.community.items) || []), ...cloudNews, ...((C.sources && C.sources.items) || [])].map(x => ({ ...x, kind: 'snap' }));
   const seen = new Set(), out = [];
   for (const x of [...curated, ...snap]) {
     const id = newsId(x.u);

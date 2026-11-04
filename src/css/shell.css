@@ -37,6 +37,10 @@
 .pf{display:flex;gap:6px;padding:7px 10px;border-top:1px solid #F3E3CF;background:#fff;justify-content:flex-end;flex-wrap:wrap}
 .blk .pf{border:0;padding:6px 0 0;background:none}
 
+/* 财经快讯 */
+.lst.hot li{display:flex;gap:10px;align-items:baseline;justify-content:space-between}
+.lst.hot li a{text-decoration:none}
+
 /* 学习方法档案 */
 .mrow{display:grid;grid-template-columns:54px minmax(0,1fr);gap:10px;align-items:start}
 .mw{height:6px;border-radius:3px;background:var(--soft);margin-top:8px;overflow:hidden}

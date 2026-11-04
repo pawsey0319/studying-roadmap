@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0"><head><title>学习网站 国内源</title></head><body>
+<outline text="llm" title="llm">
+  <outline type="rss" text="量子位 [B]" title="量子位 [B]" xmlUrl="https://www.qbitai.com/feed"/>
+  <outline type="rss" text="公众号 · DeepSeek [A]" title="公众号 · DeepSeek [A]" xmlUrl="https://wechat2rss.bestblogs.dev/feed/1709da4f538d4ce4fb6d7a8ba1a5a1c297919601.xml"/>
+  <outline type="rss" text="公众号 · 智谱 [A]" title="公众号 · 智谱 [A]" xmlUrl="https://wechat2rss.bestblogs.dev/feed/433d2134dca54d80804daf32e8be546155be3300.xml"/>
+  <outline type="rss" text="公众号 · 通义大模型 [A]" title="公众号 · 通义大模型 [A]" xmlUrl="https://wechat2rss.bestblogs.dev/feed/4ebee6222ae08705b8aabc9116f0defbcb6b17c6.xml"/>
+  <outline type="rss" text="公众号 · 月之暗面 Kimi [A]" title="公众号 · 月之暗面 Kimi [A]" xmlUrl="https://wechat2rss.bestblogs.dev/feed/c5c43d4bc17bae656763859ed0903bb6314ec6fe.xml"/>
+  <outline type="rss" text="公众号 · 腾讯混元 [A]" title="公众号 · 腾讯混元 [A]" xmlUrl="https://wechat2rss.bestblogs.dev/feed/306ce19a1ca590c9c2df781789e828d1acfa1356.xml"/>
+  <outline type="rss" text="公众号 · 阶跃星辰 [A]" title="公众号 · 阶跃星辰 [A]" xmlUrl="https://wechat2rss.bestblogs.dev/feed/3e2714d06aa36142e8ed6b3f4e5cf9090a069dd2.xml"/>
+  <outline type="rss" text="公众号 · MiniMax [A]" title="公众号 · MiniMax [A]" xmlUrl="https://wechat2rss.bestblogs.dev/feed/00306b171f754d463b28cf83f3ba086ad009b430.xml"/>
+  <outline type="rss" text="公众号 · 字节跳动 Seed [A]" title="公众号 · 字节跳动 Seed [A]" xmlUrl="https://wechat2rss.bestblogs.dev/feed/6efd40bb335d2037f365d284cb5e00f0843e737e.xml"/>
+</outline>
+<outline text="llm,agent" title="llm,agent">
+  <outline type="rss" text="36氪 [B]" title="36氪 [B]" xmlUrl="https://www.36kr.com/feed"/>
+  <outline type="rss" text="InfoQ 中文 [B]" title="InfoQ 中文 [B]" xmlUrl="https://www.infoq.cn/feed"/>
+  <outline type="rss" text="雷锋网 [B]" title="雷锋网 [B]" xmlUrl="https://www.leiphone.com/feed"/>
+  <outline type="rss" text="公众号 · 机器之心 [B]" title="公众号 · 机器之心 [B]" xmlUrl="https://wechat2rss.bestblogs.dev/feed/8d97af31b0de9e48da74558af128a4673d78c9a3.xml"/>
+  <outline type="rss" text="公众号 · 新智元 [B]" title="公众号 · 新智元 [B]" xmlUrl="https://wechat2rss.bestblogs.dev/feed/e531a18b21c34cf787b83ab444eef659d7a980de.xml"/>
+  <outline type="rss" text="公众号 · 晚点 LatePost [B]" title="公众号 · 晚点 LatePost [B]" xmlUrl="https://wechat2rss.bestblogs.dev/feed/c442206ec9957f3c52f2f40300ca532079538b31.xml"/>
+  <outline type="rss" text="公众号 · 海外独角兽 [B]" title="公众号 · 海外独角兽 [B]" xmlUrl="https://wechat2rss.bestblogs.dev/feed/7200d3a5e976d231deb1e40ad33745c0e649b029.xml"/>
+  <outline type="rss" text="公众号 · 智东西 [B]" title="公众号 · 智东西 [B]" xmlUrl="https://wechat2rss.bestblogs.dev/feed/cfd52b4245ca6119b2fda4ef934832c689028927.xml"/>
+  <outline type="rss" text="公众号 · 甲子光年 [B]" title="公众号 · 甲子光年 [B]" xmlUrl="https://wechat2rss.bestblogs.dev/feed/1c4008936645d5c17239d99bba91522cf2bdfa26.xml"/>
+  <outline type="rss" text="公众号 · AI 前线 [B]" title="公众号 · AI 前线 [B]" xmlUrl="https://wechat2rss.bestblogs.dev/feed/25185b01482da0f485418ecb92e208b4416712fb.xml"/>
+  <outline type="rss" text="公众号 · 腾讯科技 [B]" title="公众号 · 腾讯科技 [B]" xmlUrl="https://wechat2rss.bestblogs.dev/feed/a81bdfcbb9eefe870d285e81510ffa1af26e4520.xml"/>
+  <outline type="rss" text="公众号 · 硅星人 Pro [B]" title="公众号 · 硅星人 Pro [B]" xmlUrl="https://wechat2rss.bestblogs.dev/feed/c62ceda9eed269d851802bdbc5f33c4fabbf7462.xml"/>
+  <outline type="rss" text="公众号 · Founder Park [B]" title="公众号 · Founder Park [B]" xmlUrl="https://wechat2rss.bestblogs.dev/feed/f940695505f2be1399d23cc98182297cadf6f90d.xml"/>
+  <outline type="rss" text="公众号 · 42章经 [B]" title="公众号 · 42章经 [B]" xmlUrl="https://wechat2rss.bestblogs.dev/feed/f6694726ced4ba3d7c7cd65c6edf2160c5978387.xml"/>
+</outline>
+<outline text="slm" title="slm">
+  <outline type="rss" text="公众号 · 魔搭 ModelScope 社区 [A]" title="公众号 · 魔搭 ModelScope 社区 [A]" xmlUrl="https://wechat2rss.bestblogs.dev/feed/d993a885260f96057b9a4c96212cb2c95bb5054b.xml"/>
+</outline>
+</body></opml>
