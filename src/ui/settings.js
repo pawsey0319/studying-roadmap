@@ -46,11 +46,11 @@ export async function renderSettings() {
       <h3 style="margin-top:18px">显示哪些方向</h3>
       <div class="chips">${allTracks.map(t => `<button class="chip" data-act="track-vis" data-id="${t.id}" aria-pressed="${!hidden[t.id]}">${esc(t.name)}</button>`).join('')}</div></section>
     <section class="card set"><h3>账号与云端同步</h3>
-      ${cloud.available() ? (cloud.signedIn() ? `<p class="small">已登录：${esc(cloud.email())}。${cloud.error ? `<span class="err">同步失败：${esc(cloud.error)}</span>` : cloud.lastSync() ? '最后同步 ' + new Date(cloud.lastSync()).toLocaleString('zh-CN', { hour12: false }) : ''}</p>
+      ${cloud.available() ? (cloud.signedIn() ? `<p class="small">已登录（${esc(cloud.backendName())}）：${esc(cloud.email())}。${cloud.error ? `<span class="err">同步失败：${esc(cloud.error)}</span>` : cloud.lastSync() ? '最后同步 ' + new Date(cloud.lastSync()).toLocaleString('zh-CN', { hour12: false }) : ''}</p>
           <div class="sa"><button class="btn" data-act="cloud-sync">立即同步</button><button class="btn gh" data-act="cloud-out">退出登录</button></div>`
-        : `<p class="hint">用邮箱登录后，进度、调整、笔记、导入的路线会保存到云端，任何设备登录都能看到。内测期间需要先被邀请。邮件里有 6 位验证码就填到下面；只有登录链接的话，在这台设备上点开链接即可。AI 的 Key 和对话不会上传。</p>
+        : `${cloud.justMigrated() ? '<p class="note small">云端已经换到新的服务器。用同一个邮箱重新登录一次，这台设备上的数据会自动推上去。</p>' : ''}<p class="hint">用邮箱验证码登录（${esc(cloud.backendName())}）。第一次登录会自动建账号。登录后进度、调整、笔记、导入的路线会保存到云端，任何设备登录都能看到。AI 的 Key 和原始对话不会上传。</p>
           <form id="cloudForm" class="addit"><input id="cloudEmail" type="email" placeholder="邮箱" required><button class="btn sm">发验证码</button></form>
-          <form id="cloudVerify" class="addit"${cloud.email() || localStorage.getItem('learning-hub.cloud')?.includes('pending') ? '' : ' hidden'}><input id="cloudCode" inputmode="numeric" placeholder="邮件里的 6 位验证码"><button class="btn sm pri">登录</button></form>
+          <form id="cloudVerify" class="addit"${cloud.pendingEmail() ? '' : ' hidden'}><input id="cloudCode" inputmode="numeric" placeholder="邮件里的 6 位验证码"><button class="btn sm pri">登录</button></form>
           <p id="cloudMsg" class="small"></p>`)
       : '<p class="hint">这个网站还没有接云端（仓库里没有 config.json）。可以用下面的 GitHub Gist 同步。</p>'}
       <h3 style="margin-top:18px">GitHub Gist 同步（备用）</h3>
@@ -79,7 +79,7 @@ export function afterSettings() {
   const prov = $('#aiProv'); if (!prov) return;
   prov.onchange = async () => { const c = await aiCfg(), p = PROVIDERS[prov.value]; await saveCfg({ ...c, provider: prov.value, model: p.model, budget: p.hosted ? 0 : (c.budget || 30), price: p.price, base: prov.value === 'custom' ? c.base : '' }); refresh(); };
   const cf = $('#cloudForm');
-  if (cf) cf.onsubmit = async e => { e.preventDefault(); const m = $('#cloudMsg'); m.textContent = '正在发送…'; try { await cloud.sendCode($('#cloudEmail').value.trim()); m.textContent = '验证码已发到邮箱，填到下面。'; $('#cloudVerify').hidden = false; $('#cloudCode').focus(); } catch (err) { m.innerHTML = `<span class="err">${esc(err.message)}</span>`; } };
+  if (cf) cf.onsubmit = async e => { e.preventDefault(); const m = $('#cloudMsg'); m.textContent = '正在发送…'; try { await cloud.sendCode($('#cloudEmail').value.trim()); m.textContent = '验证码已发到邮箱（10 分钟内有效），填到下面。'; $('#cloudVerify').hidden = false; $('#cloudCode').focus(); } catch (err) { m.innerHTML = `<span class="err">${esc(err.message)}</span>`; } };
   const cv = $('#cloudVerify');
   if (cv) cv.onsubmit = async e => { e.preventDefault(); const m = $('#cloudMsg'); try { await cloud.verify($('#cloudCode').value); m.textContent = '登录成功，正在同步…'; await cloud.syncNow(); refresh(); toast('已登录并同步'); } catch (err) { m.innerHTML = `<span class="err">${esc(err.message)}</span>`; } };
   $('#gistForm').onsubmit = async e => { e.preventDefault(); const t = $('#gistTok').value.trim(); if (!gist.TOKEN_RE.test(t)) { toast('令牌格式不对：应以 github_pat_ 或 ghp_ 开头'); return; } gist.setToken(t); await gist.syncNow(); refresh(); };

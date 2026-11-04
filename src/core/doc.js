@@ -38,3 +38,21 @@ function sortKeys(d) {
   const s = o => Object.fromEntries(Object.keys(o || {}).sort().map(k => [k, o[k]]));
   return { e: s(d && d.e), mt: s(d && d.mt) };
 }
+
+// 带冲突检测的合并（用于阶段长文档）。base = 上次同步成功时每个键的修改时间。
+// 两边都在上次同步之后改过同一个键、而且内容不同 → 仍按“较新的一方获胜”合并，同时把较旧的一份作为冲突副本返回，交给调用方另存。
+export function mergeDocKeepConflicts(local, remote, base = {}, valid = () => true) {
+  const conflicts = [];
+  if (remote && typeof remote === 'object') {
+    const re = remote.e || {}, rm = remote.mt || {};
+    for (const k of Object.keys(rm)) {
+      const b = +base[k] || 0, lt = +local.mt[k] || 0, rt = +rm[k] || 0;
+      if (lt <= b || rt <= b || lt === rt) continue;
+      const lv = local.e[k], rv = re[k];
+      if (lv === rv || lv === undefined || rv === undefined) continue;
+      if (!valid(k, rv)) continue;
+      conflicts.push(rt > lt ? { k, value: lv, ts: lt, side: 'local' } : { k, value: rv, ts: rt, side: 'remote' });
+    }
+  }
+  return { changed: mergeDoc(local, remote, valid), conflicts };
+}

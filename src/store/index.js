@@ -2,7 +2,7 @@
 // 本地：IndexedDB（kv.js）。同步：私有 Gist（gist.js）或云端 Supabase（cloud.js），两者用同一套“文档合并”逻辑。
 // 个人数据按用途分成多份可同步文档（见 core/schema.js），界面偏好 ui 和 AI 设置只存本地，不同步。
 import { kvGet, kvSet } from './kv.js';
-import { newDoc, setKey, delKey, mergeDoc } from '../core/doc.js';
+import { newDoc, setKey, delKey, mergeDoc, mergeDocKeepConflicts } from '../core/doc.js';
 import { DOC_NAMES, validFor } from '../core/schema.js';
 import { migrateV1, migrateUiV1 } from './migrate.js';
 
@@ -17,6 +17,8 @@ const emit = what => listeners.forEach(fn => { try { fn(what); } catch (e) { con
 
 export async function init({ legacyMap, defaultTab, today }) {
   legacy = legacyMap;
+  skew = (await kvGet('_skew')) || 0;
+  BASE = (await kvGet('_base')) || {};
   // 版本信息存在 _ver；M0 版本把它存在 meta 键里，和“meta”文档同名，这里兼容迁移
   let ver = await kvGet('_ver');
   if (!ver) { const old = await kvGet('meta'); if (old && old.v === 2 && !old.e) { ver = old; await kvSet('_ver', old); await kvSet('meta', newDoc()); } }
@@ -44,14 +46,22 @@ export async function init({ legacyMap, defaultTab, today }) {
 
 const persist = n => kvSet(n, D[n]);
 
+/* ---------- 时间：用服务器对齐过的时钟给每一项打修改时间 ---------- */
+// 同步时从云端拿到服务器时间，算出本机时钟偏差；之后所有修改时间都加上这个偏差。
+// 这样某台设备时钟不准，也不会让旧修改覆盖新修改。
+let skew = 0;
+export const now = () => Date.now() + skew;
+export function setSkew(ms) { if (Number.isFinite(ms) && Math.abs(ms - skew) > 1500 && Math.abs(ms) < 365 * 864e5) { skew = Math.round(ms); kvSet('_skew', skew); } }
+export const clockSkew = () => skew;
+
 /* ---------- 通用读写 ---------- */
 export const get = (doc, k) => D[doc].e[k];
 export const all = doc => D[doc].e;
 export function put(doc, k, v) {
-  if (v === undefined || v === null || v === '') delKey(D[doc], k); else setKey(D[doc], k, v);
+  if (v === undefined || v === null || v === '') delKey(D[doc], k, now()); else setKey(D[doc], k, v, now());
   persist(doc); emit(doc);
 }
-export function del(doc, k) { delKey(D[doc], k); persist(doc); emit(doc); }
+export function del(doc, k) { delKey(D[doc], k, now()); persist(doc); emit(doc); }
 
 /* ---------- 常用快捷方式 ---------- */
 export const start = () => D.progress.e.start;
@@ -79,24 +89,43 @@ export function importData(d) {
   if (d.v === 2 && d.docs) src = Object.fromEntries(Object.entries(d.docs).map(([k, v]) => [k, (v && v.e) || {}]));
   else if (d.v === 2 && d.progress) src = { progress: d.progress.e || {}, notes: (d.notes && d.notes.e) || {} };
   else { const m = migrateV1({ start: d.start, done: d.done, notes: d.notes }, legacy); src = { progress: m.progress.e, notes: m.notes.e }; }
-  const now = Date.now();
+  const ts = now();
   for (const n of DOC_NAMES) {
     if (!src[n]) continue;
     const valid = validFor(n);
-    for (const k of Object.keys(D[n].e)) if (!(k in src[n])) delKey(D[n], k, now);
-    for (const [k, v] of Object.entries(src[n])) if (valid(k, v)) setKey(D[n], k, v, now);
+    for (const k of Object.keys(D[n].e)) if (!(k in src[n])) delKey(D[n], k, ts);
+    for (const [k, v] of Object.entries(src[n])) if (valid(k, v)) setKey(D[n], k, v, ts);
     persist(n); emit(n);
   }
-  if (!D.progress.e.start) { setKey(D.progress, 'start', new Date().toISOString().slice(0, 10), now); persist('progress'); }
+  if (!D.progress.e.start) { setKey(D.progress, 'start', new Date().toISOString().slice(0, 10), ts); persist('progress'); }
 }
 
 /* ---------- 同步用 ---------- */
 export const docs = () => D;
+// 阶段长文档两边都改过时，较旧的一份另存成卡片（“冲突副本”），不丢内容
+const CONFLICT_DOCS = new Set(['notes']);
 export function mergeRemote(name, remote) {
   if (!D[name]) return false;
-  const changed = mergeDoc(D[name], remote, validFor(name));
+  let changed;
+  if (CONFLICT_DOCS.has(name)) {
+    const r = mergeDocKeepConflicts(D[name], remote, BASE[name] || {}, validFor(name));
+    changed = r.changed;
+    for (const c of r.conflicts) {
+      const id = 'c' + now().toString(36) + Math.random().toString(36).slice(2, 6);
+      const when = new Date(c.ts).toLocaleString('zh-CN', { hour12: false });
+      setKey(D.cards, id, { t: `**冲突副本**（${c.side === 'local' ? '这台设备' : '另一台设备'} ${when} 的版本，阶段文档已采用较新的那份；确认后可以删掉这张卡片）\n\n${String(c.value).slice(0, 19000)}`, at: c.k, c: now() }, now());
+    }
+    if (r.conflicts.length) { persist('cards'); emit('remote:cards'); conflictCount += r.conflicts.length; }
+  } else changed = mergeDoc(D[name], remote, validFor(name));
   if (changed) { persist(name); emit('remote:' + name); }
   return changed;
+}
+// 上次同步成功时的修改时间，用来判断“两边都改过”
+let BASE = {}, conflictCount = 0;
+export const takeConflicts = () => { const n = conflictCount; conflictCount = 0; return n; };
+export function markSynced() {
+  for (const n of CONFLICT_DOCS) BASE[n] = { ...D[n].mt };
+  kvSet('_base', BASE);
 }
 export const legacyMap = () => legacy;
 
