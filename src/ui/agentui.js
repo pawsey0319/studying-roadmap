@@ -253,7 +253,7 @@ export async function openAgent(kind = 'free', id = '') {
   const cur = { kind, id, ...c }, key = ckey(cur);
   let S = SESS.get(key);
   if (!S) { S = { key, cur, msgs: (await store.localGet(key)) || [], busy: false, ctl: null, note: '', live: '' }; SESS.set(key, S); }
-  else if (!S.busy) S.cur = cur;
+  else if (!S.busy) { S.cur = cur; S.msgs = (await store.localGet(key)) || S.msgs; }   // 没在生成时以存下来的为准（别的标签页可能改过）
   ACTIVE = key; store.ui().agentLast = key; store.saveUi();
   if (document.body.classList.contains('rd-open')) document.querySelector('[data-act=rd-close]')?.click();   // 阅读面板和 Agent 在同一侧，开 Agent 时先收起阅读面板
   document.body.classList.add('dw-open'); dw().hidden = false;
