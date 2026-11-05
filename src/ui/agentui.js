@@ -32,9 +32,10 @@ export function aiBlock(cfg) {
 }
 const month = () => new Date().toISOString().slice(0, 7);
 export async function usage() { const u = (await store.localGet('usage')) || {}; return u.m === month() ? u : { m: month(), cny: 0, tin: 0, tout: 0, calls: 0 }; }
-async function addUsage(cfg, us) {
-  const u = await usage(); u.cny += cost(cfg, us); u.tin += us.in; u.tout += us.out; u.calls++;
-  await store.localSet('usage', u); return u;
+let usageQ = Promise.resolve();
+function addUsage(cfg, us) {
+  // 几段对话同时在跑时，花费记录要排队写，免得互相覆盖
+  return (usageQ = usageQ.then(async () => { const u = await usage(); u.cny += cost(cfg, us); u.tin += us.in; u.tout += us.out; u.calls++; await store.localSet('usage', u); return u; }));
 }
 
 /* ---------- 上下文 ---------- */
@@ -74,7 +75,7 @@ const KINDS = {
       auto: '把这些卡片整理进阶段文档：保留文档原有内容，合并重复的点，按主题分小标题，标出还没搞懂的问题。输出完整的新文档，放在 note 代码块里（text 字段是完整 Markdown，at 字段是阶段 ID）。' }; },
   news: id => { const n = M.news().find(x => x.id === id); if (!n) return null;
     const rel = M.news().filter(x => x.id !== id && x.r.some(r => n.r.includes(r))).slice(0, 6);
-    return { title: '一键解析', newsIds: [id], routeId: n.r[0] || null, text: newsBlock(n) + `\n\n同一前沿路线最近的其他进展（供参考）：\n${rel.map(x => `- ${x.d} ${x.t}`).join('\n') || '（无）'}\n\n${doingText()}`,
+    return { title: '解析：' + n.t.slice(0, 40), newsIds: [id], routeId: n.r[0] || null, text: newsBlock(n) + `\n\n同一前沿路线最近的其他进展（供参考）：\n${rel.map(x => `- ${x.d} ${x.t}`).join('\n') || '（无）'}\n\n${doingText()}`,
       pills: ['这条资讯', rel.length ? `${rel.length} 条相关进展` : null, '在学的阶段'], auto: EXPLAIN_ONE }; },
   multi: ids => { const L = String(ids).split(',').map(id => M.news().find(x => x.id === id)).filter(Boolean); if (L.length < 2) return null;
     return { title: `关联解析 · ${L.length} 条`, newsIds: L.map(n => n.id), routeId: (L[0].r || [])[0] || null, text: L.map((n, i) => `【${i + 1}】` + newsBlock(n)).join('\n\n') + '\n\n' + doingText(),
@@ -95,6 +96,7 @@ function newsBlock(n) {
 const doingText = () => '用户正在学：' + (M.doing().map(d => d.kind === 'stage' ? `${d.t.name} / ${d.s.title}` : `${d.t.name} / 前沿：${d.r.title}`).join('；') || '（未设置）');
 const EXPLAIN_RULE = '只根据给出的标题、摘要和你确定知道的背景来讲；原文里才有的细节（数字、结论）不要编，拿不准就标“需要看原文确认”。来源是社区讨论的，提醒我它未经核实。';
 const EXPLAIN_ONE = `帮我一键解析这条资讯，按下面的结构，总共不超过 400 字：
+第一行写“原文：”加上资讯的链接（照抄给出的链接，不要改）。
 **一句话**：发生了什么。
 **看懂它要知道的**：里面的术语或背景，每个一两句话讲清楚（最多 3 个）。
 **为什么重要**：分技术和产品/商业两个角度，各一两句。
@@ -102,6 +104,7 @@ const EXPLAIN_ONE = `帮我一键解析这条资讯，按下面的结构，总�
 ${EXPLAIN_RULE}
 最后把要点整理成一张笔记，放在 note 代码块里：{"text":"Markdown 内容，开头写上资讯标题和链接","at":"最相关的阶段或前沿路线 ID，没有就留空"}。`;
 const EXPLAIN_MANY = `这几条资讯我觉得有关联，但没看懂它们之间是什么关系。帮我一键解析，总共不超过 600 字：
+**原文**：每条一行，写【编号】标题和链接（照抄给出的链接）。
 **一句话串起来**：它们共同指向的是什么变化或趋势；如果其实没什么关系，直接说，并按话题分组。
 **各条的位置**：每条一两句话，说清它在这件事里扮演的角色（起因、进展、反应、对比、反例……），用【编号】指代。
 **关系**：先后、因果、竞争、互补、矛盾，哪些是确定的，哪些只是推测。
@@ -124,7 +127,7 @@ function attText(list) {
 }
 // 把资讯放进对话框（不发送）；抽屉没开就先打开
 export async function attach(items) {
-  if (!dw() || dw().hidden) await openAgent('free');
+  if (!isOpen()) await resumeAgent();
   for (const x of items) if (x && (x.t || x.quote) && !ATT.some(y => attKey(y) === attKey(x))) ATT.push(x);
   ATT = ATT.slice(0, MAX_PICK);
   await renderDrawer();
@@ -132,9 +135,11 @@ export async function attach(items) {
 }
 // 带着资讯直接提问（右键菜单）
 export async function askWith(items, question) {
-  if (!dw() || dw().hidden) await openAgent('free');
+  // 单条站内资讯直接一键解析：用它自己的那段对话，和别的解析可以同时跑
+  if (!question && items.length === 1 && items[0].id && !items[0].quote && M.news().some(n => n.id === items[0].id)) return openAgent('news', items[0].id);
+  await openAgent('free');
   ATT = items.slice(0, MAX_PICK);
-  await send(question || '');
+  await send(A(), question || '');
 }
 
 /* ---------- 一段对话的生命周期 ---------- */
@@ -144,17 +149,21 @@ const NEXT_RE = /```next[\s\S]*?```/g;
 export const idleHours = () => store.get('meta', 'idleHours') || 6;
 const idleMs = () => idleHours() * 3600e3;
 const lastTs = msgs => Math.max(0, ...msgs.map(m => m.ts || 0));
-const ctxAt = () => { const a = CUR && (CUR.stageId || CUR.routeId || CUR.docId); return a && (M.findStage(a) || M.route(a)) ? a : null; };
-const sessionInfo = () => ({ kind: CUR.kind, title: CUR.title, at: ctxAt() });
-async function indexSession(key, info) {
-  const ix = (await store.localGet('chatIndex')) || {};
-  if (MSGS.length) ix[key] = { ...info, t: Date.now(), tries: (ix[key] || {}).tries || 0 }; else delete ix[key];
-  await store.localSet('chatIndex', ix);
+// S：一段对话 { key, cur 话题和上下文, msgs, busy, ctl, note, live 正在生成的文字 }。几段可以同时在跑
+const ctxAt = (S = A()) => { const c = S && S.cur, a = c && (c.stageId || c.routeId || c.docId); return a && (M.findStage(a) || M.route(a)) ? a : null; };
+const sessionInfo = (S = A()) => ({ kind: S.cur.kind, id: S.cur.id, title: S.cur.title, at: ctxAt(S) });
+let ixQ = Promise.resolve();
+function indexSession(key, info, has) {
+  return (ixQ = ixQ.then(async () => {
+    const ix = (await store.localGet('chatIndex')) || {};
+    if (has) ix[key] = { ...info, t: Date.now(), tries: (ix[key] || {}).tries || 0 }; else delete ix[key];
+    await store.localSet('chatIndex', ix);
+  }));
 }
 // 和当前话题相关的过去纪要：同一个阶段或路线的最近 3 份；自由对话带最近 2 份
-function relatedDigests() {
-  const all = Object.values(store.all('digests')).sort((a, b) => b.c - a.c), at = CUR && ctxAt();
-  return at ? all.filter(g => g.at === at).slice(0, 3) : CUR && CUR.kind === 'free' ? all.slice(0, 2) : [];
+function relatedDigests(S = A()) {
+  const all = Object.values(store.all('digests')).sort((a, b) => b.c - a.c), at = S && ctxAt(S);
+  return at ? all.filter(g => g.at === at).slice(0, 3) : S && S.cur.kind === 'free' ? all.slice(0, 2) : [];
 }
 
 // 把一段对话整理成纪要，并更新学习方法档案。成功返回纪要 ID；AI 不可用时返回 null，对话保留
@@ -216,67 +225,103 @@ export async function sweepSessions() {
   let n = 0;
   for (const [key, info] of Object.entries(ix)) {
     if (n >= 3 || now - info.t < idleMs()) continue;
-    if (CUR && key === ckey(CUR) && !dw().hidden) continue;
+    const L = SESS.get(key); if (L && (L.busy || (key === ACTIVE && !dw().hidden))) continue;
     const msgs = (await store.localGet(key)) || [];
-    if (await closeSession(key, msgs, info)) n++;
+    if (await closeSession(key, msgs, info)) { n++; if (L) L.msgs = []; }
   }
   if (n) { refresh(); toast(`已把 ${n} 段过去的对话整理成纪要`); }
 }
-function nextHtml() {
-  const last = [...MSGS].reverse().find(m => m.role === 'assistant');
+function nextHtml(S) {
+  const last = [...S.msgs].reverse().find(m => m.role === 'assistant');
   const b = last && extractBlocks(last.content).blocks.find(x => x.type === 'next');
   const qs = (b && Array.isArray(b.data.q) ? b.data.q : []).filter(q => typeof q === 'string' && q.trim()).map(q => q.trim().slice(0, 40)).slice(0, 3);
   return qs.length ? `<div class="quick">${qs.map(q => `<button data-act="agent-next" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>` : '';
 }
 
 /* ---------- 抽屉状态 ---------- */
-let CUR = null, MSGS = [], busy = false, ctl = null, note = '';
+// 每个话题一段对话（同一条资讯、同一个阶段……各一段），几段可以同时生成；抽屉里显示其中一段，上方的标签可以切换。
+const SESS = new Map();
+let ACTIVE = null;
+const A = () => SESS.get(ACTIVE);
 const ckey = c => 'chat.' + c.kind + '.' + (c.kind === 'multi' ? hash(String(c.id)) : (c.id || ''));
 const dw = () => $('#dw');
+const isOpen = () => dw() && !dw().hidden;
 
 export async function openAgent(kind = 'free', id = '') {
   const make = KINDS[kind]; if (!make) return;
   const c = make(id); if (!c) { toast('找不到要讨论的内容'); return; }
-  CUR = { kind, id, ...c };
+  const cur = { kind, id, ...c }, key = ckey(cur);
+  let S = SESS.get(key);
+  if (!S) { S = { key, cur, msgs: (await store.localGet(key)) || [], busy: false, ctl: null, note: '', live: '' }; SESS.set(key, S); }
+  else if (!S.busy) S.cur = cur;
+  ACTIVE = key; store.ui().agentLast = key; store.saveUi();
   if (document.body.classList.contains('rd-open')) document.querySelector('[data-act=rd-close]')?.click();   // 阅读面板和 Agent 在同一侧，开 Agent 时先收起阅读面板
-  const key = ckey(CUR);
-  MSGS = (await store.localGet(key)) || [];
   document.body.classList.add('dw-open'); dw().hidden = false;
-  // 离开太久：先把上次的对话整理成纪要，再开始新的一段
-  if (MSGS.length && Date.now() - lastTs(MSGS) > idleMs()) {
-    note = '正在把上次的对话整理成纪要…'; await renderDrawer();
-    await closeSession(key, MSGS, sessionInfo());
-    MSGS = (await store.localGet(key)) || []; note = '';
+  // 离开超过设定的小时数（默认 6 小时）：先把上次的对话整理成纪要，再开始新的一段；没超过就接着上次的聊
+  if (!S.busy && S.msgs.length && Date.now() - lastTs(S.msgs) > idleMs()) {
+    S.busy = true; S.note = '正在把上次的对话整理成纪要…'; await renderDrawer();
+    await closeSession(key, S.msgs, sessionInfo(S));
+    S.msgs = (await store.localGet(key)) || []; S.note = ''; S.busy = false;
   }
   await renderDrawer();
-  if (!MSGS.length && CUR.auto) send(CUR.auto, { auto: true, label: CUR.label || (kind === 'news' ? '一键解析这条资讯' : kind === 'multi' ? `一键解析这 ${String(id).split(',').length} 条资讯的关联` : '') });
+  if (!S.msgs.length && !S.busy && S.cur.auto) send(S, S.cur.auto, { auto: true, label: S.cur.label || (kind === 'news' ? '一键解析这条资讯' : kind === 'multi' ? `一键解析这 ${String(id).split(',').length} 条资讯的关联` : '') });
 }
-export function closeAgent() { document.body.classList.remove('dw-open'); if (dw()) dw().hidden = true; if (ctl) ctl.abort(); }
+// 右下角按钮：回到上一次的对话（6 小时内都还在），没有就开自由对话
+export async function resumeAgent() {
+  const last = store.ui().agentLast, S = SESS.get(last);
+  if (S) return openAgent(S.cur.kind, S.cur.id);
+  const ix = (await store.localGet('chatIndex')) || {}, now = Date.now();
+  const pick = (last && ix[last] && now - ix[last].t < idleMs() && ix[last]) || Object.values(ix).filter(x => now - x.t < idleMs()).sort((a, b) => b.t - a.t)[0];
+  if (pick && pick.kind && KINDS[pick.kind] && (pick.kind === 'free' || pick.id)) return openAgent(pick.kind, pick.id || '');
+  return openAgent('free');
+}
+// 收起抽屉不会打断正在生成的回答，也不会清掉对话
+export function closeAgent() { document.body.classList.remove('dw-open'); if (dw()) dw().hidden = true; }
+
+// 抽屉上方的标签：最近 6 小时里聊过的话题，和正在生成的
+async function tabsHtml() {
+  const ix = (await store.localGet('chatIndex')) || {}, now = Date.now(), seen = new Set(), L = [];
+  for (const S of SESS.values()) if (S.busy || S.msgs.length || S.key === ACTIVE) { seen.add(S.key); L.push({ key: S.key, kind: S.cur.kind, id: S.cur.id, title: S.cur.title, busy: S.busy, t: lastTs(S.msgs) || now }); }
+  for (const [k, x] of Object.entries(ix)) if (!seen.has(k) && x.kind && KINDS[x.kind] && now - x.t < idleMs()) L.push({ key: k, kind: x.kind, id: x.id || '', title: x.title, t: x.t });
+  if (L.length < 2) return '';
+  L.sort((a, b) => (b.key === ACTIVE) - (a.key === ACTIVE) || b.t - a.t);
+  return `<div class="dtabs">${L.slice(0, 8).map(x => `<button class="dtab${x.key === ACTIVE ? ' on' : ''}" data-act="agent-tab" data-kind="${esc(x.kind)}" data-id="${esc(x.id || '')}" title="${esc(x.title || '')}">${x.busy ? '<i class="spin"></i>' : ''}${esc(String(x.title || '').slice(0, 14))}</button>`).join('')}</div>`;
+}
 
 async function renderDrawer() {
+  const S = A(); if (!S || !isOpen()) return;
+  const CUR = S.cur, MSGS = S.msgs, busy = S.busy, note = S.note;
+  BLOCKS.clear();
   const cfg = await aiCfg(), u = await usage(), p = PROVIDERS[cfg.provider] || PROVIDERS.custom;
   const block = aiBlock(cfg), ready = !block;
   const prof = store.get('meta', 'profile'), mem = store.get('meta', 'memory');
-  const nMethod = activeMethod(store.all('method')).length, nDig = relatedDigests().length;
-  const pills = ['学习者档案' + (prof ? '' : '（未填）'), mem ? '长期记忆' : null, nMethod ? '你的学习方法' : null, nDig ? `${nDig} 份过去的纪要` : null, journalText() ? '学习日志' : null, ...(CUR.pills || [])].filter(Boolean);
+  const nMethod = activeMethod(store.all('method')).length, nDig = relatedDigests(S).length;
+  const pills = ['学习者档案' + (prof ? '' : '（未填）'), mem ? '长期记忆' : null, nMethod ? '你的学习方法' : null, nDig ? `${nDig} 份过去的纪要` : null, journalText(S) ? '学习日志' : null, ...(CUR.pills || [])].filter(Boolean);
+  const keep = $('#agentIn') && S.key === dw().dataset.key ? $('#agentIn').value : '';
+  const tabs = await tabsHtml();
+  if (S.key !== ACTIVE) return;
+  dw().dataset.key = S.key;
+  const src = (CUR.newsIds || []).map(id => M.findItem(id)).filter(Boolean);
   dw().innerHTML = `<div class="dw-h"><h3>学习 Agent</h3><span class="fnt small">${esc(CUR.title)}</span>
-      <button class="x" data-act="agent-close" aria-label="收起">×</button></div>
+      <button class="x" data-act="agent-close" aria-label="收起">×</button></div>${tabs}
+    ${src.length ? `<div class="dsrc">${src.map((n, i) => `<a href="${esc(n.u)}" target="_blank" rel="noopener" title="${esc(n.u)}">${src.length > 1 ? `【${i + 1}】` : '原文：'}${esc(n.t.slice(0, 60))} ↗</a>`).join('')}</div>` : ''}
     <div class="mem">它会看到：${pills.map(x => `<span>${esc(x)}</span>`).join('')}<button class="btn sm gh" data-act="agent-export" title="把这次的背景整理给 ChatGPT、Claude Code、v0 等工具用">导出</button><button class="btn sm gh" data-act="agent-new" title="把这段对话整理成纪要，然后开始新话题"${MSGS.length && !busy ? '' : ' disabled'}>新话题</button></div>
     <div class="msgs" id="msgs" aria-live="polite">${ready ? '' : `<div class="ai"><p>${esc(block)}。</p><p><a class="btn sm acc" href="#/settings" data-act="agent-close">去设置</a></p></div>`}
       ${CUR.first && !MSGS.length ? `<div class="ai md">${md(CUR.first)}</div>` : ''}
-      ${MSGS.map(msgHtml).join('')}${note ? `<div class="tool">${esc(note)}</div>` : ''}</div>
-    ${busy ? '' : nextHtml()}
+      ${MSGS.map(msgHtml).join('')}${busy && !note ? `<div class="ai" id="live"><div class="md${S.live ? '' : ' fnt'}">${S.live ? liveMd(S.live) : '思考中…'}</div></div>` : ''}${note ? `<div class="tool">${esc(note)}</div>` : ''}</div>
+    ${busy ? '' : nextHtml(S)}
     <form class="inb" id="agentForm">${ATT.length ? `<div class="att">${ATT.map((x, i) => `<span class="attc" title="${esc(x.u || '')}">${x.quote ? '“' + esc(x.quote.slice(0, 24)) + '…”' : esc(x.t.slice(0, 40))}<button type="button" data-act="att-rm" data-i="${i}" aria-label="移除">×</button></span>`).join('')}</div>` : ''}
       <textarea id="agentIn" rows="2" placeholder="${ATT.length ? '想问什么？直接按 Enter 就是让 Agent 解析' : '说说你的情况，或者问一个问题。可以把资讯拖进来。Enter 发送，Shift+Enter 换行'}"${ready ? '' : ' disabled'}></textarea>
-      <div class="inb-r"><span class="fnt small">需要时会自己去查你的笔记和资讯</span>
+      <div class="inb-r"><span class="fnt small">${busy ? '正在回答，可以切到别的话题或收起窗口，回答不会中断' : '需要时会自己去查你的笔记和资讯'}</span>
       <button class="btn pri" id="agentSend"${ready ? '' : ' disabled'}>${busy ? '停止' : '发送'}</button></div>
       <div class="cost">${cfg.provider === 'hosted' ? `内测模型${cfg.model ? ' · ' + esc(cfg.model) : ''} · 本月 ${u.calls} 次` : `${esc(p.name)} · ${esc(cfg.model || p.model)} · 本月 ¥${u.cny.toFixed(2)}${cfg.budget ? ` / 上限 ¥${cfg.budget}` : ''} · ${u.calls} 次`}</div></form>`;
   const box = $('#msgs'); box.scrollTop = box.scrollHeight;
-  const ta = $('#agentIn');
+  const ta = $('#agentIn'); if (keep) ta.value = keep;
   ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); $('#agentForm').requestSubmit(); } });
-  $('#agentForm').addEventListener('submit', e => { e.preventDefault(); if (busy) { ctl && ctl.abort(); return; } const v = ta.value.trim(); if (v || ATT.length) { ta.value = ''; send(v); } });
+  $('#agentForm').addEventListener('submit', e => { e.preventDefault(); const T = A(); if (!T) return; if (T.busy) { T.ctl && T.ctl.abort(); return; } const v = ta.value.trim(); if (v || ATT.length) { ta.value = ''; send(T, v); } });
   if (ready && matchMedia('(min-width: 821px)').matches) setTimeout(() => ta.focus(), 30);
 }
+const liveMd = t => md(t.replace(/```next[\s\S]*?(```|$)/g, '').replace(/```[\s\S]*?(```|$)/g, '\n（正在生成方案…）\n'));
 
 function msgHtml(m, i) {
   if (m.role === 'user') {
@@ -295,6 +340,7 @@ function msgHtml(m, i) {
 const BLOCKS = new Map();
 function blockHtml(b, key) {
   BLOCKS.set(key, b);
+  const CUR = A().cur;
   if (b.type === 'plan') {
     const f = M.findStage(b.data.stage || CUR.stageId);
     const plan = f && cleanPlan(b.data, f.s);
@@ -344,13 +390,14 @@ const TOOLS = {
 };
 const TOOL_LABEL = { list_tracks: '查看你的学习方向', get_stage: '查看一个阶段', search_news: '搜索资讯', get_notes: '查看你的笔记', get_route: '查看前沿路线', search_digests: '查找过去的对话纪要', search_public: '搜索公共区域的路线', get_public: '查看一条公共路线' };
 
-async function send(text, opts = {}) {
-  if (busy) return;
+async function send(S, text, opts = {}) {
+  if (!S || S.busy) return;
   const cfg = await aiCfg();
   const u = await usage();
   if (cfg.budget && u.cny >= cfg.budget && !confirm(`本月已经用了 ¥${u.cny.toFixed(2)}，超过你设的上限 ¥${cfg.budget}。还要继续调用吗？`)) return;
   if (cfg.budget && u.cny >= cfg.budget * 0.8 && u.cny < cfg.budget && !opts.warned) toast(`本月花费已到上限的 ${Math.round(u.cny / cfg.budget * 100)}%`);
-  if (ATT.length && !opts.auto) {
+  const MSGS = S.msgs, CUR = S.cur;
+  if (ATT.length && !opts.auto && S.key === ACTIVE) {
     const list = ATT; ATT = [];
     const q = text || (list.length > 1 ? `解析这 ${list.length} 条之间的关联` : list[0].quote ? '解释一下这段话' : '解析这条资讯');
     const rule = !text ? '\n\n' + (list.length > 1 ? EXPLAIN_MANY : EXPLAIN_ONE).replace(/^[^\n]*\n/, '按下面的结构回答：\n') : '\n\n' + EXPLAIN_RULE;
@@ -358,25 +405,30 @@ async function send(text, opts = {}) {
       content: `${q}\n\n附带的内容：\n${attText(list)}${rule}` });
   } else MSGS.push({ role: 'user', content: text, ...(opts.auto ? { auto: true, label: opts.label } : {}) });
   MSGS[MSGS.length - 1].ts = Date.now();
-  busy = true; await renderDrawer();
-  const box = $('#msgs');
+  S.busy = true; S.live = ''; await renderDrawer();
   const sys = systemPrompt({ profile: store.get('meta', 'profile'), memory: store.get('meta', 'memory'), recent: recentChanges(),
     method: activeMethod(store.all('method')).map(([, x]) => `- ${x.d}：${x.t}`).join('\n'),
-    digests: relatedDigests().map(g => `- ${new Date(g.c).toLocaleDateString('zh-CN')} ${g.title}：${g.t.replace(/\s+/g, ' ').slice(0, 700)}`).join('\n'),
-    journal: journalText(), tests: CUR.tests || '' });
+    digests: relatedDigests(S).map(g => `- ${new Date(g.c).toLocaleDateString('zh-CN')} ${g.title}：${g.t.replace(/\s+/g, ' ').slice(0, 700)}`).join('\n'),
+    journal: journalText(S), tests: CUR.tests || '' });
   const steps = 6;
   try {
     for (let step = 0; step < steps; step++) {
       const history = MSGS.filter(m => m.role !== 'err').slice(-16).map(m => m.role === 'tool' ? { role: 'user', content: '工具结果：\n' + m.result } : { role: m.role, content: m.role === 'assistant' ? m.content.replace(NEXT_RE, '') : m.content });
       const messages = [{ role: 'system', content: sys + '\n\n当前上下文：\n' + CUR.text }, ...history];
-      const el = document.createElement('div'); el.className = 'ai'; el.innerHTML = '<div class="md fnt">思考中…</div>'; box.appendChild(el);
-      let acc = '';
-      ctl = new AbortController();
-      const res = await chat(cfg, messages, { signal: ctl.signal, onDelta: d => { acc += d; el.firstChild.className = 'md'; el.firstChild.innerHTML = md(acc.replace(/```next[\s\S]*?(```|$)/g, '').replace(/```[\s\S]*?(```|$)/g, '\n（正在生成方案…）\n')); box.scrollTop = box.scrollHeight; } });
+      S.live = ''; S.ctl = new AbortController();
+      // 生成中的文字存在这段对话上；只有它正显示在抽屉里时才更新画面
+      const res = await chat(cfg, messages, { signal: S.ctl.signal, onDelta: d => {
+        S.live += d;
+        if (S.key !== ACTIVE || !isOpen()) return;
+        const el = $('#live'); if (!el) return;
+        el.firstChild.className = 'md'; el.firstChild.innerHTML = liveMd(S.live);
+        const box = $('#msgs'); if (box) box.scrollTop = box.scrollHeight;
+      } });
       const c = cost(cfg, res.usage); await addUsage(cfg, res.usage);
       MSGS.push({ role: 'assistant', ts: Date.now(), content: res.text, cost: c, tin: res.usage.in, tout: res.usage.out, est: res.estimated });
+      S.live = '';
       const { blocks } = extractBlocks(res.text);
-      recordQuiz(blocks, MSGS.length - 1);
+      recordQuiz(S, blocks, MSGS.length - 1);
       const tool = blocks.find(b => b.type === 'tool');
       if (!tool) break;
       const fn = TOOLS[tool.data.name];
@@ -386,29 +438,32 @@ async function send(text, opts = {}) {
     }
   } catch (e) {
     if (e.name !== 'AbortError') MSGS.push({ role: 'err', content: e.message || String(e) });
+    else if (S.live) MSGS.push({ role: 'assistant', ts: Date.now(), content: S.live + '\n\n（已停止）' });
   }
-  busy = false; ctl = null;
-  MSGS = MSGS.slice(-60);
-  await store.localSet(ckey(CUR), MSGS);
-  await indexSession(ckey(CUR), sessionInfo());
+  S.busy = false; S.ctl = null; S.live = '';
+  S.msgs = MSGS.slice(-60);
+  await store.localSet(S.key, S.msgs);
+  await indexSession(S.key, sessionInfo(S), S.msgs.length > 0);
+  if (S.key !== ACTIVE || !isOpen()) toast(`“${String(CUR.title).slice(0, 16)}”回答好了`);
   await renderDrawer();
 }
 
-function journalText() {
-  const at = ctxAt(); const j = at && store.get('journal', at);
+function journalText(S = A()) {
+  const at = ctxAt(S); const j = at && store.get('journal', at);
   return j ? `${stageLabel(at)}（${new Date(j.u).toLocaleDateString('zh-CN')}）上次：${j.last || '—'}；下次重点：${j.next || '—'}` : '';
 }
 /* ---------- 自测 ---------- */
 // 出的题先记在本机“待批改”里（参考答案不显示）；收到批改结果后记一次作答，算掌握度
-const quizItem = id => { const f = CUR && CUR.stageId && M.findStage(CUR.stageId); if (!f) return null; return f.s.items.some(i => i.id === id) ? id : f.s.id; };
-function recordQuiz(blocks, mi) {
+const quizItem = (S, id) => { const f = S.cur.stageId && M.findStage(S.cur.stageId); if (!f) return null; return f.s.items.some(i => i.id === id) ? id : f.s.id; };
+function recordQuiz(S, blocks, mi) {
+  const CUR = S.cur, MSGS = S.msgs;
   const U = store.ui(); U.quizPending = U.quizPending || {};
   for (const b of blocks) {
     if (b.type === 'quiz' && b.data.q) {
-      const item = quizItem(b.data.item); if (!item) continue;
+      const item = quizItem(S, b.data.item); if (!item) continue;
       U.quizPending[item] = { q: String(b.data.q).slice(0, 400), a: String(b.data.a || '').slice(0, 600), k: QKINDS[b.data.kind] ? b.data.kind : 'memory', t: Date.now(), at: CUR.stageId };
     } else if (b.type === 'grade') {
-      const item = quizItem(b.data.item); if (!item) continue;
+      const item = quizItem(S, b.data.item); if (!item) continue;
       const pend = U.quizPending[item] || {};
       const rec = addAttempt(store.get('tests', item), { kind: pend.k || b.data.kind, s: +b.data.score, h: +b.data.hints || 0, r: +b.data.retries || 0, p: b.data.pass !== false && +b.data.score >= 0.6, q: pend.q ? { t: pend.q, a: pend.a } : null });
       store.put('tests', item, rec);
@@ -421,7 +476,7 @@ function recordQuiz(blocks, mi) {
 }
 function gradeHtml(m, i) {
   const g = m.graded; if (!g) return '';
-  const f = M.findStage(CUR.stageId), it = f && f.s.items.find(x => x.id === g.item);
+  const f = M.findStage(A().cur.stageId), it = f && f.s.items.find(x => x.id === g.item);
   const recs = store.all('tests'), whole = f && suggestMastered(f.s, recs, store.done());
   return `<div class="quiz"><div class="k">自测记录 · ${esc(it ? it.text.slice(0, 40) : '这个阶段')}</div>掌握度 <b>${Math.round(g.m * 100)}%</b>${g.ok ? ' · 已达标' : ''}
     ${g.ok && it && !store.isDone(it.id) ? `<div class="pf"><button class="btn sm" data-act="quiz-done" data-id="${it.id}">把这项勾为完成</button></div>` : ''}
@@ -439,24 +494,26 @@ function recentChanges() {
 act('agent-close', () => closeAgent());
 act('blk-req', async el => {
   const b = BLOCKS.get(el.dataset.k); if (!b) return;
+  const CUR = A().cur;
   if (CUR.bizId) await store.localSet('req.' + CUR.bizId, b.data);
   openExport({ biz: CUR.bizId || null, req: b.data, scene: 'demo' });
 });
-act('agent-export', () => openExport({ at: ctxAt(), card: CUR && CUR.cardId, biz: CUR && CUR.bizId }));
+act('agent-export', () => { const S = A(); openExport({ at: ctxAt(S), card: S && S.cur.cardId, biz: S && S.cur.bizId }); });
+act('agent-tab', el => openAgent(el.dataset.kind, el.dataset.id));
 act('agent-biz', el => openAgent('biz', el.dataset.id));
 act('agent-public', el => openAgent('pub', el.dataset.id));
 act('att-rm', el => { ATT.splice(+el.dataset.i, 1); renderDrawer(); });
 act('agent-new', async () => {
-  if (busy || !MSGS.length) return;
-  busy = true; note = '正在把这段对话整理成纪要…'; await renderDrawer();
-  const gid = await closeSession(ckey(CUR), MSGS, sessionInfo(), true);
-  MSGS = (await store.localGet(ckey(CUR))) || []; busy = false; note = '';
+  const S = A(); if (!S || S.busy || !S.msgs.length) return;
+  S.busy = true; S.note = '正在把这段对话整理成纪要…'; await renderDrawer();
+  const gid = await closeSession(S.key, S.msgs, sessionInfo(S), true);
+  S.msgs = (await store.localGet(S.key)) || []; S.busy = false; S.note = '';
   await renderDrawer();
   toast(gid ? '已整理成纪要，可以在“我的学习方法”里查看' : '没能整理（AI 服务不可用），这段对话先保留');
 });
-act('agent-next', el => send(el.dataset.q));
+act('agent-next', el => send(A(), el.dataset.q));
 act('msg-note', el => {
-  const m = MSGS[+el.dataset.i]; if (!m) return;
+  const m = A().msgs[+el.dataset.i]; if (!m) return;
   const id = 'c' + uid('');
   store.put('cards', id, { t: extractBlocks(m.content).text, at: ctxAt(), c: Date.now() });
   el.disabled = true; el.textContent = '已存进笔记'; toast('已存进笔记', () => store.del('cards', id));
@@ -464,6 +521,7 @@ act('msg-note', el => {
 act('blk-note', el => {
   const b = BLOCKS.get(el.dataset.k); if (!b) return;
   const text = String(b.data.text || '').trim(); if (!text) return;
+  const CUR = A().cur;
   if (CUR.docId) {
     const before = store.note(CUR.docId);
     store.setNote(CUR.docId, text); refresh();
@@ -483,7 +541,7 @@ act('blk-memory', el => {
 });
 act('blk-route', el => {
   const b = BLOCKS.get(el.dataset.k); if (!b) return;
-  const rid = M.route(b.data.route) ? b.data.route : CUR.routeId; if (!rid) return;
+  const rid = M.route(b.data.route) ? b.data.route : A().cur.routeId; if (!rid) return;
   const m = store.get('routes', rid) || {};
   const add = (b.data.items || []).filter(x => x && x.text).slice(0, 8).map(x => ({ id: `${rid}.u${uid('').slice(0, 8)}`, text: String(x.text).slice(0, 300), mode: x.mode === 'practice' ? 'practice' : 'theory', ...(/^https?:\/\//.test(x.url || '') ? { url: x.url } : {}), ai: true }));
   store.put('routes', rid, { ...m, learnAdd: [...(m.learnAdd || []), ...add] }); refresh();
@@ -514,6 +572,7 @@ act('pick-go', () => { if (PICK.ids.length < 2) return; const ids = PICK.ids.joi
 act('route-explain', el => { const ids = M.routeNews(el.dataset.id).slice(0, MAX_PICK).map(n => n.id); if (ids.length < 2) { toast('这条路线的进展不到 2 条'); return; } openAgent('multi', ids.join(',')); });
 act('agent-route', el => openAgent('route', el.dataset.id));
 act('agent-track', el => openAgent('track', el.dataset.id));
-act('agent-open', () => openAgent('free'));
+act('agent-open', () => resumeAgent());
+act('agent-free', () => openAgent('free'));
 window.addEventListener('agent:card', e => openAgent('card', e.detail));
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('dw-open') && !document.querySelector('dialog[open]')) closeAgent(); });

@@ -7,7 +7,11 @@ function inline(s) {
   s = s.replace(/`([^`]+)`/g, (_, c) => { codes.push(c); return `\u0000${codes.length - 1}\u0000`; });
   s = esc(s);
   s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_, t, u) => `<a href="${u}" target="_blank" rel="noopener">${t}</a>`);
-  s = s.replace(/(^|[\s(（])(https?:\/\/[^\s<)）]+)/g, (_, p, u) => `${p}<a href="${u}" target="_blank" rel="noopener">${u}</a>`);
+  // 裸链接：前面可以是任何不属于网址的字符（中文冒号、括号等）；网址遇到空白、中文或中文标点就结束，末尾的英文标点不算
+  s = s.replace(/(^|[^\w\/"=>:.\-])(https?:\/\/[^\s<>"'）)\]】，。；、！？「」《》\u3400-\u9fff]+)/g, (_, p, u) => {
+    const tail = (u.match(/[.,;:!?]+$/) || [''])[0]; u = u.slice(0, u.length - tail.length);
+    return `${p}<a href="${u}" target="_blank" rel="noopener">${u.replace(/^https?:\/\//, '').slice(0, 60)}${u.length > 68 ? '…' : ''}</a>${tail}`;
+  });
   s = s.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/(^|[^*])\*([^*\s][^*]*)\*/g, '$1<i>$2</i>');
   return s.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${esc(codes[+i])}</code>`);
 }

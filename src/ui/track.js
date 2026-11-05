@@ -11,7 +11,7 @@ import { act, refresh, toast, newsRow, resLink, TYPES, LVL, lvlTag, PICK, splitN
 import { applyToStage } from './suggest.js';
 import { LIVE, loadLive } from '../live.js';
 import { saveFile } from '../native.js';
-import { treeHtml } from './tree.js';
+import { treeHtml, afterTree } from './tree.js';
 
 /* ---------- 理论阶段 ---------- */
 function itemRow(i, s) {
@@ -155,6 +155,7 @@ export function renderTrack(id, sub, q) {
 }
 export function afterTrack(id, sub, q) {
   if (sub === 'news' && M.track(id).live) loadLive(M.track(id), false);
+  if (sub === 'tree') afterTree(M.track(id));
   if (q.s) { const el = document.getElementById('st-' + q.s.replace(/\./g, '-')); if (el) el.scrollIntoView({ block: 'center' }); }
 }
 

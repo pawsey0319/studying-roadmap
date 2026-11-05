@@ -5,10 +5,19 @@ import { chat } from '../ai/providers.js';
 import { looseJSON } from '../ai/agent.js';
 import { aiCfg, aiBlock } from './agentui.js';
 import { act, toast } from './kit.js';
-import { needs, saveRuntime, trPrompt, isEn, t } from '../i18n.js';
+import { hasRuntime, isContentNode } from '../i18n.js';
+import { needs, saveRuntime, trPrompt, isEn, t, restore, translateTree } from '../i18n.js';
 
 const SKIP = 'textarea,input,select,script,style,pre,code,.ned,.me,button,.trb';
 const label = () => (isEn() ? 'Translate' : '翻译');
+const origLabel = () => (isEn() ? 'Show original' : '看原文');
+// 看原文的板块：按 .sh 的标题文字记住（重画页面后还是原文），直到再点一次“翻译”
+const ORIG = new Set();
+const boardKey = h => (h.querySelector('h3') || h).textContent.trim().slice(0, 40);
+function markBoard(h, orig) {
+  for (const el of targets(h.querySelector('.trb') || h)) { el.classList.toggle('trorig', orig); if (orig) restore(el); else translateTree(el); }
+  const b = h.querySelector('.trb'); if (b) { b.textContent = orig ? label() : (b.dataset.done ? origLabel() : label()); b.dataset.act = orig || !b.dataset.done ? 'tr-board' : 'tr-orig'; }
+}
 // 页面重画后，给每个板块标题（.sh）和阅读面板加上“翻译”按钮
 export function addBoardButtons(root) {
   if (!root) return;
@@ -17,6 +26,9 @@ export function addBoardButtons(root) {
     const b = document.createElement('button'); b.className = 'lnk trb'; b.dataset.act = 'tr-board'; b.textContent = label();
     b.title = isEn() ? 'Translate the items in this section with your AI model' : '用你设置的模型翻译这一块里的外文标题和摘要';
     (h.querySelector('.r') || h).appendChild(b);
+    // 这一块已经有译文显示：按钮变成“看原文”；之前点过“看原文”的保持原文
+    if (ORIG.has(boardKey(h))) { b.dataset.done = '1'; markBoard(h, true); }
+    else if (hasTranslated(h)) { b.dataset.done = '1'; b.dataset.act = 'tr-orig'; b.textContent = origLabel(); }
   });
 }
 function targets(btn) {
@@ -24,6 +36,10 @@ function targets(btn) {
   const h = btn.closest('.sh'), out = []; if (!h) return out;
   for (let e = h.nextElementSibling; e && !e.matches('.sh'); e = e.nextElementSibling) out.push(e);
   return out;
+}
+function hasTranslated(h) {
+  for (const el of targets(h.querySelector('.trb'))) { const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) if (n.__orig != null && (hasRuntime(n.__orig) || isContentNode(n))) return true; }
+  return false;
 }
 function collect(els) {
   const set = new Set();
@@ -33,9 +49,14 @@ function collect(els) {
   }
   return [...set].slice(0, 160);
 }
+act('tr-orig', el => { const h = el.closest('.sh'); if (h) { ORIG.add(boardKey(h)); markBoard(h, true); } else { const box = targets(el)[0]; if (box) { box.classList.add('trorig'); restore(box); el.textContent = label(); el.dataset.act = 'tr-board'; } } });
 act('tr-board', async el => {
+  const h = el.closest('.sh');
+  // 之前切回过原文：直接再显示译文，不用再调模型
+  if (h && ORIG.has(boardKey(h))) { ORIG.delete(boardKey(h)); markBoard(h, false); }
+  else { const box = el.closest('.rd-b, .tr-p, .dw'); if (box && box.classList.contains('trorig')) box.classList.remove('trorig'), translateTree(box); }
   const L = collect(targets(el));
-  if (!L.length) { toast(t('这一块已经都是当前语言了')); return; }
+  if (!L.length) { if (hasTranslatedEls(targets(el))) { el.dataset.done = '1'; el.dataset.act = 'tr-orig'; el.textContent = origLabel(); } else toast(t('这一块已经都是当前语言了')); return; }
   const cfg = await aiCfg(), block = aiBlock(cfg);
   if (block) { toast(t(block)); return; }
   el.disabled = true; el.textContent = isEn() ? `Translating ${L.length}…` : `正在翻译 ${L.length} 条…`;
@@ -49,7 +70,9 @@ act('tr-board', async el => {
       n += Object.keys(ok).length; saveRuntime(ok);
     }
     toast(isEn() ? `Translated ${n} items` : `翻译了 ${n} 条`);
+    if (n) { el.disabled = false; el.dataset.done = '1'; el.dataset.act = 'tr-orig'; el.textContent = origLabel(); return; }
   } catch (e) { toast((isEn() ? 'Translation failed: ' : '翻译失败：') + (e.message || e)); }
   el.disabled = false; el.textContent = label();
 });
+function hasTranslatedEls(els) { for (const el of els) { const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) if (n.__orig != null && (hasRuntime(n.__orig) || isContentNode(n))) return true; } return false; }
 export const _esc = esc;

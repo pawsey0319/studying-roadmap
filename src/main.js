@@ -26,7 +26,6 @@ import './ui/dragask.js';
 import './ui/export.js';
 import './ui/reader.js';
 import { renderPublic, beforePublic, reportDone, checkUpstream } from './ui/public.js';
-import { renderTreePage } from './ui/tree.js';
 
 /* ---------- 路由：#/  #/t/<方向>[/news][?s=阶段]  #/r/<路线>  #/notes[/<卡片>|/s/<阶段>]  #/biz  #/import  #/settings  #/later  #/suggestions ---------- */
 function parse() {
@@ -49,7 +48,7 @@ async function render(opts = {}) {
     else if (page === 'biz') html = renderBiz(q);
     else if (page === 'later') html = renderLater();
     else if (page === 'library') html = renderLibrary();
-    else if (page === 'tree') html = renderTreePage(q);
+    else if (page === 'tree') { location.replace('#/t/' + ((M.tracks()[0] || {}).id || '') + '/tree'); return; }
     else if (page === 'public') { await beforePublic(q); html = renderPublic(q); }
     else if (page === 'search') html = renderSearch(q);
     else if (page === 'method') { await beforeMethod(); html = renderMethod(q); if (q.g) after = () => { const el = document.getElementById('dg-' + q.g); if (el) el.scrollIntoView({ block: 'center' }); }; }
@@ -81,7 +80,6 @@ function renderNav(page, seg) {
     <a class="nav" href="#/biz" aria-current="${cur('biz')}">落地与商机</a>
     <a class="nav" href="#/later" aria-current="${cur('later')}">稍后读<span class="n">${Object.keys(store.all('later')).filter(id => !M.isRead(id)).length || ''}</span></a>
     <a class="nav" href="#/search" aria-current="${cur('search')}">搜索</a>
-    <a class="nav" href="#/tree" aria-current="${cur('tree')}">知识树</a>
     <a class="nav" href="#/method" aria-current="${cur('method')}">我的学习方法</a>
     ${cloud.supportsPublic() ? `<a class="nav" href="#/public" aria-current="${cur('public')}">公共区域</a>` : ''}
     <div class="gh">学习方向</div>
@@ -96,7 +94,7 @@ function renderNav(page, seg) {
     <a href="${M.tracks().length ? '#/t/' + (tid && M.track(tid) ? tid : M.track(UI().lastTrack) ? UI().lastTrack : M.tracks()[0].id) : '#/library'}" aria-current="${mt ? 'page' : 'false'}"><b><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 4h12M3 9h7M3 14h10"/><circle cx="13" cy="9" r="1.6" fill="currentColor"/></svg></b>方向</a>
     <button class="plus" data-act="quick-note" aria-label="随手记"><b>＋</b></button>
     <button data-act="agent-open"><b>✦</b>Agent</button>
-    <a href="#/more" aria-current="${['more', 'notes', 'biz', 'later', 'settings', 'import', 'search', 'method', 'library', 'public', 'tree'].includes(page) ? 'page' : 'false'}"><b>☰</b>我的</a>`;
+    <a href="#/more" aria-current="${['more', 'notes', 'biz', 'later', 'settings', 'import', 'search', 'method', 'library', 'public'].includes(page) ? 'page' : 'false'}"><b>☰</b>我的</a>`;
   if (tid) { UI().lastTrack = tid; store.saveUi(); }
   setSyncStatus();
 }
@@ -105,7 +103,7 @@ function renderMore() {
   const cards = Object.keys(store.all('cards')).length, docs = Object.keys(store.all('notes')).length;
   const later = Object.keys(store.all('later')).filter(id => !M.isRead(id)).length;
   const row = (href, t, n) => `<a class="mi" href="${href}" style="text-decoration:none;display:flex"><b>${t}</b><span class="n" style="margin-left:auto;color:var(--faint)">${n}</span></a>`;
-  return `<div class="card" style="margin-top:8px">${row('#/notes', '笔记', `${cards} 张卡片 · ${docs} 篇文档`)}${row('#/later', '稍后在电脑上读', later)}${row('#/biz', '落地与商机', M.C.biz.items.length)}${row('#/search', '搜索', '资讯和笔记')}${row('#/suggestions', '等你确认', '')}${row('#/library', '路线库', '')}${row('#/import', '导入文档', '')}${row('#/tree', '知识树', '')}${row('#/method', '我的学习方法', '')}${cloud.supportsPublic() ? row('#/public', '公共区域', '') : ''}</div>
+  return `<div class="card" style="margin-top:8px">${row('#/notes', '笔记', `${cards} 张卡片 · ${docs} 篇文档`)}${row('#/later', '稍后在电脑上读', later)}${row('#/biz', '落地与商机', M.C.biz.items.length)}${row('#/search', '搜索', '资讯和笔记')}${row('#/suggestions', '等你确认', '')}${row('#/library', '路线库', '')}${row('#/import', '导入文档', '')}${row('#/method', '我的学习方法', '')}${cloud.supportsPublic() ? row('#/public', '公共区域', '') : ''}</div>
     <div class="card" style="margin-top:10px">${row('#/settings', '设置', 'AI 服务、花费、同步、备份')}<button class="mi" data-act="lang" style="all:unset;cursor:pointer;display:flex;padding:12px 14px"><b>${isEn() ? '中文' : 'English'}</b><span class="n" style="margin-left:auto;color:var(--faint)">${isEn() ? '切换到中文' : 'Switch language'}</span></button></div>
     <p class="fnt small" style="margin-top:10px">阶段长文档和导入在电脑上操作更方便。</p>`;
 }

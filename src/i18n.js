@@ -95,11 +95,17 @@ export const t = s => (isEn() ? lookup(s) || s : s);
 // 不翻的：输入框、你写的笔记正文、Agent 的回复（它本来就按界面语言回答）
 const SKIP = 'textarea,input,script,style,pre,code,[contenteditable],[data-notr],.ai > .md,.me,.ned,.nbody';
 const ATTRS = ['title', 'placeholder', 'aria-label'];
+// 点了“看原文”的板块（.trorig）里，按需翻译的结果不替换（界面词典照常）
+// 内容（资讯标题、摘要、链接文字），区别于按钮和说明这些界面文字：看原文时只还原内容
+export const CONTENT = '.tt,.ts,.rdl,.rd-t,.rd-s,.tline a,.live li a,.lst.hot a,.tr-p .rdl,.dsrc a';
 function fixText(node) {
   const v = node.nodeValue; if (!v || !v.trim()) return;
+  if (node.__orig != null) return;
   if (isEn() ? !CJK.test(v) && !RUN[norm(v)] : !RUN[norm(v)]) return;
   const p = node.parentElement; if (!p || p.closest(SKIP)) return;
+  if (p.closest('.trorig') && (RUN[norm(v)] || p.closest(CONTENT))) return;
   const r = lookup(v); if (!r) return;
+  node.__orig = v;
   const lead = v.match(/^\s*/)[0], tail = v.match(/\s*$/)[0];
   node.nodeValue = lead + r + tail;
 }
@@ -122,7 +128,7 @@ function observe() {
   obs = new MutationObserver(list => {
     if (busy) return; busy = true;
     for (const m of list) {
-      if (m.type === 'characterData') fixText(m.target);
+      if (m.type === 'characterData') { if (!busyRestore) fixText(m.target); }
       else if (m.type === 'attributes') fixAttrs(m.target);
       else m.addedNodes.forEach(translateTree);
     }
@@ -137,6 +143,15 @@ function observe() {
 /* ---------- 不固定的内容：按板块用模型翻译，存在这台设备 ---------- */
 // 需要翻译的文字：切到英文时是含中文的，中文界面时是外文标题（至少 3 个英文单词）
 export const needs = s => { const k = norm(s); if (!k || RUN[k] || (isEn() && DICT[k])) return false; return isEn() ? CJK.test(k) : !CJK.test(k) && (k.match(/[A-Za-z]{2,}/g) || []).length >= 3; };
+// 把一块区域里翻译过的文字换回原文
+export function restore(root) {
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let n;
+  while ((n = w.nextNode())) if (n.__orig != null && (RUN[norm(n.__orig)] || (n.parentElement && n.parentElement.closest(CONTENT)))) { const o = n.__orig; delete n.__orig; busyRestore = true; n.nodeValue = o; busyRestore = false; }
+}
+let busyRestore = false;
+export const hasRuntime = s => !!RUN[norm(s)];
+export const isContentNode = n => !!(n.parentElement && n.parentElement.closest(CONTENT));
+export const originalOf = n => n.__orig;
 export function saveRuntime(map) {
   for (const [k, v] of Object.entries(map)) if (v) RUN[norm(k)] = v;
   const keys = Object.keys(RUN); if (keys.length > 4000) for (const k of keys.slice(0, keys.length - 4000)) delete RUN[k];
