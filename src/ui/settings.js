@@ -10,6 +10,9 @@ import { aiCfg, saveCfg, usage } from './agentui.js';
 import { embedCfg, saveEmbed, embedReady, embed } from '../ai/embed.js';
 import { isNative, saveFile, scheduleReminder } from '../native.js';
 import { checkUpdate, currentVersion } from '../update.js';
+import { appearanceHtml } from './appearance.js';
+import { pendingSuggestions } from './suggest.js';
+import { isEn } from '../i18n.js';
 
 let hostedInfo = null;  // 内测模型的可选模型和用量，进设置页时取一次
 
@@ -21,8 +24,15 @@ export async function renderSettings() {
   const prof = store.get('meta', 'profile') || '', mem = store.get('meta', 'memory') || '';
   const hidden = store.ui().hiddenTracks || {};
   const allTracks = M.library().filter(t => M.adopted(t.id)).concat(Object.entries(store.all('tracks')).filter(([k]) => k.startsWith('u')).map(([, t]) => t));
+  const later = Object.keys(store.all('later')).filter(id => !M.isRead(id)).length, sugs = pendingSuggestions().length;
+  const row = (href, t, n = '') => `<a class="srow" href="${href}"><b>${t}</b><span class="fnt">${n}</span><i aria-hidden="true">›</i></a>`;
   return `<div class="ph"><h1>设置</h1></div>
   <div class="g2" style="margin-top:14px;align-items:start">
+    <section class="card set"><h3>功能</h3>
+      ${row('#/method', '我的学习方法')}${row('#/suggestions', '等你确认', sugs ? sugs + ' 条' : '')}${row('#/notes', '全部笔记', Object.keys(store.all('cards')).length + ' 张卡片')}${row('#/later', '稍后在电脑上读', later ? later + ' 条' : '')}
+      ${row('#/biz', '落地与商机（全部方向）')}${row('#/library', '路线库', '加入或移出方向')}${row('#/import', '导入文档')}${cloud.supportsPublic() ? row('#/public', '公共区域') : ''}
+      <button type="button" class="srow" data-act="lang"><b>${isEn() ? '中文' : 'English'}</b><span class="fnt">${isEn() ? '切换到中文' : 'Switch language'}</span><i aria-hidden="true">›</i></button></section>
+    ${appearanceHtml()}
     <section class="card set"><h3>AI 服务</h3>
       <p class="hint">${hosted ? '内测期间学习 Agent 用管理员提供的模型，登录后就能用，不需要自己的 Key。也可以换成自己的服务商。' : 'Key 只保存在这台设备的浏览器里，不会同步到其他设备，只发给你选的服务商。公用电脑上不要填。'}</p>
       <label class="field"><span>服务商</span><select id="aiProv">${Object.entries(PROVIDERS).filter(([k, v]) => !v.hosted || cloud.hostedAI()).map(([k, v]) => `<option value="${k}"${k === c.provider ? ' selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>

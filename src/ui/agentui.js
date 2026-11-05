@@ -245,6 +245,8 @@ let ACTIVE = null;
 const A = () => SESS.get(ACTIVE);
 const ckey = c => 'chat.' + c.kind + '.' + (c.kind === 'multi' ? hash(String(c.id)) : (c.id || ''));
 const dw = () => $('#dw');
+let CTX_OPEN = null;   // 上下文区是否展开：电脑上默认展开，手机上默认收起，用户点过之后记住
+document.addEventListener('toggle', e => { if (e.target.matches && e.target.matches('details.dctx')) CTX_OPEN = e.target.open; }, true);
 const isOpen = () => dw() && !dw().hidden;
 
 export async function openAgent(kind = 'free', id = '') {
@@ -256,7 +258,7 @@ export async function openAgent(kind = 'free', id = '') {
   else if (!S.busy) { S.cur = cur; S.msgs = (await store.localGet(key)) || S.msgs; }   // 没在生成时以存下来的为准（别的标签页可能改过）
   ACTIVE = key; store.ui().agentLast = key; store.saveUi();
   if (document.body.classList.contains('rd-open')) document.querySelector('[data-act=rd-close]')?.click();   // 阅读面板和 Agent 在同一侧，开 Agent 时先收起阅读面板
-  document.body.classList.add('dw-open'); dw().hidden = false;
+  document.body.classList.add('dw-open'); dw().hidden = false; dw().classList.remove('min');
   // 离开超过设定的小时数（默认 6 小时）：先把上次的对话整理成纪要，再开始新的一段；没超过就接着上次的聊
   if (!S.busy && S.msgs.length && Date.now() - lastTs(S.msgs) > idleMs()) {
     S.busy = true; S.note = '正在把上次的对话整理成纪要…'; await renderDrawer();
@@ -302,10 +304,12 @@ async function renderDrawer() {
   if (S.key !== ACTIVE) return;
   dw().dataset.key = S.key;
   const src = (CUR.newsIds || []).map(id => M.findItem(id)).filter(Boolean);
-  dw().innerHTML = `<div class="dw-h"><h3>学习 Agent</h3><span class="fnt small">${esc(CUR.title)}</span>
-      <button class="x" data-act="agent-close" aria-label="收起">×</button></div>${tabs}
+  const ctxOpen = CTX_OPEN === null ? matchMedia('(min-width: 821px)').matches : CTX_OPEN;
+  dw().innerHTML = `<div class="dw-h"><h3>学习 Agent</h3><span class="aitag" title="你正在和 AI 交流，回答由模型生成">AI</span><span class="fnt small dw-ti">${esc(CUR.title)}</span>
+      <button class="x mn" data-act="agent-min" aria-label="收小" title="收小，只留标题栏">–</button><button class="x" data-act="agent-close" aria-label="收起">×</button></div>${tabs}
+    <details class="dctx"${ctxOpen ? ' open' : ''}><summary>上下文<em>${pills.length}${src.length ? ` · 原文 ${src.length}` : ''}</em></summary>
     ${src.length ? `<div class="dsrc">${src.map((n, i) => `<a href="${esc(n.u)}" target="_blank" rel="noopener" title="${esc(n.u)}">${src.length > 1 ? `【${i + 1}】` : '原文：'}${esc(n.t.slice(0, 60))} ↗</a>`).join('')}</div>` : ''}
-    <div class="mem">它会看到：${pills.map(x => `<span>${esc(x)}</span>`).join('')}<button class="btn sm gh" data-act="agent-export" title="把这次的背景整理给 ChatGPT、Claude Code、v0 等工具用">导出</button><button class="btn sm gh" data-act="agent-new" title="把这段对话整理成纪要，然后开始新话题"${MSGS.length && !busy ? '' : ' disabled'}>新话题</button></div>
+    <div class="mem">它会看到：${pills.map(x => `<span>${esc(x)}</span>`).join('')}<button class="btn sm gh" data-act="agent-export" title="把这次的背景整理给 ChatGPT、Claude Code、v0 等工具用">导出</button><button class="btn sm gh" data-act="agent-new" title="把这段对话整理成纪要，然后开始新话题"${MSGS.length && !busy ? '' : ' disabled'}>新话题</button></div></details>
     <div class="msgs" id="msgs" aria-live="polite">${ready ? '' : `<div class="ai"><p>${esc(block)}。</p><p><a class="btn sm acc" href="#/settings" data-act="agent-close">去设置</a></p></div>`}
       ${CUR.first && !MSGS.length ? `<div class="ai md">${md(CUR.first)}</div>` : ''}
       ${MSGS.map(msgHtml).join('')}${busy && !note ? `<div class="ai" id="live"><div class="md${S.live ? '' : ' fnt'}">${S.live ? liveMd(S.live) : '思考中…'}</div></div>` : ''}${note ? `<div class="tool">${esc(note)}</div>` : ''}</div>

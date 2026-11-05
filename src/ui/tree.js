@@ -57,7 +57,7 @@ function barHtml(root, D) {
 }
 
 /* ---------- 画树：横向展开，根在左，子方向往右 ---------- */
-const COLW = 214, ROWH = 62, NW = 178, NH = 48, PAD = 18;
+const COLW = 214, ROWH = 64, NW = 178, NH = 54, PAD = 18;
 let LAST = { root: null, pos: new Map() }, anim = 0;
 function layout(D, S) {
   const focus = S.focus && D.tree.byId.has(S.focus) ? S.focus : '';

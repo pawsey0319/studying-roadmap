@@ -1,0 +1,112 @@
+/* 柔和学术风：设计令牌、三种主题、字体与字号、密度。最后加载，覆盖前面文件里的变量。
+   默认“雾青”：偏冷的灰绿纸面，墨色是蓝黑，主色黛蓝；荧光笔色只用在引用和重点。 */
+:root{
+  --paper:#EEF1EF; --card:#FAFBFA; --side:#E4E9E6; --soft:#F2F5F3;
+  --ink:#1E2A35; --muted:#5C6870; --faint:#838D94; --line:#D5DCD9;
+  --accent:#34507A; --accent-ink:#FFFFFF; --accent-soft:#E3EAF3;
+  --sig:#E8B93D; --sig-ink:#6E4F00; --hl:#F0E2B6;
+  --ok:#2F6B57; --bad:#A63A2F;
+  --r:14px; --r-sm:9px;
+  --serif:"Source Han Serif SC","Noto Serif CJK SC","Noto Serif SC","Songti SC","STSong","SimSun","Times New Roman",serif;
+  --sans:"PingFang SC","Noto Sans SC","Hiragino Sans GB","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+  --kai:"Kaiti SC","STKaiti","KaiTi","BiauKai","Noto Serif CJK SC",serif;
+  --font-head:var(--serif); --font:var(--sans); --font-note:var(--sans);
+  --shadow:0 1px 2px rgba(30,42,53,.05);
+  --float:0 10px 30px rgba(30,42,53,.16);
+  --fs-read:15px; --pad-li:9px;
+}
+html[data-theme=paper]{
+  --paper:#F6F6F3; --card:#FFFFFF; --side:#EBEBE7; --soft:#F3F3F0;
+  --ink:#24292E; --muted:#636A70; --faint:#8D9298; --line:#DEDED8; --hl:#F3E7BC;
+}
+html[data-theme=night]{
+  color-scheme:dark;
+  --paper:#12171C; --card:#1A2128; --side:#0F1418; --soft:#202931;
+  --ink:#E3E8EB; --muted:#A2ADB5; --faint:#7A858D; --line:#2C363E;
+  --accent:#8FAEDB; --accent-ink:#0F1A28; --accent-soft:#243246;
+  --sig:#D9AE3A; --sig-ink:#F0D58A; --hl:#4A4224;
+  --ok:#6FBF9F; --bad:#E58B80;
+  --shadow:none; --float:0 10px 30px rgba(0,0,0,.5);
+}
+html[data-font=serif]{--font:var(--serif);--font-head:var(--serif)}
+html[data-font=sans]{--font:var(--sans);--font-head:var(--sans)}
+html[data-font=kai]{--font:var(--sans);--font-head:var(--kai)}
+html[data-note-font=serif]{--font-note:var(--serif)}
+html[data-note-font=sans]{--font-note:var(--sans)}
+html[data-note-font=kai]{--font-note:var(--kai)}
+html[data-size=large]{--fs-read:17px}
+html[data-size=large] body{font-size:16.5px}
+html[data-density=compact]{--pad-li:5px}
+
+body{font-family:var(--font);background:var(--paper);color:var(--ink)}
+h1,h2,h3,h4,.brand,.ph h1,.sh h3{font-family:var(--font-head);font-weight:600;letter-spacing:.02em}
+h4{font-weight:600}
+.nbody,.md.nbody,.ned,.rd-s{font-family:var(--font-note);font-size:var(--fs-read);line-height:1.85}
+.md p,.msgs{line-height:1.75}
+.lst>li,.nlist>li{padding-top:var(--pad-li);padding-bottom:var(--pad-li)}
+.card{box-shadow:var(--shadow)}
+::selection{background:var(--hl)}
+:focus-visible{outline-color:var(--accent)}
+a{text-decoration-color:color-mix(in srgb,var(--accent) 40%,transparent)}
+
+/* 把“用墨色当填充”的地方改成主色，深色主题下才有对比 */
+.btn.pri,.chip[aria-pressed=true],.dtab.on,.fab button.k,.me{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.pri:hover{color:var(--accent-ink);filter:brightness(1.08)}
+.btn:hover{border-color:var(--accent);color:var(--ink)}
+.btn.acc{background:var(--c);border-color:var(--c);color:#fff}
+.mw i,.up-bar i{background:var(--accent)}
+.toast{background:var(--ink);color:var(--paper)}
+.toast button{color:var(--sig)}
+.att.in .attc a{color:var(--accent-ink)}
+.nav{color:var(--muted)}
+.nav:hover{background:color-mix(in srgb,var(--ink) 7%,transparent)}
+.nav[aria-current=page]{box-shadow:0 0 0 1px var(--line);background:var(--card)}
+.brand i{box-shadow:0 0 0 3px var(--card)}
+.sign b{font-family:var(--font-head);font-weight:600;letter-spacing:.08em}
+
+/* 引用块：荧光笔底色，是整个界面里唯一的亮色 */
+.md blockquote{background:color-mix(in srgb,var(--hl) 55%,transparent);border-left:3px solid var(--sig);color:var(--ink);border-radius:0 8px 8px 0}
+.note{background:color-mix(in srgb,var(--c) 8%,var(--card))}
+
+/* 夜读主题里写死的浅色底 */
+html[data-theme=night] .field input,html[data-theme=night] .field select,html[data-theme=night] .field textarea,
+html[data-theme=night] .qn-h select,html[data-theme=night] .snapbar select,html[data-theme=night] .srch input,
+html[data-theme=night] .nq,html[data-theme=night] .askm input,html[data-theme=night] .ned,html[data-theme=night] .inb textarea,
+html[data-theme=night] .qn textarea,html[data-theme=night] .ob-in textarea,html[data-theme=night] .set textarea,html[data-theme=night] #exExtra,
+html[data-theme=night] .addit input{background:var(--soft);color:var(--ink);border-color:var(--line)}
+html[data-theme=night] .blk,html[data-theme=night] .quiz,html[data-theme=night] .obsum li,html[data-theme=night] .pf{background:var(--soft)}
+html[data-theme=night] .plan{background:var(--soft);border-color:var(--line)}
+html[data-theme=night] .plan .ph2{background:#3A3020;color:#F0D58A}
+html[data-theme=night] .drow,html[data-theme=night] .pf{border-color:var(--line)}
+html[data-theme=night] .ai.err{background:#3A2220}
+html[data-theme=night] .pbar{background:#33291A}html[data-theme=night] .pbar b{color:var(--sig-ink)}
+html[data-theme=night] .tag.a{background:#1F3A31;color:#8FD2B6}html[data-theme=night] .tag.b{background:#22324C;color:#9DBBEA}
+html[data-theme=night] .tag.c{background:#3C2A22;color:#E8A98A}html[data-theme=night] .tag.fr{background:#2E2742;color:#BBA6E8}
+html[data-theme=night] .tag.ai{background:#3A2E1E;color:#E8BE86}html[data-theme=night] .tag.mine{background:#22324C;color:#9DBBEA}
+html[data-theme=night] .tn.d0{background:#2A3744;border-color:#2A3744}
+html[data-theme=night] .tr-svg path{stroke:#3A4752}
+html[data-theme=night] .tline li:before{background:var(--card)}
+html[data-theme=night] .ai .md a{color:var(--accent)}
+html[data-theme=night] .metro text{fill:var(--ink)}
+html[data-theme=night] dialog{background:var(--card)}
+
+/* 前沿路线的标签 a.tag.fr 和前沿路线卡片 .fr 同名，这里把标签的卡片样式去掉 */
+.tag.fr{display:inline-block;padding:0 7px;margin:0;border-left:0;box-shadow:none;border-radius:5px}
+.tag.fr:hover{box-shadow:none}
+
+.wc .tag{white-space:normal;overflow-wrap:anywhere}
+
+.snapbar select{max-width:100%;min-width:0;text-overflow:ellipsis}
+
+/* 知识树节点：名字最多两行，不再被裁掉 */
+.tn{height:54px}
+.tn-name{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.2}
+
+/* 夜读：悬停色和强调按钮不能用深色的 --c */
+html[data-theme=night] a:hover{color:var(--accent)}
+html[data-theme=night] .btn.acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+html[data-theme=night] .sign b{background:var(--accent);color:var(--accent-ink)}
+
+/* 长按钮在窄卡片里换行，不撑出卡片；相邻板块之间留空 */
+.sa .btn{white-space:normal;text-align:left;max-width:100%}
+.rpane+.rpane{margin-top:18px}

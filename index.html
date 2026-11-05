@@ -14,6 +14,13 @@
 <link rel="stylesheet" href="src/css/base.css">
 <link rel="stylesheet" href="src/css/pages.css">
 <link rel="stylesheet" href="src/css/shell.css">
+<link rel="stylesheet" href="src/css/theme.css">
+<link rel="stylesheet" href="src/css/mobile.css">
+<script>
+// 第一帧就用上次选的外观，避免先闪一下默认样式
+try { var t = JSON.parse(localStorage.getItem("lh.theme") || "null"), r = document.documentElement;
+  if (t) { r.dataset.theme = t.mode || ""; r.dataset.font = t.font === "book" ? "" : (t.font || ""); r.dataset.noteFont = t.noteFont || ""; r.dataset.size = t.size || ""; r.dataset.density = t.density || ""; } } catch (e) {}
+</script>
 </head>
 <body>
 <div class="app">

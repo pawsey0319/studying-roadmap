@@ -5,49 +5,68 @@ import * as store from '../store/index.js';
 import { act, refresh, toast, newsRow, trackTag, routeTag } from './kit.js';
 import { pendingSuggestions, planCard } from './suggest.js';
 import { sugRow, stageLabel } from './home.js';
+import { reactBar, refsHtml } from './react.js';
 
+const SEGS = [['tl', '进展'], ['learn', '跟踪学习'], ['read', '已读'], ['notes', '笔记']];
 export function renderRoute(id) {
   const r = M.routes().find(x => x.id === id);
-  if (!r) return `<p class="empty">没有这条前沿路线，可能已被合并。<a href="#/">回到工作台</a></p>`;
+  if (!r) return `<p class="empty">没有这条前沿路线，可能已被合并。<a href="#/">回到首页</a></p>`;
   const t = M.track(r.track), mine = store.get('routes', id) || {};
   document.documentElement.style.setProperty('--c', t ? t.color : '#8C63C8');
   const news = M.routeNews(id), cut = new Date(M.today.getTime() - 7 * 864e5).toISOString().slice(0, 10);
   const from = M.findStage(r.from);
   const cards = Object.entries(store.all('cards')).filter(([, c]) => c.at === id).sort((a, b) => b[1].c - a[1].c);
-  const learn = r.learn || [];
+  const learn = r.learn || [], un = news.filter(n => !M.isRead(n.id)), rd = news.filter(n => M.isRead(n.id));
   const lim = store.ui().tlMore === id ? 200 : 12;
-  return `<div class="fnt small"><a href="#/t/${r.track}">${esc(t ? t.name : '')}</a> / 前沿路线</div>
-    <div class="ph"><h1>${esc(mine.name || r.title)}</h1>${mine.name ? `<span class="fnt small">原名：${esc(r.title)}</span>` : ''}
-      <span class="mut">${from ? `从理论阶段“${esc(from.s.title)}”分出 · ` : ''}${news.length} 条进展</span>
+  const seg = (store.ui().routeSeg || {})[id] || 'tl';
+  const cnt = { tl: un.length, learn: learn.length, read: rd.length, notes: cards.length };
+  const pane = (k, inner) => `<section class="rpane" data-pane="${k}" aria-label="${SEGS.find(x => x[0] === k)[1]}">${inner}</section>`;
+  return `<div class="fnt small crumb"><a href="#/t/${r.track}/frontier">${esc(t ? t.name : '')}</a> / 前沿路线</div>
+    <div class="ph rhead"><h1>${esc(mine.name || r.title)}</h1>
       <span class="r"><button class="btn ${mine.follow ? '' : 'acc'}" data-act="route-follow" data-id="${id}">${mine.follow ? '取消跟踪学习' : '跟踪学习'}</button>
         <button class="btn gh" data-act="route-rename" data-id="${id}">改名</button>
         <button class="btn gh" data-act="route-stop" data-id="${id}">${mine.stopped ? '恢复跟踪' : '停止跟踪'}</button></span></div>
-    <p class="lede">${esc(r.desc)}</p>
-    <div class="dual" style="grid-template-columns:minmax(0,1fr) minmax(0,1.05fr)">
-      <div><div class="colh"><b>进展时间线</b>每天自动追加，每周由 AI 整理${news.length >= 2 ? `<button class="btn sm acc" style="margin-left:auto" data-act="route-explain" data-id="${id}" title="把最近 8 条进展交给 Agent，讲清楚这条路线最近发生了什么">一键解析最近进展</button>` : ''}</div>
-        ${news.length ? tline(news.filter(n => !M.isRead(n.id)), '未读', lim, id, cut, true) + tline(news.filter(n => M.isRead(n.id)), '已读', lim, id, cut, false) : ''}
-        ${news.length ? '' : '<div class="card"><p class="empty">还没有进展。新资讯命中这条路线的关键词后会出现在这里。</p></div>'}</div>
-      <div><div class="colh"><b>跟踪学习</b>根据进展整理的学习清单，打勾记录进度</div>
-        <div class="card" style="padding:12px 14px">
-          <div class="items">${learn.map(i => `<div class="it ${store.isDone(i.id) ? 'on' : ''}"><input type="checkbox" data-done="${i.id}"${store.isDone(i.id) ? ' checked' : ''}><span class="tx">${i.mode === 'practice' ? '<span class="tag">实践验证</span> ' : ''}${i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.text)}</a>` : esc(i.text)}</span></div>`).join('') || '<p class="fnt small">还没有学习清单，每周一的自动更新会补上。</p>'}</div>
-          <div class="sa"><button class="btn sm acc" data-act="agent-route" data-id="${id}">让 Agent 根据最新进展更新清单</button><button class="btn sm gh" data-act="quick-note" data-id="${id}">随手记</button></div></div>
-        <div class="sh"><h3>这条路线上的笔记</h3></div>
-        <div class="card"><ul class="lst">${cards.map(([cid, c]) => `<li><a href="#/notes/${cid}" style="text-decoration:none">${esc(c.t.slice(0, 120))}</a><div class="meta">${new Date(c.c).toLocaleDateString('zh-CN')}</div></li>`).join('') || '<li class="fnt">还没有笔记。</li>'}</ul></div></div>
+    <p class="fnt small">${mine.name ? `原名：${esc(r.title)} · ` : ''}${from ? `从理论阶段“${esc(from.s.title)}”分出 · ` : ''}${news.length} 条进展</p>
+    <p class="lede">${esc(r.desc)}</p><div class="rx-row">${reactBar('stage', id)}</div>${refsHtml('stage', id)}
+    <div class="rseg seg" role="tablist">${SEGS.map(([k, n]) => `<button role="tab" data-act="route-seg" data-id="${esc(id)}" data-v="${k}" aria-selected="${seg === k}">${n}<em>${cnt[k]}</em></button>`).join('')}</div>
+    <div class="dual rview" data-seg="${seg}">
+      <div class="rcol">
+        ${pane('tl', `<div class="colh"><b>进展时间线</b>未读的在这里，读过的移到“已读”${un.length >= 2 || news.length >= 2 ? `<button class="btn sm acc" style="margin-left:auto" data-act="route-explain" data-id="${id}" title="把最近 8 条进展交给 Agent，讲清楚这条路线最近发生了什么">一键解析最近进展</button>` : ''}</div>
+          ${tlist(un, lim, id, cut, news.length ? '这条路线的进展都读过了。' : '还没有进展。新资讯命中这条路线的关键词后会出现在这里。')}`)}
+        ${pane('read', `<div class="colh"><b>已读</b>读过的进展</div>${tlist(rd, lim, id, cut, '还没有读过的。')}`)}
+      </div>
+      <div class="rcol">
+        ${pane('learn', `<div class="colh"><b>跟踪学习</b>根据进展整理的学习清单，打勾记录进度</div>
+          <div class="card" style="padding:12px 14px">
+            <div class="items">${learn.map(i => `<div class="it ${store.isDone(i.id) ? 'on' : ''}"><input type="checkbox" data-done="${i.id}"${store.isDone(i.id) ? ' checked' : ''}><span class="tx">${i.mode === 'practice' ? '<span class="tag">实践验证</span> ' : ''}${i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.text)}</a>` : esc(i.text)}</span></div>`).join('') || '<p class="fnt small">还没有学习清单，每周一的自动更新会补上。</p>'}</div>
+            <div class="sa"><button class="btn sm acc" data-act="agent-route" data-id="${id}">让 Agent 根据最新进展更新清单</button></div></div>`)}
+        ${pane('notes', `<div class="colh"><b>这条路线上的笔记</b><button class="btn sm gh" style="margin-left:auto" data-act="quick-note" data-id="${id}">＋ 随手记</button></div>
+          <div class="card"><ul class="lst">${cards.map(([cid, c]) => `<li><a href="#/notes/${cid}" style="text-decoration:none">${esc(c.t.slice(0, 120))}</a><div class="meta">${new Date(c.c).toLocaleDateString('zh-CN')}</div></li>`).join('') || '<li class="fnt">还没有笔记。</li>'}</ul></div>`)}
+      </div>
     </div>`;
+}
+act('route-seg', el => { const U = store.ui(); U.routeSeg = U.routeSeg || {}; U.routeSeg[el.dataset.id] = el.dataset.v; store.saveUi(); document.querySelectorAll('.rseg [role=tab]').forEach(b => b.setAttribute('aria-selected', b === el)); const v = document.querySelector('.rview'); if (v) v.dataset.seg = el.dataset.v; });
+
+// 落地与商机的一张卡片（双列瀑布流里的一项）：色块封面的高度随内容错落，不用图片
+export function bizCard(x) {
+  const t = M.track(x.track), h = [56, 84, 112][[...String(x.id || x.title)].reduce((a, c) => a + c.charCodeAt(0), 0) % 3];
+  return `<article class="wc biz" style="--lc:${t ? t.color : 'var(--accent)'}"><div class="wc-cover" style="height:${h}px"><span class="wc-kind">${x.kind === 'new' ? '新商机' : '老商机改造'}</span><span class="wc-glyph" aria-hidden="true">${esc(String(x.title).slice(0, 1))}</span></div>
+    <div class="wc-b"><h4>${esc(x.title)}</h4><p>${esc(x.desc)}</p>
+    <div class="meta">${trackTag(x.track)}${(x.r || []).filter(rid => M.route(rid)).map(routeTag).join('')}${(x.links || []).map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name)}</a>`).join(' ')}</div></div>
+    <div class="wc-f"><button class="btn sm acc" data-act="agent-biz" data-id="${esc(x.id)}" title="Agent 先问你三件事，再整理成需求包">做成 demo</button><button class="btn sm gh" data-act="export-open" data-biz="${esc(x.id)}" data-scene="prd">写 PRD</button></div></article>`;
+}
+export function bizFilter(kf) {
+  return [['all', '全部'], ['new', '新商机'], ['old', '老商机改造']].map(([k, v]) => `<button class="chip" data-act="biz-kind" data-id="${k}" aria-pressed="${kf === k}">${v}</button>`).join('');
 }
 
 export function renderBiz(q) {
   document.documentElement.style.setProperty('--c', '#1B2430');
   const U = store.ui(), tf = U.bizTrack || 'all', kf = U.bizKind || 'all';
   const items = M.C.biz.items.filter(x => (tf === 'all' || x.track === tf) && (kf === 'all' || x.kind === kf) && M.track(x.track));
-  const card = x => `<div class="card mcard"><h4>${esc(x.title)}</h4><p>${esc(x.desc)}</p>
-    <div class="meta">${trackTag(x.track)}${(x.r || []).filter(rid => M.route(rid)).map(routeTag).join('')}${(x.links || []).map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name)}</a>`).join(' · ')}</div>
-    <div class="sa"><button class="btn sm acc" data-act="agent-biz" data-id="${esc(x.id)}" title="Agent 先问你三件事，再整理成需求包">做成 demo</button><button class="btn sm gh" data-act="export-open" data-biz="${esc(x.id)}" data-scene="prd">写 PRD / 调研</button></div></div>`;
   return `<div class="ph"><h1>落地与商机</h1><span class="mut">AI 真正落地的机会：新出现的商机，以及老业务怎么用 AI 改造</span></div>
     <div class="chips" style="margin:14px 0">${[['all', '全部方向'], ...M.tracks().map(t => [t.id, t.short || t.name])].map(([k, v]) => `<button class="chip" data-act="biz-track" data-id="${k}" aria-pressed="${tf === k}">${esc(v)}</button>`).join('')}
-      <span style="width:12px"></span>${[['all', '全部'], ['new', '新商机'], ['old', '老商机改造']].map(([k, v]) => `<button class="chip" data-act="biz-kind" data-id="${k}" aria-pressed="${kf === k}">${v}</button>`).join('')}</div>
-    <div class="g2"><div><div class="sh" style="margin-top:0"><h3>新商机</h3></div>${items.filter(x => x.kind === 'new').map(card).join('') || '<p class="empty">没有符合筛选的条目。</p>'}</div>
-      <div><div class="sh" style="margin-top:0"><h3>老商机改造</h3></div>${items.filter(x => x.kind === 'old').map(card).join('') || '<p class="empty">没有符合筛选的条目。</p>'}</div></div>`;
+      <span style="width:12px"></span>${bizFilter(kf)}</div>
+    <div class="wf">${items.map(bizCard).join('') || '<p class="empty">没有符合筛选的条目。</p>'}</div>`;
 }
 
 export function renderSuggestions(q = {}) {
@@ -77,13 +96,11 @@ export function renderLibrary() {
 act('lib-add', el => { store.setAdopted(el.dataset.id, true); refresh(); toast('已加入，侧边栏里能看到这个方向'); });
 act('lib-remove', el => { const id = el.dataset.id; store.setAdopted(id, false); refresh(); toast('已移出。进度和笔记都保留，重新加入就能恢复', () => { store.setAdopted(id, true); refresh(); }); });
 
-// 前沿路线的时间线：未读一块、已读一块
-function tline(L, h, lim, id, cut, unread) {
+// 前沿路线的时间线（一个列表）
+function tlist(L, lim, id, cut, empty) {
   const row = n => `<li class="${n.d >= cut ? 'nw' : ''}"><time>${esc(n.d)}${n.d >= cut ? ' · 新' : ''}</time><a href="${esc(n.u)}" target="_blank" rel="noopener" data-act="rd-open" data-id="${n.id}">${esc(n.t)}</a>
-    <div class="meta">${n.lvl ? `<span class="tag ${n.lvl.toLowerCase()}">${{ A: '一手来源', B: '权威媒体', C: '社区讨论' }[n.lvl]}</span>` : ''}${esc(n.src || '')}${n.rAuto ? '<span class="tag" title="按关键词自动归类，每周一会由 AI 复核">自动归类</span>' : ''}</div></li>`;
-  const body = L.length ? `<ul class="tline">${L.slice(0, lim).map(row).join('')}</ul>${L.length > lim ? `<button class="btn gh" style="margin:0 0 10px" data-act="tl-more" data-id="${id}">还有 ${L.length - lim} 条</button>` : ''}` : `<p class="fnt small">${unread ? '这条路线的进展都读过了。' : '还没有读过的。'}</p>`;
-  const open = unread || store.ui().open['tl.' + id];
-  return `<details class="card nsplit" data-gkey="tl.${esc(id)}" style="padding:4px 16px 4px"${open ? ' open' : ''}><summary class="nsh" style="padding-left:0"><b>${h}</b><span class="n">${L.length}</span></summary>${body}</details>`;
+    <div class="meta">${n.lvl ? `<span class="tag ${n.lvl.toLowerCase()}">${{ A: '一手来源', B: '权威媒体', C: '社区讨论' }[n.lvl]}</span>` : ''}<span>${esc(n.src || '')}</span>${n.rAuto ? '<span class="tag" title="按关键词自动归类，每周一会由 AI 复核">自动归类</span>' : ''}</div></li>`;
+  return L.length ? `<ul class="tline">${L.slice(0, lim).map(row).join('')}</ul>${L.length > lim ? `<button class="btn gh" style="margin:0 0 10px" data-act="tl-more" data-id="${id}">还有 ${L.length - lim} 条</button>` : ''}` : `<p class="fnt small">${esc(empty)}</p>`;
 }
 
 export function renderLater() {

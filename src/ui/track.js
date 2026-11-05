@@ -12,6 +12,8 @@ import { applyToStage } from './suggest.js';
 import { LIVE, loadLive } from '../live.js';
 import { saveFile } from '../native.js';
 import { treeHtml, afterTree } from './tree.js';
+import { reactBar } from './react.js';
+import { bizCard, bizFilter } from './pages.js';
 
 /* ---------- 理论阶段 ---------- */
 function itemRow(i, s) {
@@ -54,6 +56,7 @@ export function stageCard(t, s, idx, cur, openId) {
           <button class="btn sm gh" data-act="quick-note" data-id="${s.id}">随手记</button>
           <button class="btn sm gh" data-act="export-open" data-at="${s.id}" title="整理成给其他 AI 工具用的上下文">导出给 AI</button>
           ${s.mastered ? '' : `<button class="btn sm gh" data-act="master" data-id="${s.id}">标为已掌握</button>`}</div>
+        <div class="rx-row">${reactBar('stage', s.id)}</div>
       </div></div></li>`;
 }
 
@@ -88,15 +91,40 @@ export function routeCard(r) {
     <div class="tl">${dots}<span>${n.length} 条进展${last ? ' · 最近 ' + esc(last.slice(5) || last) : ''}${from ? ' · 从理论阶段 ' + (M.state(r.track).stages.indexOf(from.s) + 1) + ' 分出' : ''}</span></div></a>`;
 }
 
-function routeTab(t, q) {
-  const st = M.state(t.id), rs = M.routes(t.id);
+// 理论路线：全宽的阶段列表
+function theoryTab(t, q) {
+  const st = M.state(t.id);
+  return `<div class="colh" style="margin-top:14px"><b>理论路线</b>按内容的先后顺序排列，基础打牢后基本不变</div>
+    <ol class="stages">${st.stages.map((s, i) => stageCard(t, s, i + 1, st.current, q.s)).join('')}</ol>`;
+}
+// 前沿路线：根据资讯自动整理，和理论路线、知识树、资讯动态同一层级
+function frontierTab(t) {
+  const rs = M.routes(t.id);
   rs.sort((a, b) => (a.stopped - b.stopped) || (M.routeHasNew(b.id) - M.routeHasNew(a.id)) || (M.routeNews(b.id).length - M.routeNews(a.id).length));
-  return `<div class="dual">
-    <div><div class="colh"><b>理论路线</b>按内容的先后顺序排列，基础打牢后基本不变</div>
-      <ol class="stages">${st.stages.map((s, i) => stageCard(t, s, i + 1, st.current, q.s)).join('')}</ol></div>
-    <div><div class="colh"><b>前沿路线</b>根据资讯自动整理，持续更新</div>
-      ${rs.map(routeCard).join('') || '<div class="card empty">这个方向还没有整理出前沿路线。</div>'}
-      <p class="fnt small">每天按关键词把新资讯归到路线上，每周一由 AI 合并、命名、拆分。进展少于 2 条的话题先不成路线。</p></div></div>`;
+  return `<div class="colh" style="margin-top:14px"><b>前沿路线</b>根据资讯自动整理，持续更新</div>
+    <div class="frgrid">${rs.map(routeCard).join('') || '<div class="card empty">这个方向还没有整理出前沿路线。</div>'}</div>
+    <p class="fnt small" style="margin-top:8px">每天按关键词把新资讯归到路线上，每周一由 AI 合并、命名、拆分。进展少于 2 条的话题先不成路线。</p>`;
+}
+// 落地与商机：这个方向下的条目，双列瀑布流
+function bizTab(t) {
+  const kf = store.ui().bizKind || 'all';
+  const items = M.C.biz.items.filter(x => x.track === t.id && (kf === 'all' || x.kind === kf));
+  return `<div class="chips" style="margin:14px 0 10px">${bizFilter(kf)}</div>
+    <div class="wf">${items.map(bizCard).join('') || '<p class="empty">这个方向暂时没有落地与商机的条目。</p>'}</div>`;
+}
+
+// 方向页顶部的分区标签：顺序可以长按拖动调整（按方向分别记在本机）
+export const TABS = [['', '理论路线'], ['frontier', '前沿路线'], ['tree', '知识树'], ['news', '资讯动态'], ['biz', '落地与商机']];
+export function tabOrder(id) {
+  const want = ((store.ui().tabOrder || {})[id] || []).filter(k => TABS.some(([x]) => x === k));
+  return [...new Set([...want, ...TABS.map(([k]) => k)])];
+}
+function tabsHtml(t, sub) {
+  const nw = M.routes(t.id).some(r => !r.stopped && M.routeHasNew(r.id));
+  return `<nav class="ttabs" id="ttabs" data-track="${t.id}" aria-label="方向内容">${tabOrder(t.id).map(k => {
+    const label = TABS.find(([x]) => x === k)[1];
+    return `<a data-tab="${k}" href="#/t/${t.id}${k ? '/' + k : ''}" aria-current="${(sub || '') === k ? 'page' : 'false'}">${label}${k === 'frontier' && nw ? '<i class="nd" title="有新进展"></i>' : ''}</a>`;
+  }).join('')}</nav>`;
 }
 
 /* ---------- 财经快讯（量化方向） ---------- */
@@ -142,18 +170,21 @@ function newsTab(t) {
 
 export function renderTrack(id, sub, q) {
   const t = M.track(id);
-  if (!t) return `<p class="empty">没有这个方向。<a href="#/">回到工作台</a></p>`;
+  if (!t) return `<p class="empty">没有这个方向。<a href="#/">回到首页</a></p>`;
   document.documentElement.style.setProperty('--c', t.color);
-  const st = M.state(id), rs = M.routes(id);
-  const html = `<div class="ph"><span class="sign"><b>${esc(t.name)}</b></span>
-      <span class="mut">理论 ${st.doneStages}/${st.stages.length} · 前沿路线 ${rs.filter(r => !r.stopped).length} 条，${rs.filter(r => M.routeHasNew(r.id)).length} 条有新进展</span>
-      <span class="r"><button class="btn" data-act="agent-track" data-id="${t.id}">和 Agent 规划这个方向</button></span></div>
-    ${t.goal ? `<p class="lede">${esc(t.goal)}</p>` : ''}${t.pub ? `<p class="note">采用自公共区域：${esc(t.pub.by)} 的第 ${t.pub.v} 版。${(store.ui().upstream || {})[t.id] ? ` 作者已经更新到第 ${store.ui().upstream[t.id]} 版，<a href="#/public?id=${t.pub.id}">去看看改了什么</a>。` : ''}</p>` : ''}${t.note ? `<p class="note">${esc(t.note)}</p>` : ''}
-    <nav class="tabs" aria-label="方向内容"><a href="#/t/${id}" aria-current="${!sub ? 'page' : 'false'}">路线</a><a href="#/t/${id}/tree" aria-current="${sub === 'tree' ? 'page' : 'false'}">知识树</a><a href="#/t/${id}/news" aria-current="${sub === 'news' ? 'page' : 'false'}">资讯动态</a></nav>
-    ${sub === 'news' ? newsTab(t) : sub === 'tree' ? treeHtml(t, q) : routeTab(t, q)}`;
-  return html;
+  const st = M.state(id), rs = M.routes(id).filter(r => !r.stopped), nw = rs.filter(r => M.routeHasNew(r.id)).length;
+  const body = sub === 'news' ? newsTab(t) : sub === 'tree' ? treeHtml(t, q) : sub === 'frontier' ? frontierTab(t) : sub === 'biz' ? bizTab(t) : theoryTab(t, q);
+  return `<header class="thead"><div class="thead-t"><h1 class="sign"><b>${esc(t.name)}</b></h1>
+      <button class="btn tplan" data-act="agent-track" data-id="${t.id}" title="和 Agent 一起规划这个方向"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l1.9 4.6 4.6 1.9-4.6 1.9L12 16.5l-1.9-4.6L5.5 10l4.6-1.9z"/></svg><span class="lg-l">Agent 规划这个方向</span><span class="sm-l">规划</span></button></div>
+      ${t.goal ? `<p class="tintro">${esc(t.goal)}</p>` : ''}
+      <div class="tstat"><span>理论 <b>${st.doneStages}/${st.stages.length}</b></span><span>前沿路线 <b>${rs.length}</b></span>${nw ? `<span class="hasnew">${nw} 条有新进展</span>` : ''}</div></header>
+    ${t.pub ? `<p class="note">采用自公共区域：${esc(t.pub.by)} 的第 ${t.pub.v} 版。${(store.ui().upstream || {})[t.id] ? ` 作者已经更新到第 ${store.ui().upstream[t.id]} 版，<a href="#/public?id=${t.pub.id}">去看看改了什么</a>。` : ''}</p>` : ''}${t.note ? `<p class="note">${esc(t.note)}</p>` : ''}
+    ${tabsHtml(t, sub)}
+    <div class="tbody">${body}</div>`;
 }
 export function afterTrack(id, sub, q) {
+  const nav = document.getElementById('ttabs'), cur = nav && nav.querySelector('[aria-current=page]');
+  if (cur) nav.scrollLeft = Math.max(0, cur.offsetLeft - (nav.clientWidth - cur.offsetWidth) / 2);
   if (sub === 'news' && M.track(id).live) loadLive(M.track(id), false);
   if (sub === 'tree') afterTree(M.track(id));
   if (q.s) { const el = document.getElementById('st-' + q.s.replace(/\./g, '-')); if (el) el.scrollIntoView({ block: 'center' }); }

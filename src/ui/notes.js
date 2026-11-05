@@ -6,6 +6,7 @@ import { md } from '../core/md.js';
 import { uid } from '../core/ids.js';
 import { act, refresh, toast } from './kit.js';
 import { stageLabel } from './home.js';
+import { reactBar, refsHtml } from './react.js';
 
 const cards = () => store.all('cards');
 const isMobile = () => matchMedia('(max-width: 820px)').matches;
@@ -127,13 +128,14 @@ function stageDoc(id, C, docs) {
     ${editing ? `<textarea class="ned" id="docEd" data-doc="${esc(id)}" placeholder="整理这个阶段学到的东西，支持 Markdown">${esc(text)}</textarea>
       <div class="sa"><button class="btn sm pri" data-act="doc-done">完成编辑</button><span class="fnt small">自动保存</span></div>`
     : `<div class="md nbody">${text ? md(text) : '<p class="fnt">这个阶段还没有整理文档。点“编辑”开始写，或者让 Agent 把下面的卡片整理进来。</p>'}</div>
+      <div class="rx-row">${reactBar('stage', id)}</div>${refsHtml('stage', id)}
       <div class="sa"><button class="btn sm" data-act="doc-edit" data-id="${esc(id)}">编辑</button>
         <button class="btn sm acc" data-act="agent-doc" data-id="${esc(id)}">和 Agent 聊这篇</button>
         ${cs.length ? `<button class="btn sm" data-act="agent-organize" data-id="${esc(id)}">让 Agent 把 ${cs.length} 张卡片整理进来</button>` : ''}
         <button class="btn sm gh" data-act="quick-note" data-id="${esc(id)}">＋ 卡片</button>
         <button class="btn sm gh" data-act="export-open" data-at="${esc(id)}">导出给 AI</button></div>`}
     <div class="sh"><h3>这个阶段的卡片</h3></div>
-    ${cs.map(([cid, c]) => `<div class="mini"><div class="md">${md(c.t)}</div><div class="meta">${new Date(c.c).toLocaleString('zh-CN', { hour12: false })}<span class="act"><a href="#/notes/${cid}">编辑</a><button data-act="agent-card" data-id="${cid}">问 Agent</button></span></div></div>`).join('') || '<p class="fnt small">还没有卡片。</p>'}</div>`;
+    ${cs.map(([cid, c]) => `<div class="mini"><div class="md">${md(c.t)}</div><div class="meta">${new Date(c.c).toLocaleString('zh-CN', { hour12: false })}<span class="act"><a href="#/notes/${cid}">编辑</a><button data-act="agent-card" data-id="${cid}">问 Agent</button></span></div><div class="rx-row">${reactBar('card', cid)}</div></div>`).join('') || '<p class="fnt small">还没有卡片。</p>'}</div>`;
 }
 
 function cardView(id, c) {
@@ -144,6 +146,7 @@ function cardView(id, c) {
       <label class="field"><span>挂到</span><select id="cardAt" data-card="${id}"><option value="">不归类</option>${attachOptions(c.at)}</select></label>
       <div class="sa"><button class="btn sm pri" data-act="doc-done">完成编辑</button><button class="btn sm gh" data-act="card-del" data-id="${id}">删除这张卡片</button></div>`
     : `<div class="md nbody">${md(c.t)}</div>
+      <div class="rx-row">${reactBar('card', id)}</div>${refsHtml('card', id)}
       <div class="sa"><button class="btn sm" data-act="doc-edit" data-id="${id}">编辑</button><button class="btn sm acc" data-act="agent-card" data-id="${id}">和 Agent 聊这条</button>
         <button class="btn sm gh" data-act="export-open" data-card="${id}">导出给 AI</button><button class="btn sm gh" data-act="card-del" data-id="${id}">删除</button></div>`}</div>`;
 }

@@ -6,6 +6,8 @@ import { stageStatus } from '../core/progress.js';
 import { nextItems } from '../core/mastery.js';
 import { newsRow, trackTag, routeTag, PICK } from './kit.js';
 import { pendingSuggestions } from './suggest.js';
+import * as cloud from '../store/cloud.js';
+import { act } from './kit.js';
 
 // 线路图：每个方向一条线，站点 = 理论阶段；从站点分出的虚线支线 = 前沿路线，黄点 = 7 天内有新进展
 export function metroSvg(tracks, opts = {}) {
@@ -73,9 +75,8 @@ export function renderHome() {
       ${left.slice(0, 2).map(i => `<label class="it"><input type="checkbox" data-done="${i.id}"><span class="tx">${esc(i.text)}</span></label>`).join('') || '<p class="small fnt">跟踪学习清单都完成了，有新进展时会自动补充。</p>'}
       <div class="row"><a class="btn sm" href="#/r/${encodeURIComponent(x.r.id)}">打开</a></div></div>`;
   }).join('');
-  return `<div class="ph"><h1>现在学什么</h1><span class="mut">${doing.length} 项在学，${sugs.length} 条建议等你确认</span>
+  return mobileHome({ T, doing, sugs, un, recent }) + `<div class="pc-only"><div class="ph"><h1>现在学什么</h1><span class="mut">${doing.length} 项在学，${sugs.length} 条建议等你确认</span>
       <span class="r"><button class="btn" data-act="onboard">和 Agent 规划我的路线</button></span></div>
-    <div class="mrings">${ringsHtml(T)}</div>
     <div class="card metro">${metroSvg(T)}
       <div class="legend"><span><i class="f"></i>已学完</span><span><i></i>未学</span><span><i class="d"></i>你标为已掌握</span><span>虚线支线：自动整理出的前沿路线</span><span><i class="y"></i>7 天内有新进展</span></div></div>
     <div class="sh"><h3>在学</h3><span class="fnt small">每个方向的当前理论阶段，以及你在跟踪学习的前沿路线</span></div>
@@ -90,8 +91,46 @@ export function renderHome() {
       <div><div class="sh"><h3>未读资讯</h3><span class="r"><button class="chip" data-act="${PICK.on ? 'pick-cancel' : 'pick-start'}" aria-pressed="${PICK.on}" title="勾选几条你觉得有关联的资讯，让 Agent 讲清楚它们之间的关系">${PICK.on ? '退出多选' : '多选解析'}</button><button class="btn sm gh" data-act="read-all">全部标为已读</button></span></div>
         <div class="card"><ul class="nlist compact">${un.slice(0, 7).map(n => newsRow(n, { showTrack: true, compact: true })).join('') || '<li><span></span><div class="fnt">都读完了。资讯每天早上 8 点更新。</div><span></span></li>'}</ul>
         <div class="chips" style="padding:8px 12px;border-top:1px solid var(--soft)">${T.map(t => `<a class="chip" href="#/t/${t.id}/news" style="text-decoration:none">${esc(t.short || t.name)}资讯</a>`).join('')}</div></div></div>
-    </div>`;
+    </div></div>`;
 }
+
+/* ---------- 手机首页：顶部横滑（目前在学 / 最新资讯 / 公共区域），其下最近笔记和待你确认 ---------- */
+const PANES = [['doing', '目前在学'], ['news', '最新资讯'], ['pub', '公共区域']];
+function ring(x) {
+  const isS = x.kind === 'stage', t = x.t;
+  const learn = isS ? null : x.r.learn || [], dn = isS ? x.s.prog.n : learn.filter(i => store.isDone(i.id)).length, tot = isS ? x.s.prog.total : learn.length;
+  const p = tot ? dn / tot : 0, C = 2 * Math.PI * 29, nw = !isS && M.routeHasNew(x.r.id);
+  const href = isS ? `#/t/${t.id}?s=${encodeURIComponent(x.s.id)}` : `#/r/${encodeURIComponent(x.r.id)}`;
+  return `<a class="rg" href="${href}" style="--lc:${t.color}"><svg width="72" height="72" viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="29" fill="none" stroke="var(--line)" stroke-width="5"/>
+      <circle cx="36" cy="36" r="29" fill="none" stroke="${t.color}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${(C * p).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 36 36)"/>
+      ${nw ? '<circle cx="60" cy="12" r="6" fill="var(--sig)" stroke="var(--card)" stroke-width="2"/>' : ''}<text x="36" y="41" text-anchor="middle" font-size="14" font-weight="600" fill="var(--ink)">${dn}/${tot}</text></svg>
+    <span class="rg-t">${esc(isS ? x.s.title : x.r.title)}</span><span class="rg-k"><span>${esc(t.short || t.name)}</span> · <span>${isS ? '理论' : '前沿'}</span></span></a>`;
+}
+function mobileHome({ T, doing, sugs, un, recent }) {
+  const pub = cloud.supportsPublic();
+  const doingP = doing.length ? `<div class="rgs">${doing.map(ring).join('')}</div>` : '<p class="empty">所有阶段都学完了。去领域里挑一条前沿路线“跟踪学习”。</p>';
+  const newsP = `<ul class="nlist compact">${un.slice(0, 4).map(n => newsRow(n, { showTrack: true, compact: true })).join('') || '<li><span></span><div class="fnt">都读完了。资讯每天早上 8 点更新。</div><span></span></li>'}</ul>
+    <div class="chips pane-f">${T.map(t => `<a class="chip" href="#/t/${t.id}/news" style="text-decoration:none">${esc(t.short || t.name)}</a>`).join('')}</div>`;
+  const pubP = `<p class="mut">别人公开的学习路线，可以采用到自己的方向里，也可以看到他们的更新。</p>
+    <p class="fnt small" style="margin:6px 0 12px">${pub ? '正式版开放发布和收藏，现在可以预览。' : '登录云端之后才能使用。'}</p>
+    <a class="btn pri" href="${pub ? '#/public' : '#/settings'}">${pub ? '打开公共区域' : '去登录'}</a>`;
+  const body = { doing: doingP, news: newsP, pub: pubP };
+  return `<div class="m-only mh">
+    <div class="hseg" role="tablist">${PANES.map(([k, n], i) => `<button role="tab" data-act="h-go" data-i="${i}" aria-selected="${i === 0}">${n}</button>`).join('')}</div>
+    <div class="hstrip" id="hstrip">${PANES.map(([k, n]) => `<section class="hpane card" aria-label="${n}">${body[k]}</section>`).join('')}</div>
+    <div class="sh"><h3>最近笔记</h3><span class="r"><a class="btn sm gh" href="#/notes">全部</a></span></div>
+    <div class="card"><ul class="lst">${recent.slice(0, 4).map(([id, c]) => `<li><a href="#/notes/${id}" style="text-decoration:none">${esc(c.t.split('\n')[0].slice(0, 80))}</a>
+      <div class="meta">${c.at ? esc(stageLabel(c.at)) : '没有归类'}</div></li>`).join('') || '<li class="fnt">还没有笔记。点右下角的“＋”随手记一条。</li>'}</ul></div>
+    <div class="sh"><h3>待你确认</h3><span class="fnt small">点“应用”才会改路线</span></div>
+    <div class="card">${sugs.slice(0, 3).map(sugRow).join('') || '<p class="empty">没有待确认的建议。每周一的自动更新和学习 Agent 会在这里提出建议。</p>'}
+      ${sugs.length > 3 ? `<a class="btn gh" style="margin:6px 10px" href="#/suggestions">还有 ${sugs.length - 3} 条</a>` : ''}</div></div>`;
+}
+act('h-go', el => { const s = document.getElementById('hstrip'); if (s) s.scrollTo({ left: s.clientWidth * +el.dataset.i * 0.9, behavior: 'smooth' }); });
+document.addEventListener('scroll', e => {
+  const s = e.target; if (!(s && s.id === 'hstrip')) return;
+  const w = s.firstElementChild ? s.firstElementChild.offsetWidth + 10 : 1, i = Math.min(PANES.length - 1, Math.round(s.scrollLeft / w));
+  document.querySelectorAll('.hseg [role=tab]').forEach((b, k) => b.setAttribute('aria-selected', k === i));
+}, true);
 
 // 手机：每个方向一个圆环，圆环 = 理论进度，黄点 = 前沿有新进展
 export function ringsHtml(tracks) {
