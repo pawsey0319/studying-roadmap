@@ -9,6 +9,22 @@ GitHub 仓库 → Actions → “安卓安装包” → Run workflow。跑完在
 
 签名用仓库里的四个 Secrets：`ANDROID_KEYSTORE_BASE64`、`ANDROID_KEYSTORE_PASSWORD`、`ANDROID_KEY_ALIAS`、`ANDROID_KEY_PASSWORD`。每次都用同一个签名文件，新版本才能覆盖安装。
 
+## 发新版本（App 里会提示更新）
+
+```bash
+git push origin main
+git tag -a v3.0.1 -m "这次更新了什么，一行一条"
+git push origin v3.0.1
+```
+
+推送标签后，“安卓安装包”工作流会打包、签名，并在 Releases 里发布 APK 和 `version.json`（版本号、下载地址、SHA-256、更新说明）。
+已经装了 App 的手机，下次打开时会弹出“发现新版本”，点“立即更新”在 App 里下载、校验，然后交给系统安装器覆盖安装，数据都保留。
+第一次更新时系统会要求允许这个 App“安装未知应用”，打开开关回到 App 就会继续安装。
+`-m` 里写的就是弹窗里的更新说明；不写的话，用这次的提交标题。设置页有“检查更新”按钮。
+版本号是工作流的运行编号，每次都会变大，所以总能覆盖旧版。
+
+更新相关的原生代码在 `app/native/`（`AppUpdatePlugin.java`，由 `patch-android.py` 复制进生成的工程），网页这边在 `src/update.js`。
+
 ## 本地打包（可选）
 
 需要 Node 22+、JDK 21、Android Studio（含 Android SDK 36）。

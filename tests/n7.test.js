@@ -48,3 +48,10 @@ test('知识树：预置两层、个人细分、扩散层数、资讯挂到最�
   assert.ok(!kwRegex(['MoE']).test('smoke') && kwRegex(['quantiz']).test('Quantization'));
   assert.deepEqual(Object.keys(cleanKids({ kids: { 'agent.x': [{ name: 'a', kw: ['k1'] }], 'evil': [{ name: 'b', kw: ['k'] }], 'agent.y': [{ name: 'c', kw: [] }] } }, new Set(['agent.x', 'agent.y']))), ['agent.x']);
 });
+
+test('App 内更新：只接受本仓库 Releases 的、带校验值的更高版本', async () => {
+  globalThis.localStorage = globalThis.localStorage || { getItem: () => null, setItem() {} };
+  const { isNewer } = await import('../src/update.js');
+  const ok = { versionCode: 12, url: 'https://github.com/pawsey0319/studying-roadmap/releases/download/v3.0.1/learning-hub-3.0.12.apk', sha256: 'a'.repeat(64) };
+  assert.ok(isNewer(ok, 11)); assert.ok(!isNewer(ok, 12)); assert.ok(!isNewer({ ...ok, url: 'https://evil.com/x.apk' }, 1)); assert.ok(!isNewer({ ...ok, sha256: '' }, 1));
+});

@@ -9,6 +9,7 @@ import { act, refresh, toast } from './kit.js';
 import { aiCfg, saveCfg, usage } from './agentui.js';
 import { embedCfg, saveEmbed, embedReady, embed } from '../ai/embed.js';
 import { isNative, saveFile, scheduleReminder } from '../native.js';
+import { checkUpdate, currentVersion } from '../update.js';
 
 let hostedInfo = null;  // 内测模型的可选模型和用量，进设置页时取一次
 
@@ -67,7 +68,7 @@ export async function renderSettings() {
       <form id="gistForm" class="addit"><input id="gistTok" type="password" autocomplete="off" placeholder="github_pat_…（只需要 Gists 读写权限）"><button class="btn sm">${gist.enabled() ? '更换令牌' : '开启'}</button></form>
       ${gist.enabled() ? '<div class="sa"><button class="btn sm" data-act="gist-sync">立即同步</button><button class="btn sm gh" data-act="gist-off">关闭</button></div>' : ''}
       <p class="hint">在 <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub 新建细粒度令牌</a>，Account permissions 里只把 Gists 设为 Read and write。</p></section>
-    ${isNative() ? remindHtml(rm) : ''}
+    ${isNative() ? remindHtml(rm) + `<section class="card set"><h3>版本</h3><p class="small">当前版本 <b id="appVer">…</b>。有新版本时打开 App 会提示，点“立即更新”就会下载并覆盖安装。</p><div class="sa"><button class="btn" data-act="app-update">检查更新</button></div></section>` : ''}
     <section class="card set"><h3>备份</h3>
       <p class="hint">导出一份包含所有进度、调整、笔记和导入内容的文件，可以在任何设备上导入恢复。</p>
       <div class="sa"><button class="btn" data-act="exp">导出备份</button><button class="btn" data-act="imp">导入备份</button><input type="file" id="impBak" accept="application/json" hidden></div>
@@ -102,6 +103,7 @@ function hostedHtml(c) {
 }
 
 export function afterSettings() {
+  if (isNative()) currentVersion().then(v => { const el = $('#appVer'); if (el) el.textContent = v.name ? `${v.name}（${v.code}）` : '未知'; });
   const prov = $('#aiProv'); if (!prov) return;
   prov.onchange = async () => { const c = await aiCfg(), p = PROVIDERS[prov.value]; await saveCfg({ ...c, provider: prov.value, model: p.model, budget: p.hosted ? 0 : (c.budget || 30), price: p.price, base: prov.value === 'custom' ? c.base : '' }); refresh(); };
   const cf = $('#cloudForm');
@@ -137,6 +139,7 @@ act('exp', () => {
   saveFile(`学习路线备份-${iso(new Date())}.json`, JSON.stringify(store.exportData(), null, 1), 'application/json').catch(e => toast('保存失败：' + e.message));
 });
 act('imp', () => $('#impBak').click());
+act('app-update', () => checkUpdate({ manual: true }));
 act('em-save', async () => {
   const c = { base: $('#emBase').value.trim(), model: $('#emModel').value.trim(), key: $('#emKey').value.trim() }, m = $('#emMsg');
   await saveEmbed(c); m.textContent = '已保存，正在测试…';

@@ -15,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0   # 要读上一个版本标签，生成更新说明
       - uses: actions/setup-node@v5
         with:
           node-version: "22"
@@ -65,8 +67,36 @@ jobs:
           name: learning-hub-apk
           path: out/*.apk
           retention-days: 30
+      - name: 生成版本信息 version.json（App 打开时读它判断有没有新版本）
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          TAG="${{ github.ref_name }}"
+          git fetch --force --tags -q origin   # checkout 会把带说明的标签换成轻量标签，重新取一次才读得到说明
+          # 更新说明：打标签时写的说明（git tag -a v3.0.1 -m "…"）；没写就列出这次的提交标题
+          NOTES=""
+          if [ "$(git cat-file -t "$TAG")" = "tag" ]; then NOTES=$(git tag -l --format='%(contents)' "$TAG" | sed '/^-----BEGIN/,$d'); fi
+          if [ -z "$(echo "$NOTES" | tr -d '[:space:]')" ]; then
+            PREV=$(git describe --tags --abbrev=0 "$TAG^" 2>/dev/null || true)
+            NOTES=$(git log --no-merges --format='- %s' ${PREV:+$PREV..}"$TAG" | head -8 | cut -c1-90)
+          fi
+          APK=$(ls out/*.apk | head -1)
+          NOTES="$NOTES" APK="$APK" python3 - <<'PY'
+          import hashlib, json, os, datetime
+          apk = os.environ["APK"]; name = os.path.basename(apk)
+          data = {
+              "versionCode": int("${{ github.run_number }}"), "versionName": "3.0.${{ github.run_number }}", "tag": "${{ github.ref_name }}",
+              "url": f"https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/{name}",
+              "sha256": hashlib.sha256(open(apk, "rb").read()).hexdigest(), "size": os.path.getsize(apk),
+              "notes": os.environ.get("NOTES", "").strip()[:1500], "date": datetime.date.today().isoformat(),
+          }
+          json.dump(data, open("out/version.json", "w"), ensure_ascii=False, indent=1)
+          print(json.dumps(data, ensure_ascii=False, indent=1))
+          PY
       - name: 发布到 Releases（推送标签时）
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${{ github.ref_name }}" out/*.apk --title "学习路线 ${{ github.ref_name }}" --notes "安卓安装包。下载 APK 后在手机上打开安装；第一次需要允许“安装未知应用”。"
+        run: |
+          python3 -c "import json;print(json.load(open('out/version.json'))['notes'] or '更新')" > out/notes.md
+          printf '\n\n---\n已经装了旧版的：打开 App 会提示更新，点“立即更新”即可。第一次安装：下载 APK 后在手机上打开，允许“安装未知应用”。\n' >> out/notes.md
+          gh release create "${{ github.ref_name }}" out/*.apk out/version.json --title "学习路线 ${{ github.ref_name }}" --notes-file out/notes.md --latest

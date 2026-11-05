@@ -6,6 +6,7 @@ import * as store from './store/index.js';
 import * as gist from './store/gist.js';
 import * as cloud from './store/cloud.js';
 import { initNative, isNative, scheduleReminder } from './native.js';
+import { checkUpdate } from './update.js';
 import { initI18n, isEn, setLang } from './i18n.js';
 import { addBoardButtons } from './ui/translate.js';
 import { setupLive, loadOne } from './live.js';
@@ -192,6 +193,9 @@ async function boot() {
   await render();
   syncNow();
   // App：每次打开都按当前在学的阶段更新提醒内容
+  // App：检查有没有新版本（6 小时最多查一次），有就弹出更新提示
+  if (isNative()) setTimeout(() => checkUpdate().catch(() => {}), 2500);
+  window.addEventListener('lh-toast', e => toast(e.detail));
   if (isNative()) store.localGet('remind').then(r => r && r.on && scheduleReminder(r, remindBody())).catch(() => {});
   if (linked) toast('已登录，正在同步');
   setTimeout(() => sweepSessions().catch(() => {}), 3000);
