@@ -7,6 +7,10 @@ import { relatedTo, relatedMine } from '../core/related.js';
 import { act, toast, refresh, lvlTag, trackTag, routeTag, TYPES } from './kit.js';
 import { stageLabel } from './home.js';
 import { addBoardButtons } from './translate.js';
+import { md } from '../core/md.js';
+import { newsId } from '../core/ids.js';
+import { cachedSummary, summarize, clearSummary, BASIS } from '../ai/summary.js';
+import { isEn } from '../i18n.js';
 
 let STACK = [];   // 在面板里依次打开过的条目，用于“返回上一篇”
 const panel = () => { let el = $('#rd'); if (!el) { el = document.createElement('aside'); el.id = 'rd'; el.className = 'rd'; el.setAttribute('aria-label', '阅读'); el.hidden = true; document.body.appendChild(el); } return el; };
@@ -28,6 +32,7 @@ export function openReader(id, { push = true } = {}) {
   addBoardButtons(panel());
   const el = panel(); el.hidden = false; document.body.classList.add('rd-open');
   el.scrollTop = 0;
+  startSummary(x).catch(() => {});
   return true;
 }
 // 关面板时再刷新列表：读过的条目这时才移到“已读”，阅读过程中列表不跳动
@@ -51,10 +56,10 @@ function render(x) {
     <div class="rd-b">
       <div class="meta">${(x.k || []).map(trackTag).join('')}${x.type ? `<span class="tag">${TYPES[x.type] || '资讯'}</span>` : ''}${lvlTag(x.lvl)}<span>${esc(x.src || '')}${x.d ? ' · ' + esc(x.d) : ''}${x.via ? ' · 经 ' + esc(x.via) : ''}</span></div>
       <div class="sh" style="margin:0"><span class="r"></span></div><h2 class="rd-t">${esc(x.t)}</h2>
-      ${x.s ? `<p class="rd-s">${esc(x.s)}</p>` : '<p class="fnt small">没有摘要，读原文看完整内容。</p>'}
+      <section class="rd-sum" id="rdSum" data-id="${x.id}" aria-live="polite"><p class="fnt small"><i class="spin"></i> 正在准备总结…</p></section>
       ${(x.r || []).length ? `<div class="meta">前沿路线：${x.r.slice(0, 3).map(routeTag).join('')}</div>` : ''}
       <div class="sa"><a class="btn pri" href="${esc(x.u)}" target="_blank" rel="noopener">读原文 ↗</a>
-        <button class="btn acc" data-act="agent-news" data-id="${x.id}">一键解析</button>
+        <button class="btn acc" data-act="agent-news" data-id="${x.id}" title="让学习 Agent 深入解析：背景、论点和证据、影响、和你在学内容的关系">深度解析</button>
         ${M.news().some(n => n.id === x.id) ? `<button class="btn gh" data-act="later" data-id="${x.id}">${later ? '已在稍后读' : '稍后读'}</button>` : ''}
         <button class="btn gh" data-act="rd-note" data-id="${x.id}">记一笔</button></div>
       <div class="sh"><h3>接着读</h3><span class="fnt small">按内容、所属前沿路线和日期算出来的，不用 AI</span></div>
@@ -65,12 +70,47 @@ function render(x) {
     </div>`;
 }
 
+/* ---------- 总结 ---------- */
+// 点开就给：先显示标题和“讲了什么”。有缓存直接用；没有就用你的模型生成；没设置模型时显示来源给的摘要
+const FLY = new Map();
+const spot = id => { const el = document.getElementById('rdSum'); return el && el.dataset.id === id ? el : null; };
+const paint = (id, html) => { const el = spot(id); if (el) el.innerHTML = html; };
+const snippet = x => x.s ? `<p class="rd-s">${esc(x.s)}</p><p class="fnt small">以上是来源给的摘要。</p>` : '<p class="fnt small">来源没有给摘要。</p>';
+const done = (x, c) => `<div class="rd-sumb md">${md(c.text)}</div><div class="rd-sumf"><span class="aitag">AI</span><span>总结 · ${esc(BASIS[c.basis] || '')}</span><button type="button" class="lnk" data-act="rd-resum" data-id="${x.id}">重新总结</button></div>`;
+export async function startSummary(x, { force = false } = {}) {
+  const ag = await import('./agentui.js');
+  if (!force) { const c = await cachedSummary(x.id); if (c) return paint(x.id, done(x, c)); }
+  const cfg = await ag.aiCfg(), block = ag.aiBlock(cfg);
+  if (block) return paint(x.id, snippet(x) + `<p class="fnt small">${esc(block)}。<a href="#/settings">去设置</a>，设好之后点开资讯会自动生成总结。</p>`);
+  const u = await ag.usage(), over = !!(cfg.budget && u.cny >= cfg.budget);
+  if (!force && (store.ui().autoSum === false || over))
+    return paint(x.id, snippet(x) + `<button type="button" class="btn sm acc" data-act="rd-resum" data-id="${x.id}">生成总结</button>${over ? '<span class="fnt small"> 本月花费已超过你设的上限，生成前会再确认一次。</span>' : ''}`);
+  if (force && over && !confirm(`本月已经用了 ¥${u.cny.toFixed(2)}，超过你设的上限 ¥${cfg.budget}。还要继续调用吗？`)) return;
+  paint(x.id, snippet(x) + '<p class="rd-wait"><i class="spin"></i> 正在总结…</p>');
+  if (!FLY.has(x.id)) FLY.set(x.id, summarize(x, cfg, { en: isEn() }).then(async r => { await ag.addUsage(cfg, r.usage); return r; }).finally(() => FLY.delete(x.id)));
+  try { paint(x.id, done(x, await FLY.get(x.id))); }
+  catch (e) { paint(x.id, snippet(x) + `<p class="err small">总结失败：${esc(e.message || e)}</p><button type="button" class="btn sm" data-act="rd-resum" data-id="${x.id}">重试</button>`); }
+}
+act('rd-resum', async el => { const x = M.findItem(el.dataset.id); if (!x) return; await clearSummary(x.id); startSummary(x, { force: true }); });
+
 act('rd-open', (el, e) => {
   // 按住 ⌘/Ctrl 或中键：照旧直接在新标签页打开原文
   if (e && (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1)) { markRead(el.dataset.id); return; }
   if (openReader(el.dataset.id)) e && e.preventDefault();
 });
 act('rd-go', el => openReader(el.dataset.id));
+// 实时动态、财经快讯里的链接：不在资讯库里，临时登记后同样先在面板里看总结
+act('rd-link', (el, e) => {
+  if (e && (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1)) return;
+  const u = el.getAttribute('href'), id = newsId(u);
+  M.addAdhoc({ id, t: el.dataset.t || u, u, src: el.dataset.src || '', d: '', s: '', k: [], r: [], via: '' });
+  if (openReader(id)) e && e.preventDefault();
+});
+// 点标题只会打开阅读面板：即使面板出错也不能让页面直接跳到原文（读原文要点面板里的按钮）
+document.addEventListener('click', e => {
+  const a = e.target.closest && e.target.closest('a[data-act=rd-open],a[data-act=rd-link]');
+  if (a && !(e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1)) e.preventDefault();
+}, true);
 act('rd-back', () => { STACK.pop(); const id = STACK[STACK.length - 1]; if (id) openReader(id, { push: false }); });
 act('rd-close', () => closeReader());
 act('rd-note', el => {

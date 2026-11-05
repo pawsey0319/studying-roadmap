@@ -75,7 +75,7 @@ document.addEventListener('contextmenu', e => {
   menu.innerHTML = `<div class="askm-h">问学习 Agent</div>
     <div class="askm-t">${cur.quote ? '选中的文字：“' + esc(cur.quote.slice(0, 60)) + (cur.quote.length > 60 ? '…' : '') + '”' : esc(cur.t)}</div>
     <form><input placeholder="想问什么？例如：这和 MCP 有什么关系" aria-label="问题"><button class="btn sm acc">询问</button></form>
-    <div class="askm-q"><button type="button" class="btn sm gh" data-q="">一键解析</button><button type="button" class="btn sm gh" data-q="这对产品和落地意味着什么？">对产品意味着什么</button><button type="button" class="btn sm gh" data-q="__attach">先放进对话框</button></div>
+    <div class="askm-q"><button type="button" class="btn sm gh" data-q="">深度解析</button><button type="button" class="btn sm gh" data-q="这对产品和落地意味着什么？">对产品意味着什么</button><button type="button" class="btn sm gh" data-q="__attach">先放进对话框</button></div>
     <p class="fnt small">按住 Shift 再右键是浏览器原来的菜单</p>`;
   menu.hidden = false; openedAt = Date.now();
   const w = 340, h = 190;

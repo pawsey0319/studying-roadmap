@@ -1,5 +1,5 @@
 // 方向页：“路线”标签（理论路线 + 前沿路线并排）和“资讯动态”标签（实时动态 / 官方媒体与社区 / 精选资讯）
-import { esc, iso } from '../util.js';
+import { esc, iso, rlink } from '../util.js';
 import * as M from '../model.js';
 import * as store from '../store/index.js';
 import { stageStatus } from '../core/progress.js';
@@ -134,7 +134,7 @@ export function hotHtml() {
   const cur = H.sources.find(s => s.id === tab) || H.sources[0];
   return `<div class="sh"><h3>财经快讯</h3><span class="fnt small">${H.cloud ? '每 2 小时更新' : '每天更新'}（${esc(H.updated || '')}）；只显示标题，点开看原文</span></div>
     <div class="card"><div class="chips" style="padding:10px 12px 0">${H.sources.map(s => `<button class="chip" data-act="hot-tab" data-id="${s.id}" aria-pressed="${s.id === cur.id}">${esc(s.name)} ${s.items.length}</button>`).join('')}</div>
-      <ul class="lst hot">${cur.items.slice(0, 20).map(x => `<li><a href="${esc(x.u)}" target="_blank" rel="noopener">${esc(x.t)}</a><span class="fnt small">${esc(String(x.time || '').slice(5))}</span></li>`).join('') || '<li class="fnt">暂时没有内容。</li>'}</ul></div>`;
+      <ul class="lst hot">${cur.items.slice(0, 20).map(x => `<li>${rlink(x.t, x.u, cur.name)}<span class="fnt small">${esc(String(x.time || '').slice(5))}</span></li>`).join('') || '<li class="fnt">暂时没有内容。</li>'}</ul></div>`;
 }
 act('hot-tab', el => { store.ui().hotTab = el.dataset.id; store.saveUi(); refresh(); });
 
@@ -143,7 +143,7 @@ function newsTab(t) {
   const U = store.ui();
   const all = M.news().filter(n => n.k.includes(t.id) && !M.isHidden(n.id));
   const curated = all.filter(n => n.kind === 'curated');
-  const snap = all.filter(n => n.kind === 'snap');
+  const snap = all.filter(n => n.kind === 'snap' && !n.mine), mineItems = all.filter(n => n.mine);
   // 官方、媒体与社区
   const lvF = U.snapLvl[t.id] || 'all', srcF = U.snapSrc[t.id] || 'all';
   const sBase = snap;
@@ -155,10 +155,12 @@ function newsTab(t) {
   const cItems = curated.filter(n => f === 'all' || n.type === f);
   const byAge = L => groupByAge(L, M.today).map(g => `<div class="fage"><div class="fnt small">${g.name} · ${g.items.length} 条</div><ul class="nlist">${g.items.map(n => newsRow(n)).join('')}</ul></div>`).join('');
   return `<div class="sh" style="margin-top:14px"><span class="mut small">每一栏都分成“未读”和“已读”两块，读完的自动移到下面。点标题在旁边打开，能看到相关的其他文章。</span>
-      <span class="r"><button class="chip" data-act="${PICK.on ? 'pick-cancel' : 'pick-start'}" aria-pressed="${PICK.on}" title="勾选几条你觉得有关联的资讯，让 Agent 讲清楚它们之间的关系">${PICK.on ? '退出多选' : '多选解析'}</button><button class="btn sm gh" data-act="read-all" data-id="${t.id}">本方向全部标为已读</button></span></div>
+      <span class="r"><button class="chip" data-act="${PICK.on ? 'pick-cancel' : 'pick-start'}" aria-pressed="${PICK.on}" title="勾选几条你觉得有关联的资讯，让 Agent 讲清楚它们之间的关系">${PICK.on ? '退出多选' : '多选解析'}</button><a class="btn sm gh" href="#/channels">管理渠道</a><button class="btn sm gh" data-act="read-all" data-id="${t.id}">本方向全部标为已读</button></span></div>
     ${t.live ? `<div class="sh"><h3>实时动态</h3><span class="fnt small">打开页面时从公开接口直接拉取，1 小时内用缓存</span></div>
     <div class="live">${LIVE.map(c => `<div class="card"><h4><span>${esc(c.name)}<em>${esc(c.kind)}</em></span><button data-reload="${c.id}" aria-label="刷新${esc(c.name)}">刷新</button></h4><div id="live-${c.id}" class="msg">加载中…</div></div>`).join('')}</div>` : ''}
     ${t.id === 'quant' ? hotHtml() : ''}
+    ${mineItems.length ? `<div class="sh"><h3>我订阅的渠道</h3><span class="fnt small">你自己添加的，共 ${mineItems.length} 条</span><span class="r"><a class="btn sm gh" href="#/channels">管理</a></span></div>
+      ${splitNews(mineItems, { key: 'mine.' + t.id, empty: '都读完了。' })}` : ''}
     <div class="sh"><h3>官方博客、权威媒体与社区讨论</h3><span class="fnt small">${H ? `每天 8 点更新（${esc(H.updated)}）` : '每天 8 点由 GitHub 自动抓取'}${CM ? `；Reddit 与 Hacker News 每周更新（${esc(CM.updated)}）` : ''}</span></div>
     <div class="snapbar">${['all', 'A', 'B', 'C'].map(l => `<button class="chip" data-act="snap-lvl" data-id="${l}" aria-pressed="${lvF === l}">${l === 'all' ? '全部' : LVL[l]} ${l === 'all' ? sBase.length : sBase.filter(n => n.lvl === l).length}</button>`).join('')}
       <select data-snapsrc aria-label="按来源筛选"><option value="all">全部来源（${sLv.length}）</option>${names.map(nm => `<option value="${esc(nm)}"${nm === srcF ? ' selected' : ''}>${esc(nm)}（${sLv.filter(n => n.src === nm).length}）</option>`).join('')}</select></div>

@@ -15,6 +15,7 @@ import { planCard, registerPlan } from './suggest.js';
 import { stageLabel } from './home.js';
 import { openExport } from './export.js';
 import { searchPublic, publicText } from './public.js';
+import { channelsText, channelCard } from './channels.js';
 
 /* ---------- 设置与花费（只存本设备） ---------- */
 // 网站接了云端时，默认用管理员提供的内测模型；否则默认魔搭
@@ -33,7 +34,7 @@ export function aiBlock(cfg) {
 const month = () => new Date().toISOString().slice(0, 7);
 export async function usage() { const u = (await store.localGet('usage')) || {}; return u.m === month() ? u : { m: month(), cny: 0, tin: 0, tout: 0, calls: 0 }; }
 let usageQ = Promise.resolve();
-function addUsage(cfg, us) {
+export function addUsage(cfg, us) {
   // 几段对话同时在跑时，花费记录要排队写，免得互相覆盖
   return (usageQ = usageQ.then(async () => { const u = await usage(); u.cny += cost(cfg, us); u.tin += us.in; u.tout += us.out; u.calls++; await store.localSet('usage', u); return u; }));
 }
@@ -73,9 +74,9 @@ const KINDS = {
   organize: id => { const cards = Object.values(store.all('cards')).filter(c => c.at === id).sort((a, b) => a.c - b.c); const doc = store.note(id);
     return { title: '整理卡片', docId: id, text: `阶段：${stageLabel(id)}\n现有文档：\n${doc || '（空）'}\n\n卡片笔记：\n${cards.map(c => '- ' + c.t).join('\n')}`, pills: [`${cards.length} 张卡片`, '阶段文档'],
       auto: '把这些卡片整理进阶段文档：保留文档原有内容，合并重复的点，按主题分小标题，标出还没搞懂的问题。输出完整的新文档，放在 note 代码块里（text 字段是完整 Markdown，at 字段是阶段 ID）。' }; },
-  news: id => { const n = M.news().find(x => x.id === id); if (!n) return null;
+  news: id => { const n = M.findItem(id); if (!n) return null;
     const rel = M.news().filter(x => x.id !== id && x.r.some(r => n.r.includes(r))).slice(0, 6);
-    return { title: '解析：' + n.t.slice(0, 40), newsIds: [id], routeId: n.r[0] || null, text: newsBlock(n) + `\n\n同一前沿路线最近的其他进展（供参考）：\n${rel.map(x => `- ${x.d} ${x.t}`).join('\n') || '（无）'}\n\n${doingText()}`,
+    return { title: '深度解析：' + n.t.slice(0, 40), newsIds: [id], routeId: n.r[0] || null, text: newsBlock(n) + `\n\n同一前沿路线最近的其他进展（供参考）：\n${rel.map(x => `- ${x.d} ${x.t}`).join('\n') || '（无）'}\n\n${doingText()}`,
       pills: ['这条资讯', rel.length ? `${rel.length} 条相关进展` : null, '在学的阶段'], auto: EXPLAIN_ONE }; },
   multi: ids => { const L = String(ids).split(',').map(id => M.news().find(x => x.id === id)).filter(Boolean); if (L.length < 2) return null;
     return { title: `关联解析 · ${L.length} 条`, newsIds: L.map(n => n.id), routeId: (L[0].r || [])[0] || null, text: L.map((n, i) => `【${i + 1}】` + newsBlock(n)).join('\n\n') + '\n\n' + doingText(),
@@ -95,15 +96,17 @@ function newsBlock(n) {
 }
 const doingText = () => '用户正在学：' + (M.doing().map(d => d.kind === 'stage' ? `${d.t.name} / ${d.s.title}` : `${d.t.name} / 前沿：${d.r.title}`).join('；') || '（未设置）');
 const EXPLAIN_RULE = '只根据给出的标题、摘要和你确定知道的背景来讲；原文里才有的细节（数字、结论）不要编，拿不准就标“需要看原文确认”。来源是社区讨论的，提醒我它未经核实。';
-const EXPLAIN_ONE = `帮我一键解析这条资讯，按下面的结构，总共不超过 400 字：
+const EXPLAIN_ONE = `对这条资讯做深度解析。阅读面板里已经有“讲了什么”的总结，不要再复述一遍内容，要往下挖，总共不超过 600 字：
 第一行写“原文：”加上资讯的链接（照抄给出的链接，不要改）。
-**一句话**：发生了什么。
-**看懂它要知道的**：里面的术语或背景，每个一两句话讲清楚（最多 3 个）。
-**为什么重要**：分技术和产品/商业两个角度，各一两句。
-**和我的关系**：和我正在学的哪个阶段或前沿路线有关，建议我做什么（读原文、先补什么、还是可以略过）。
+**背景和前因**：这件事为什么现在发生，之前发生了什么。需要的术语用一两句话讲清楚（最多 3 个）。
+**论点和证据**：它主张什么，凭什么；哪些站得住，哪些是推测或营销口径，哪些要看原文才能确认。
+**影响**：技术、产品、商业三个角度，各一两句，说清谁受益、谁受损。
+**和同一路线的其他进展**：它在这条线上是起因、进展、反应还是反例；有冲突的地方直接指出。
+**和我的关系**：和我正在学的哪个阶段或前沿路线有关，建议我下一步做什么（读原文哪一部分、先补什么、做个小实验、还是略过）。
+**值得追问的 2 个问题**。
 ${EXPLAIN_RULE}
 最后把要点整理成一张笔记，放在 note 代码块里：{"text":"Markdown 内容，开头写上资讯标题和链接","at":"最相关的阶段或前沿路线 ID，没有就留空"}。`;
-const EXPLAIN_MANY = `这几条资讯我觉得有关联，但没看懂它们之间是什么关系。帮我一键解析，总共不超过 600 字：
+const EXPLAIN_MANY = `这几条资讯我觉得有关联，但没看懂它们之间是什么关系。帮我做深度解析，总共不超过 600 字：
 **原文**：每条一行，写【编号】标题和链接（照抄给出的链接）。
 **一句话串起来**：它们共同指向的是什么变化或趋势；如果其实没什么关系，直接说，并按话题分组。
 **各条的位置**：每条一两句话，说清它在这件事里扮演的角色（起因、进展、反应、对比、反例……），用【编号】指代。
@@ -266,7 +269,7 @@ export async function openAgent(kind = 'free', id = '') {
     S.msgs = (await store.localGet(key)) || []; S.note = ''; S.busy = false;
   }
   await renderDrawer();
-  if (!S.msgs.length && !S.busy && S.cur.auto) send(S, S.cur.auto, { auto: true, label: S.cur.label || (kind === 'news' ? '一键解析这条资讯' : kind === 'multi' ? `一键解析这 ${String(id).split(',').length} 条资讯的关联` : '') });
+  if (!S.msgs.length && !S.busy && S.cur.auto) send(S, S.cur.auto, { auto: true, label: S.cur.label || (kind === 'news' ? '深度解析这条资讯' : kind === 'multi' ? `深度解析这 ${String(id).split(',').length} 条资讯的关联` : '') });
 }
 // 右下角按钮：回到上一次的对话（6 小时内都还在），没有就开自由对话
 export async function resumeAgent() {
@@ -363,6 +366,7 @@ function blockHtml(b, key) {
     return `<div class="blk"><b class="small">需求包 · ${esc(r.title || '')}</b><p class="small">给谁用：${esc(r.users || '')}<br>核心场景：${esc(r.scene || '')}<br>页面：${pages.map(p => esc(p.name)).join('、')}</p>
       <div class="pf"><button class="btn sm acc" data-act="blk-req" data-k="${key}">导出给 demo 工具</button></div></div>`; }
   if (b.type === 'quiz') return `<div class="quiz"><div class="k">自测题 · ${esc(QKINDS[b.data.kind] || '记忆')}类${b.data.kind === 'concept' ? '（用你自己的话讲）' : ''}</div><div class="md">${md(String(b.data.q || ''))}</div></div>`;
+  if (b.type === 'channel') return channelCard(b.data);
   if (b.type === 'tool' || b.type === 'summary' || b.type === 'next' || b.type === 'grade') return '';
   return '';
 }
@@ -382,6 +386,7 @@ const TOOLS = {
     return [doc && '阶段文档：\n' + doc.slice(0, 3000), cs.join('\n')].filter(Boolean).join('\n\n') || '没有笔记';
   },
   get_route: a => routeCtx(a.id) || '没有这条路线',
+  list_channels: () => channelsText(),
   search_public: a => searchPublic(a.query || ''),
   get_public: a => publicText(a.id),
   search_digests: async a => {
@@ -392,7 +397,7 @@ const TOOLS = {
     return hits.map(g => `## ${new Date(g.c).toLocaleDateString('zh-CN')} ${g.title}\n${g.t.slice(0, 1200)}`).join('\n\n') || '没有找到相关的对话纪要';
   }
 };
-const TOOL_LABEL = { list_tracks: '查看你的学习方向', get_stage: '查看一个阶段', search_news: '搜索资讯', get_notes: '查看你的笔记', get_route: '查看前沿路线', search_digests: '查找过去的对话纪要', search_public: '搜索公共区域的路线', get_public: '查看一条公共路线' };
+const TOOL_LABEL = { list_tracks: '查看你的学习方向', get_stage: '查看一个阶段', search_news: '搜索资讯', get_notes: '查看你的笔记', get_route: '查看前沿路线', list_channels: '查看资讯渠道', search_digests: '查找过去的对话纪要', search_public: '搜索公共区域的路线', get_public: '查看一条公共路线' };
 
 async function send(S, text, opts = {}) {
   if (!S || S.busy) return;
@@ -577,6 +582,8 @@ act('route-explain', el => { const ids = M.routeNews(el.dataset.id).slice(0, MAX
 act('agent-route', el => openAgent('route', el.dataset.id));
 act('agent-track', el => openAgent('track', el.dataset.id));
 act('agent-open', () => resumeAgent());
+// 从别的页面带着一句话打开自由对话（例如渠道页的“让 Agent 帮我管理”）
+window.addEventListener('agent:free', async e => { await openAgent('free'); const ta = $('#agentIn'); if (ta) { ta.value = e.detail || ''; ta.focus(); } });
 act('agent-free', () => openAgent('free'));
 window.addEventListener('agent:card', e => openAgent('card', e.detail));
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('dw-open') && !document.querySelector('dialog[open]')) closeAgent(); });

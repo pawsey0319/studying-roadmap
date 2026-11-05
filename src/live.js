@@ -1,6 +1,6 @@
 // 实时动态：打开页面时从公开接口直接拉取，1 小时内用缓存。
 // 依赖：C（公共内容，用于快照兜底）、curTab（当前板块，用来丢弃切走后的结果）。
-import { $, esc, link, iso, ago } from './util.js';
+import { $, esc, link, rlink, iso, ago } from './util.js';
 
 let C = {}, curTab = () => '';
 export function setupLive(content, getTab) { C = content; curTab = getTab; }
@@ -183,7 +183,7 @@ export async function loadOne(t, src, force) {
   }
   if (curTab() !== t.id) return;
   el.className = '';
-  el.innerHTML = v.length ? `<ol>${v.map(x => `<li>${link(x.t, x.u)}<small>${esc(x.m)}</small></li>`).join('')}</ol>`
+  el.innerHTML = v.length ? `<ol>${v.map(x => `<li>${rlink(x.t, x.u, (LIVE.find(c => c.id === src) || {}).name)}<small>${esc(x.m)}</small></li>`).join('')}</ol>`
     : '<span class="msg">最近没有匹配的条目。</span>';
 }
 export function loadLive(t, force) { LIVE.forEach(c => loadOne(t, c.id, force)); }

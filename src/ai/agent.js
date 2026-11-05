@@ -8,10 +8,11 @@
 //   ```tool {"name":"…","args":{…}}```                               多步模式下调用工具（只读）
 //   ```quiz  {"item":"任务 ID","kind":"memory|procedural|concept","q":"题目","a":"参考答案"}```  自测出题（界面只显示题目）
 //   ```req   {"title","users","scene","pages":[{"name","purpose","elements":[]}],"data":[],"accept":[],"style"}```  商机做 demo 的需求包
+//   ```channel {"op":"add","name":"显示名","url":"订阅地址","tracks":["方向 ID"]} 或 {"op":"remove","name":"渠道名"}```  增删资讯渠道（用户点确认才生效）
 //   ```grade {"item":"任务 ID","score":0.8,"hints":0,"retries":0,"pass":true}```  批改结果（自动记进自测记录）
 import { cleanOps } from '../core/overlay.js';
 
-const BLOCK_RE = /```(plan|route|note|memory|summary|tool|track|next|digest|method|quiz|grade|req)\s*\n?([\s\S]*?)```/g;
+const BLOCK_RE = /```(plan|route|note|memory|summary|tool|track|next|digest|method|quiz|grade|req|channel)\s*\n?([\s\S]*?)```/g;
 
 // 宽松解析：去掉注释和尾逗号，容忍模型输出的常见小错误
 export function looseJSON(s) {
@@ -60,9 +61,10 @@ export function systemPrompt({ profile, memory, recent, method, digests, journal
     '3. 跳过和标为已掌握只能建议，由用户自己勾选确认。实践验证类任务（动手做、写、搭、跑通）的 mode 写 practice。',
     '4. 不要编造链接。推荐资源时，不确定链接就只写资源名称，url 留空。',
     '5. 建议存进笔记的内容放在 ```note``` 代码块：{"text":"Markdown 内容","at":"阶段 ID"}。值得长期记住的用户信息放在 ```memory``` 代码块：{"text":"…"}。用户确认后才会保存。',
-    '6. 工具：只有当前上下文里没有、又确实需要用户自己的数据（其他阶段、笔记、资讯、过去的对话纪要）时才调用；概念解释、一般问题直接回答，不要调用。调用时每次只调一个，格式：```tool\n{"name":"工具名","args":{…}}\n```，然后停下等结果。可用工具：list_tracks{}；get_stage{"id"}；search_news{"query","track"}；get_notes{"at" 或 "query"}；get_route{"id"}；search_digests{"query"}；search_public{"query"}（公共区域里别人公开的路线）；get_public{"id"}。用户想调整路线、又没有思路时，可以先搜公共区域作参考。最多 6 步。',
+    '6. 工具：只有当前上下文里没有、又确实需要用户自己的数据（其他阶段、笔记、资讯、过去的对话纪要）时才调用；概念解释、一般问题直接回答，不要调用。调用时每次只调一个，格式：```tool\n{"name":"工具名","args":{…}}\n```，然后停下等结果。可用工具：list_tracks{}；get_stage{"id"}；search_news{"query","track"}；get_notes{"at" 或 "query"}；get_route{"id"}；search_digests{"query"}；search_public{"query"}（公共区域里别人公开的路线）；get_public{"id"}。用户想调整路线、又没有思路时，可以先搜公共区域作参考。最多 6 步。list_channels{}（资讯渠道清单：内置的和用户自己加的）。',
     '7. 每次回答的最后，附上用户接下来可能想做的 3 件事，放在 ```next``` 代码块：{"q":["…","…","…"]}。用用户的口吻，每条 18 字以内，紧扣刚才讲的内容，不要泛泛的“讲简单点”；其中 1 条是检验理解的（例如“考我一道……的题”“我复述一遍……你看对不对”）。',
     '8. 自测：用户要你考他时，一次只出一道题，放在 ```quiz``` 代码块：{"item":"任务 ID","kind":"memory、procedural 或 concept","q":"题目","a":"参考答案（界面不显示）"}。记忆类问事实和定义，步骤类问怎么做，概念类请用户用自己的话讲一遍。用户作答后先讲评，再输出 ```grade``` 代码块：{"item":"任务 ID","score":0 到 1 的得分,"hints":这道题给过几次提示,"retries":重答了几次,"pass":概念类讲得是否到位（其他类可省略）}。用户要提示时只给提示、不给答案，提示次数会扣分。不要在出题时泄露答案。',
+    '9. 资讯渠道：用户要增加、删除、关闭资讯渠道时，先调用 list_channels 看现有的（删除必须用现有的名字）。增加必须有订阅地址（RSS、Atom 或 JSON Feed）；你不能上网，不知道的地址不要编造，请用户提供，或者说明查不到。X（推特）账号和微信公众号没有公开订阅地址，要告诉用户需要第三方转换出来的订阅链接，且这类链接不稳定。做不到时，用一句话说清原因属于哪一类：没有公开订阅源、需要登录或付费、网站禁止程序读取、地址不对、网页版的跨域限制。能做时放在 ```channel``` 代码块：{"op":"add","name":"显示名","url":"订阅地址","tracks":["方向 ID"]} 或 {"op":"remove","name":"渠道名"}，界面会先检查再让用户确认，不要说“已经添加”。',
     '回答尽量短，先给结论。'
   ].filter(Boolean).join('\n');
 }

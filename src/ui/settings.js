@@ -30,13 +30,14 @@ export async function renderSettings() {
   <div class="g2" style="margin-top:14px;align-items:start">
     <section class="card set"><h3>功能</h3>
       ${row('#/method', '我的学习方法')}${row('#/suggestions', '等你确认', sugs ? sugs + ' 条' : '')}${row('#/notes', '全部笔记', Object.keys(store.all('cards')).length + ' 张卡片')}${row('#/later', '稍后在电脑上读', later ? later + ' 条' : '')}
-      ${row('#/biz', '落地与商机（全部方向）')}${row('#/library', '路线库', '加入或移出方向')}${row('#/import', '导入文档')}${cloud.supportsPublic() ? row('#/public', '公共区域') : ''}
+      ${row('#/channels', '资讯渠道', '增删订阅源')}${row('#/biz', '落地与商机（全部方向）')}${row('#/library', '路线库', '加入或移出方向')}${row('#/import', '导入文档')}${cloud.supportsPublic() ? row('#/public', '公共区域') : ''}
       <button type="button" class="srow" data-act="lang"><b>${isEn() ? '中文' : 'English'}</b><span class="fnt">${isEn() ? '切换到中文' : 'Switch language'}</span><i aria-hidden="true">›</i></button></section>
     ${appearanceHtml()}
     <section class="card set"><h3>AI 服务</h3>
       <p class="hint">${hosted ? '内测期间学习 Agent 用管理员提供的模型，登录后就能用，不需要自己的 Key。也可以换成自己的服务商。' : 'Key 只保存在这台设备的浏览器里，不会同步到其他设备，只发给你选的服务商。公用电脑上不要填。'}</p>
       <label class="field"><span>服务商</span><select id="aiProv">${Object.entries(PROVIDERS).filter(([k, v]) => !v.hosted || cloud.hostedAI()).map(([k, v]) => `<option value="${k}"${k === c.provider ? ' selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>
       <p class="hint">${esc(p.help || '')}</p>
+      <label class="ck small"><input type="checkbox" data-autosum${store.ui().autoSum === false ? '' : ' checked'}> 点开资讯时自动生成“讲了什么”的总结。每条用量很小；在 App 里会读取原文的前几千字，网页版只用标题和来源摘要。</label>
       ${hosted ? hostedHtml(c) : ''}
       <div${hosted ? ' hidden' : ''}>
       ${c.provider === 'custom' ? `<label class="field"><span>接口地址</span><input id="aiBase" value="${esc(c.base || '')}" placeholder="https://…/v1"></label>` : ''}
@@ -87,6 +88,7 @@ export async function renderSettings() {
   </div>`;
 }
 
+document.addEventListener('change', e => { if (e.target.matches && e.target.matches('input[data-autosum]')) { store.ui().autoSum = e.target.checked; store.saveUi(); } });
 function remindHtml(r) {
   const t = `${String(r.hour).padStart(2, '0')}:${String(r.minute).padStart(2, '0')}`;
   return `<section class="card set"><h3>每天提醒</h3><p class="hint">在这台手机上每天定时提醒一次，内容是你当前在学的阶段。不经过服务器。</p>

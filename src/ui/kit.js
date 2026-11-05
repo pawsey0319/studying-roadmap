@@ -42,7 +42,7 @@ export const TYPES = { news: '资讯', paper: '论文', dir: '新方向', biz: '
 export const trackTag = id => { const t = M.track(id); return t ? `<span class="tag" style="color:${t.color}">${esc(t.short || t.name)}</span>` : ''; };
 export const routeTag = rid => `<a class="tag fr" href="#/r/${encodeURIComponent(rid)}">${esc(M.routeName(rid))}</a>`;
 
-/* ---------- 多选资讯（一键解析关联） ---------- */
+/* ---------- 多选资讯（深度解析关联） ---------- */
 export const PICK = { on: false, ids: [] };
 export const MAX_PICK = 8;
 export function pickBar() {
@@ -52,7 +52,7 @@ export function pickBar() {
   el.hidden = false;
   el.innerHTML = `<span>已选 <b>${PICK.ids.length}</b> / ${MAX_PICK} 条</span>
     <button class="btn sm gh" data-act="pick-cancel">取消</button>
-    <button class="btn sm acc" data-act="pick-go"${PICK.ids.length >= 2 ? '' : ' disabled'}>一键解析关联</button>`;
+    <button class="btn sm acc" data-act="pick-go"${PICK.ids.length >= 2 ? '' : ' disabled'}>深度解析关联</button>`;
 }
 
 // 一条资讯。opts：showTrack 显示方向标签；compact 精简
@@ -65,6 +65,7 @@ export function newsRow(n, opts = {}) {
     ...(n.r || []).slice(0, 2).map(routeTag),
     M.related(n) ? '<span class="tag rel">和在学阶段相关</span>' : '',
     n.ai ? '<span class="tag ai" title="每周由免费模型整理，链接和日期已由程序核对">AI 整理</span>' : '',
+    n.mine ? '<span class="tag mine">我添加的</span>' : '',
     n.via ? `<span class="fnt">经 ${esc(n.via)}</span>` : ''
   ].join('');
   const picked = PICK.ids.includes(n.id);
@@ -74,7 +75,7 @@ export function newsRow(n, opts = {}) {
       ${n.s && !opts.compact ? `<div class="ts">${esc(n.s)}</div>` : ''}
       <div class="meta">${tags}<span>${esc(n.src || '')}${n.d ? ' · ' + esc(n.d.length > 5 ? n.d.slice(n.d.length === 10 ? 5 : 0) : n.d) : ''}</span></div></div>
     <div class="na">${M.isFresh(n) ? `<button type="button" data-act="toggle-read" data-id="${n.id}">${read ? '标为未读' : '标为已读'}</button>` : ''}
-      ${opts.compact ? `<button type="button" class="ex" data-act="agent-news" data-id="${n.id}">一键解析</button>` : `<button type="button" data-act="later" data-id="${n.id}">${later ? '已在待读' : '稍后读'}</button><button type="button" class="ex" data-act="agent-news" data-id="${n.id}" title="让学习 Agent 讲清楚这条讲了什么、为什么重要、和你在学的内容有什么关系">一键解析</button>`}
+      ${opts.compact ? `<button type="button" class="ex" data-act="agent-news" data-id="${n.id}">深度解析</button>` : `<button type="button" data-act="later" data-id="${n.id}">${later ? '已在待读' : '稍后读'}</button><button type="button" class="ex" data-act="agent-news" data-id="${n.id}" title="让学习 Agent 深入解析：背景、论点和证据、影响、和你在学内容的关系">深度解析</button>`}
       ${n.ai && !opts.compact ? `<button type="button" data-act="mark-wrong" data-id="${n.id}" title="下周的自动整理会参考你的标记">分错了</button>` : ''}</div></li>`;
 }
 

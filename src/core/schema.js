@@ -1,6 +1,7 @@
 // 个人数据的文档清单与校验（纯函数）。
 // 每份文档都是 core/doc.js 的 {e, mt} 结构，可以单独同步。来自同步文件、导入文件、云端的数据，写入前都要过这里的校验。
 import { likeOk, refOk } from './marks.js';
+import { channelOk } from './channels.js';
 export const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 // 任务：公共路线 agent.s02.i03；个人新增 agent.s02.u<随机>；导入路线 u<随机>.s01.i01
 export const ITEM_RE = /^[a-z0-9][a-z0-9-]*\.[sr][0-9a-z]{2,12}\.[iul][0-9a-z]{2,16}$/;
@@ -39,6 +40,7 @@ export const DOCS = {
   meta: (k, v) => ((k === 'profile' || k === 'memory') && str(v, 8000)) || (k === 'onboarded' && str(v, 30)) || (k === 'summary' && isObj(v) && size(v) < 20000)
     || (k === 'adopted' && Array.isArray(v) && v.length <= 60 && v.every(x => typeof x === 'string' && TRACK_RE.test(x)))
     || (k === 'card' && isObj(v) && size(v) < 2000)
+    || (k === 'avatar' && typeof v === 'string' && v.length <= 60000 && /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(v))
     || (k === 'idleHours' && typeof v === 'number' && v >= 1 && v <= 720) || (k === 'methodN' && Number.isInteger(v) && v >= 0),
   // 对话纪要：每段对话结束时由学习 Agent 压缩成的笔记。g<随机> → {title, t, at, kind, c, n}
   digests: (k, v) => /^g[0-9a-z]{6,24}$/.test(k) && isObj(v) && str(v.title, 200) && str(v.t, 20000) && (v.at == null || STAGE_RE.test(v.at)) && typeof v.c === 'number',
@@ -57,7 +59,9 @@ export const DOCS = {
   // 点赞：card:<卡片> / stage:<阶段或前沿路线> / track:<方向> → 点赞时间（毫秒）
   likes: (k, v) => likeOk(k, v),
   // 引用：q<随机> → {from:{k,id}, to:{k,id}, snap 引用时的文字, c}
-  refs: (k, v) => refOk(k, v)
+  refs: (k, v) => refOk(k, v),
+  // 资讯渠道：u<随机> → 自己加的订阅源；off.<哈希> → 关掉的内置渠道名
+  channels: (k, v) => channelOk(k, v)
 };
 export const DOC_NAMES = Object.keys(DOCS);
 export const validFor = name => DOCS[name] || (() => false);

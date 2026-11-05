@@ -110,3 +110,31 @@ html[data-theme=night] .sign b{background:var(--accent);color:var(--accent-ink)}
 /* 长按钮在窄卡片里换行，不撑出卡片；相邻板块之间留空 */
 .sa .btn{white-space:normal;text-align:left;max-width:100%}
 .rpane+.rpane{margin-top:18px}
+
+/* 首屏占位：灰色的条，不写“加载中” */
+.skel{display:grid;gap:12px;padding-top:18px}
+.skel i{display:block;height:84px;border-radius:var(--r);background:linear-gradient(90deg,var(--soft),color-mix(in srgb,var(--line) 55%,var(--soft)),var(--soft));background-size:200% 100%;animation:skel 1.2s linear infinite}
+.skel i:first-child{height:36px;width:55%}
+@keyframes skel{to{background-position:-200% 0}}
+
+/* 阅读面板里的总结 */
+.rd-sum{margin:10px 0 4px;padding:12px 14px;border-radius:12px;background:var(--soft);border-left:3px solid var(--accent)}
+.rd-sum .rd-s{margin:0;color:var(--ink)}
+.rd-sumb{font-size:14.5px;line-height:1.75}
+.rd-sumb p{margin:0 0 6px}.rd-sumb ul{margin:4px 0 8px;padding-left:18px}
+.rd-sumf{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12.5px;color:var(--faint)}
+.rd-sumf .lnk{margin-left:auto}
+.rd-wait{margin:8px 0 0;font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.ck{display:flex;gap:8px;align-items:flex-start;margin:8px 0;color:var(--muted)}
+.ck input{margin-top:3px;flex:none}
+.rd .sa .btn{min-height:40px}
+
+/* 资讯渠道页 */
+.chrow{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:9px 2px;border-bottom:1px solid var(--soft)}
+.chrow:last-child{border-bottom:0}
+.chrow .chm{min-width:0}.chrow .chm b{font-weight:500;overflow-wrap:anywhere}
+.chrow .cha{flex:none;display:flex;gap:4px}
+.chrow.off .chm b{color:var(--faint);text-decoration:line-through}
+.chip.chk{display:inline-flex;gap:6px;align-items:center;cursor:pointer;white-space:nowrap;padding:5px 12px}
+.chip.chk input{margin:0;width:auto;min-width:0;height:auto;min-height:0;padding:0;flex:none}
+#chnList{max-height:62vh;overflow:auto}

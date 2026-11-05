@@ -28,7 +28,7 @@ export function renderSearch(q = {}) {
       <div class="meta"><span class="tag">${x.kind}</span>${x.at ? esc(stageLabel(x.at)) : ''}${x.time ? ' · ' + new Date(x.time).toLocaleDateString('zh-CN') : ''}</div></li>`).join('');
   const show = k => scope === 'all' || scope === k;
   return `<div class="ph"><h1>搜索</h1><span class="mut">网站里的资讯和你自己的笔记、对话纪要、导入的资料</span></div>
-    <form class="srch" data-search><input name="q" type="search" value="${esc(term)}" placeholder="输入关键词，多个词用空格分开" aria-label="搜索" autofocus><button class="btn pri">搜索</button></form>
+    <form class="srch" data-search><input name="q" type="search" value="${esc(term)}" placeholder="输入关键词，多个词用空格分开" aria-label="搜索"><button class="btn pri">搜索</button></form>
     <div class="chips" style="margin:10px 0">${tab('all', '全部', notes.length + news.length)}${tab('notes', '我的笔记', notes.length)}${tab('news', '资讯', news.length)}</div>
     ${!toks.length ? '<p class="empty">输入关键词开始搜索。笔记里的内容只在这台设备上搜索，不会发出去。</p>' : ''}
     ${toks.length && show('notes') ? `<div class="sh"><h3>我的笔记</h3><span class="fnt small">${notes.length} 条${notes.length > MAX ? `，只显示最近 ${MAX} 条` : ''}</span></div>

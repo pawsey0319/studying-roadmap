@@ -1,6 +1,6 @@
 // 学习路线网站 v2 入口：路由、导航、全局动作、同步。
 import { $, esc, iso } from './util.js';
-import { loadContent } from './content.js';
+import { loadContent, refreshLive } from './content.js';
 import * as M from './model.js';
 import * as store from './store/index.js';
 import * as gist from './store/gist.js';
@@ -28,6 +28,7 @@ import './ui/export.js';
 import './ui/reader.js';
 import { renderPublic, beforePublic, reportDone, checkUpstream } from './ui/public.js';
 import { renderMe } from './ui/me.js';
+import { renderChannels, loadUserNews, refreshChannels } from './ui/channels.js';
 import { applyAppearance } from './ui/appearance.js';
 import './ui/react.js';
 import './ui/tabsort.js';
@@ -62,6 +63,7 @@ async function render(opts = {}) {
     else if (page === 'import') { html = renderImport(); after = afterImport; }
     else if (page === 'settings') { html = await renderSettings(); after = afterSettings; }
     else if (page === 'me' || page === 'more') html = renderMe();
+    else if (page === 'channels') html = renderChannels();
     else html = '<p class="empty">没有这个页面。<a href="#/">回到工作台</a></p>';
   } catch (e) {
     console.error(e);
@@ -100,7 +102,7 @@ function renderNav(page, seg) {
   $('#mtop').innerHTML = mt ? `<div class="chips">${M.tracks().map(t => `<a class="chip" href="#/t/${t.id}" aria-pressed="${tid === t.id}" style="text-decoration:none${tid === t.id ? `;background:${t.color};border-color:${t.color};color:#fff` : ''}">${esc(t.short || t.name)}</a>`).join('')}</div>` : ({ home: '<b>首页</b>', search: '<b>搜索</b>' }[page] || '');
   const ic = d => `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   const domainHref = M.tracks().length ? '#/t/' + (tid && M.track(tid) ? tid : M.track(UI().lastTrack) ? UI().lastTrack : M.tracks()[0].id) : '#/library';
-  const meOn = ['me', 'more', 'notes', 'biz', 'later', 'settings', 'import', 'method', 'library', 'public', 'suggestions'].includes(page);
+  const meOn = ['me', 'more', 'channels', 'notes', 'biz', 'later', 'settings', 'import', 'method', 'library', 'public', 'suggestions'].includes(page);
   $('#mnav').innerHTML = `<a href="#/" aria-current="${cur('home')}">${ic('<path d="M4 11 12 4l8 7"/><path d="M6 10v9h12v-9"/>')}<span>首页</span></a>
     <a href="${domainHref}" aria-current="${mt ? 'page' : 'false'}">${ic('<path d="M4 6h16M4 12h10M4 18h13"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/>')}<span>领域</span></a>
     <button class="agent" data-act="agent-open" aria-label="学习 Agent">${ic('<path d="M12 3.5l1.9 4.6 4.6 1.9-4.6 1.9L12 16.5l-1.9-4.6L5.5 10l4.6-1.9z"/><path d="M18.5 15.5l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8z"/>')}</button>
@@ -156,18 +158,18 @@ const HOT_NAMES = [['cls', '财联社电报'], ['wallstreet', '华尔街见闻�
 /* ---------- 启动 ---------- */
 async function boot() {
   let C;
-  try { C = await loadContent(); }
+  try { [C] = await Promise.all([loadContent(), initI18n()]); }
   catch (e) {
     $('#view').innerHTML = `<p class="note">内容没有加载出来：${esc(e.message)}。如果是直接双击打开的本地文件，请在仓库目录运行 <code>python3 -m http.server</code>，再打开 http://localhost:8000/ 。</p>`;
     return;
   }
   M.setContent(C);
   initNative();
-  await initI18n();
   await store.init({ legacyMap: C.legacy, defaultTab: C.tracks[0].id, today: iso(new Date()) });
   applyAppearance();
   cloud.setup(C.config);
   store.ensureAdopted(C.tracks.map(t => t.id));
+  await loadUserNews(C);   // 自己添加的渠道上次读到的内容，先显示，后台再更新
   const linked = await cloud.consumeLink();
   setupLive(C, () => parse().seg[1]);
   // 云端的资讯和快讯：后台拉取，拿到后刷新（拉不到就用静态快照）
@@ -194,6 +196,9 @@ async function boot() {
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncNow(); });
   await render();
   syncNow();
+  // App：内容先用安装包里的，立刻显示；网站上有更新的在后台换上
+  refreshLive(C).then(ch => { if (ch) { M.invalidate(); refresh(); } }).catch(() => {});
+  refreshChannels(C).then(ch => { if (ch) { M.invalidate(); refresh(); } }).catch(() => {});
   // App：每次打开都按当前在学的阶段更新提醒内容
   // App：检查有没有新版本（6 小时最多查一次），有就弹出更新提示
   if (isNative()) setTimeout(() => checkUpdate().catch(() => {}), 2500);

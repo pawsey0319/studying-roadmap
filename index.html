@@ -11,6 +11,70 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="学习路线">
+<!-- 脚本模块一次性并行预取，不用一层一层地发现 -->
+<link rel="modulepreload" href="src/ai/agent.js">
+<link rel="modulepreload" href="src/ai/embed.js">
+<link rel="modulepreload" href="src/ai/providers.js">
+<link rel="modulepreload" href="src/ai/summary.js">
+<link rel="modulepreload" href="src/content.js">
+<link rel="modulepreload" href="src/core/adopt.js">
+<link rel="modulepreload" href="src/core/anki.js">
+<link rel="modulepreload" href="src/core/channels.js">
+<link rel="modulepreload" href="src/core/ctxpack.js">
+<link rel="modulepreload" href="src/core/doc.js">
+<link rel="modulepreload" href="src/core/feed.js">
+<link rel="modulepreload" href="src/core/ids.js">
+<link rel="modulepreload" href="src/core/marks.js">
+<link rel="modulepreload" href="src/core/mastery.js">
+<link rel="modulepreload" href="src/core/md.js">
+<link rel="modulepreload" href="src/core/method.js">
+<link rel="modulepreload" href="src/core/overlay.js">
+<link rel="modulepreload" href="src/core/progress.js">
+<link rel="modulepreload" href="src/core/public.js">
+<link rel="modulepreload" href="src/core/related.js">
+<link rel="modulepreload" href="src/core/routes.js">
+<link rel="modulepreload" href="src/core/schema.js">
+<link rel="modulepreload" href="src/core/search.js">
+<link rel="modulepreload" href="src/core/taxonomy.js">
+<link rel="modulepreload" href="src/i18n.js">
+<link rel="modulepreload" href="src/import/parse.js">
+<link rel="modulepreload" href="src/live.js">
+<link rel="modulepreload" href="src/main.js">
+<link rel="modulepreload" href="src/model.js">
+<link rel="modulepreload" href="src/native.js">
+<link rel="modulepreload" href="src/store/backend.js">
+<link rel="modulepreload" href="src/store/cloud.js">
+<link rel="modulepreload" href="src/store/gist.js">
+<link rel="modulepreload" href="src/store/index.js">
+<link rel="modulepreload" href="src/store/kv.js">
+<link rel="modulepreload" href="src/store/migrate.js">
+<link rel="modulepreload" href="src/store/public.js">
+<link rel="modulepreload" href="src/ui/agentui.js">
+<link rel="modulepreload" href="src/ui/appearance.js">
+<link rel="modulepreload" href="src/ui/channels.js">
+<link rel="modulepreload" href="src/ui/dragask.js">
+<link rel="modulepreload" href="src/ui/export.js">
+<link rel="modulepreload" href="src/ui/floatwin.js">
+<link rel="modulepreload" href="src/ui/home.js">
+<link rel="modulepreload" href="src/ui/importui.js">
+<link rel="modulepreload" href="src/ui/kit.js">
+<link rel="modulepreload" href="src/ui/me.js">
+<link rel="modulepreload" href="src/ui/method.js">
+<link rel="modulepreload" href="src/ui/notes.js">
+<link rel="modulepreload" href="src/ui/onboard.js">
+<link rel="modulepreload" href="src/ui/pages.js">
+<link rel="modulepreload" href="src/ui/public.js">
+<link rel="modulepreload" href="src/ui/react.js">
+<link rel="modulepreload" href="src/ui/reader.js">
+<link rel="modulepreload" href="src/ui/search.js">
+<link rel="modulepreload" href="src/ui/settings.js">
+<link rel="modulepreload" href="src/ui/suggest.js">
+<link rel="modulepreload" href="src/ui/tabsort.js">
+<link rel="modulepreload" href="src/ui/track.js">
+<link rel="modulepreload" href="src/ui/translate.js">
+<link rel="modulepreload" href="src/ui/tree.js">
+<link rel="modulepreload" href="src/update.js">
+<link rel="modulepreload" href="src/util.js">
 <link rel="stylesheet" href="src/css/base.css">
 <link rel="stylesheet" href="src/css/pages.css">
 <link rel="stylesheet" href="src/css/shell.css">
@@ -25,7 +89,7 @@ try { var t = JSON.parse(localStorage.getItem("lh.theme") || "null"), r = docume
 <body>
 <div class="app">
   <nav class="side" id="side" aria-label="导航"></nav>
-  <main class="main"><div class="mtop" id="mtop"></div><div class="wrap" id="view"><p class="fnt">加载中…</p></div></main>
+  <main class="main"><div class="mtop" id="mtop"></div><div class="wrap" id="view"><div class="skel" aria-busy="true" aria-label="加载中"><i></i><i></i><i></i></div></div></main>
 </div>
 <div class="fab"><button data-act="quick-note" title="⌘J / Ctrl+J">＋ 随手记</button><button class="k" data-act="agent-open">学习 Agent</button></div>
 <nav class="mnav" id="mnav" aria-label="手机导航"></nav>

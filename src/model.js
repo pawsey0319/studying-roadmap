@@ -55,14 +55,27 @@ export function routeName(id) {
 
 /* ---------- 资讯 ---------- */
 // 统一成一个列表：精选（curated）+ 每日快照（snap，含官方、媒体、日报、社区）
+// 用户关掉的内置渠道名
+export const offSources = () => new Set(Object.entries(store.all('channels')).filter(([k]) => k.startsWith('off.')).map(([, v]) => v));
+// 各渠道现有的条数（不受“关掉”影响），渠道管理页用
+export function sourceCounts() {
+  const n = new Map();
+  const add = x => { if (x && x.src) n.set(x.src, (n.get(x.src) || 0) + 1); };
+  C.feed.items.forEach(add);
+  [...((C.community && C.community.items) || []), ...((C.cloudNews || [])), ...((C.sources && C.sources.items) || []), ...(C.userNews || [])].forEach(add);
+  for (const s of (C.sources && C.sources.sources) || []) if (!n.has(s.name) && !/^AI 资讯日报（/.test(s.name)) n.set(s.name, 0);
+  return n;
+}
 export function news() {
   if (cache.news) return cache.news;
+  const off = offSources();
   const R = C.routes.routes;
   const curated = C.feed.items.map(x => ({ ...x, kind: 'curated', k: [x.k] }));
   const cloudNews = (C.cloudNews || []).map(x => ({ ...x, s: x.s || undefined, via: x.via || undefined }));
-  const snap = [...((C.community && C.community.items) || []), ...cloudNews, ...((C.sources && C.sources.items) || [])].map(x => ({ ...x, kind: 'snap' }));
+  const snap = [...((C.community && C.community.items) || []), ...cloudNews, ...((C.sources && C.sources.items) || []), ...((C.userNews || []))].map(x => ({ ...x, kind: 'snap' }));
   const seen = new Set(), out = [];
   for (const x of [...curated, ...snap]) {
+    if (off.has(x.src)) continue;
     const id = newsId(x.u);
     if (seen.has(id)) continue;
     seen.add(id);
@@ -81,7 +94,10 @@ export function readingPool() {
   return (cache.pool = news().concat(papers));
 }
 export const relIndex = () => cache.relIx || (cache.relIx = buildIndex(readingPool()));
-export const findItem = id => readingPool().find(x => x.id === id);
+// 不在资讯库里的条目（实时动态、财经快讯里的链接）点开时临时登记在这里，阅读面板和 Agent 也能用
+const ADHOC = new Map();
+export const addAdhoc = x => { ADHOC.set(x.id, x); return x; };
+export const findItem = id => readingPool().find(x => x.id === id) || ADHOC.get(id);
 export const isRead = id => !!store.get('read', id);
 export const isHidden = id => store.get('marks', id) === 'drop';
 // 当前在学阶段相关：资讯所属的前沿路线是从这个方向的当前阶段分出来的
