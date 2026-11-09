@@ -123,5 +123,15 @@ test('平台模型地址：配了 aiFunction 才提供；aiUrl 只接受 https',
     assert.match(ep.url, /tcloudbasegateway/, 'http 地址不接受');
     cloud.setup({ backend: 'cloudbase', cloudbaseEnv: 'env-1', cloudbaseKey: 'k', aiFunction: 'lh-ai', aiUrl: 'https://ai.example.com/lh-ai' });
     return cloud.aiEndpoint();
-  }).then(ep => assert.equal(ep.url, 'https://ai.example.com/lh-ai'));
+  }).then(async ep => {
+    assert.equal(ep.url, 'https://ai.example.com/lh-ai');
+    const { readFile } = await import('node:fs/promises');
+    const config = JSON.parse(await readFile(new URL('../config.json', import.meta.url), 'utf8'));
+    cloud.setup(config);
+    assert.equal(cloud.hostedAI(), true, '实际部署配置启用平台模型');
+    assert.equal(config.aiFunction, 'lh-ai');
+    const actual = await cloud.aiEndpoint();
+    assert.equal(actual.url, 'https://studyingloop-d4gve2bc779a7d0ea-1396624416.ap-shanghai.app.tcloudbase.com/lh-ai');
+    assert.equal(actual.headers['x-user-token'], 'a');
+  });
 });

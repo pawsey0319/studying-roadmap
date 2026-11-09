@@ -31,15 +31,26 @@
 | `AI_INVITE_ONLY` | 否 | 填 `1` 时只有 `ai_entitlements` 里有记录的人能用（内测用） |
 | `AI_USAGE_OPT` | 否 | 默认 `1`：请求里带 `stream_options.include_usage`。接口不认这个参数时填 `0` |
 
-4. 网站：`config.json` 加一行 `"aiFunction": "lh-ai"`，推送后网站和 App 的“AI 服务”里就会出现“平台模型”。
-   如果网关地址 `https://<环境ID>.api.tcloudbasegateway.com/v1/functions/lh-ai?webfn=true` 调不通，
-   在控制台 → HTTP 访问服务里给函数配一个路径，再加一行 `"aiUrl": "https://完整地址"`。
+4. HTTP 路由：在控制台的独立「HTTP 网关 → 路由管理」页面添加路由，触发路径 `/lh-ai`，关联 HTTP 云函数 `lh-ai`。本环境已使用默认域名，路由指向 `$LATEST`。
+   - 函数已通过 `AI_ALLOW_ORIGIN` 处理跨域，**此路由的网关跨域设置关闭**，否则可能返回重复的 `Access-Control-Allow-Origin`，导致浏览器拒绝响应。不要因此关闭整个环境的鉴权或放宽数据库权限。
+5. 网站：`config.json` 同时配置 `"aiFunction": "lh-ai"` 与 `"aiUrl": "https://完整域名/lh-ai"`。本环境使用：
+   `https://studyingloop-d4gve2bc779a7d0ea-1396624416.ap-shanghai.app.tcloudbase.com/lh-ai`。
+   配置随网页发布后，“AI 服务”才会出现“平台模型”；现有用户选择的自带 Key 服务商不会自动切换。
+   原 `/v1/functions/lh-ai?webfn=true` 入口在此次公开 Key 探测中被网关拒绝，不能据此假设 HTTP 函数代码不可用，应以配置后的 HTTP 路由实测为准。
+
+### 两类 Key 与故障定位
+
+- 自带 Key：保存在本机设置中，浏览器直接访问服务商。
+- 平台 Key：环境变量 `AI_KEY`，由云函数访问服务商。修改其中一处不会同步到另一处；换 Key 不需要新建函数。
+- 数据库 `forbidden`：优先核对同一环境中的 `ai_secret.secret` 与 `AI_DB_SECRET` 是否完全一致，不要放开权限绕过。
+- 上游 401 `invalid key`：核对 `AI_KEY` 是否为真实的模型 API Key，不是请求编号、登录密码或其他平台凭据。不要在聊天、日志或仓库中输出 Key。
+- 已验证：2026-11-09 真实账号额度 GET 返回 200；模型 POST 返回 200；两次模型测试后日/月计数为 2；自带 Key 直连经用户更正 Key 后恢复。最终 Agent 页面正文与上线验收仍需另做。
 
 ## 自测
 
 ```bash
 # 换成你自己登录后的 access_token（浏览器开发者工具 → Application → Local Storage → learning-hub.cloud 里的 access）
-curl -s "https://<环境ID>.api.tcloudbasegateway.com/v1/functions/lh-ai?webfn=true" -H "x-user-token: <access_token>" -H "authorization: Bearer <access_token>"
+curl -s "https://studyingloop-d4gve2bc779a7d0ea-1396624416.ap-shanghai.app.tcloudbase.com/lh-ai" -H "x-user-token: <access_token>" -H "authorization: Bearer <access_token>"
 # 应该返回 {"models":[...],"plan":"free","day":0,...}
 ```
 
