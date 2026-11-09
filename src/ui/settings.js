@@ -14,7 +14,7 @@ import { appearanceHtml } from './appearance.js';
 import { pendingSuggestions } from './suggest.js';
 import { isEn } from '../i18n.js';
 
-let hostedInfo = null;  // 内测模型的可选模型和用量，进设置页时取一次
+let hostedInfo = null;  // 平台模型的可选模型和用量，进设置页时取一次
 
 export async function renderSettings() {
   document.documentElement.style.setProperty('--c', '#1B2430');

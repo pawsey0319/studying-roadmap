@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { srcItem, mergeSources, sourcesText, SRC_MAX } from '../src/core/sources.js';
+import { srcItem, mergeSources, sourcesText, backgroundSources, SRC_MAX } from '../src/core/sources.js';
 import { copyTrack, snapshot } from '../src/core/public.js';
 import { agentSkill, SKILL_NAME } from '../src/core/ctxpack.js';
 import { DOCS, ITEM_RE, STAGE_RE } from '../src/core/schema.js';
@@ -19,6 +19,8 @@ test('依据：校验、截断、去重、上限、文字', () => {
   assert.equal(mergeSources([...Array(12)].map((_, i) => srcItem('news', 'n' + i, 'x'))).length, SRC_MAX);
   assert.equal(sourcesText([]), '没有引用你的资料，以下是通用知识');
   assert.equal(sourcesText([a, b]), '参考了：阶段「阶段二」、笔记「卡片」');
+  const bg = backgroundSources({ profile: '懂 Python', method: '- 先看例子', memory: '', recent: '', journal: '', tests: '' });
+  assert.deepEqual(bg.map(x => [x.t, x.id, x.title]), [['background', 'profile', '学习者档案'], ['background', 'method', '学习方法档案']]);
 });
 
 test('引用整条路线：复制个人调整后的结构，ID 合法且稳定，原方向不变，可以记一条引用', () => {

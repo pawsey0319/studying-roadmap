@@ -16,7 +16,7 @@ import { stageLabel } from './home.js';
 import { openExport } from './export.js';
 import { searchPublic, publicText } from './public.js';
 import { channelsText, channelCard } from './channels.js';
-import { srcItem, mergeSources, SRC_LABEL } from '../core/sources.js';
+import { srcItem, mergeSources, backgroundSources, SRC_LABEL } from '../core/sources.js';
 import { stat } from './me.js';
 
 /* ---------- 设置与花费（只存本设备） ---------- */
@@ -476,7 +476,11 @@ async function send(S, text, opts = {}) {
     method: activeMethod(store.all('method')).map(([, x]) => `- ${x.d}：${x.t}`).join('\n'),
     digests: relatedDigests(S).map(g => `- ${new Date(g.c).toLocaleDateString('zh-CN')} ${g.title}：${g.t.replace(/\s+/g, ' ').slice(0, 700)}`).join('\n'),
     journal: journalText(S), tests: CUR.tests || '' });
-  const steps = 6, ctxSrc = ctxSources(S), toolSrc = [];
+  const steps = 6, ctxSrc = ctxSources(S), toolSrc = [], bgSrc = backgroundSources({
+    profile: store.get('meta', 'profile'), memory: store.get('meta', 'memory'), recent: recentChanges(),
+    method: activeMethod(store.all('method')).map(([, x]) => `- ${x.d}：${x.t}`).join('\n'),
+    journal: journalText(S), tests: CUR.tests || ''
+  });
   try {
     for (let step = 0; step < steps; step++) {
       const history = MSGS.filter(m => m.role !== 'err').slice(-16).map(m => m.role === 'tool' ? { role: 'user', content: '工具结果：\n' + m.result } : { role: m.role, content: m.role === 'assistant' ? m.content.replace(NEXT_RE, '') : m.content });
@@ -491,7 +495,7 @@ async function send(S, text, opts = {}) {
         const box = $('#msgs'); if (box) box.scrollTop = box.scrollHeight;
       } });
       const c = cost(cfg, res.usage); await addUsage(cfg, res.usage);
-      MSGS.push({ role: 'assistant', ts: Date.now(), content: res.text, cost: c, tin: res.usage.in, tout: res.usage.out, est: res.estimated, src: mergeSources(ctxSrc, toolSrc) });
+      MSGS.push({ role: 'assistant', ts: Date.now(), content: res.text, cost: c, tin: res.usage.in, tout: res.usage.out, est: res.estimated, src: mergeSources(ctxSrc, bgSrc, toolSrc) });
       S.live = ''; stat('a');
       const { blocks } = extractBlocks(res.text);
       recordQuiz(S, blocks, MSGS.length - 1);
@@ -505,7 +509,7 @@ async function send(S, text, opts = {}) {
     }
   } catch (e) {
     if (e.name !== 'AbortError') MSGS.push({ role: 'err', content: e.message || String(e) });
-    else if (S.live) MSGS.push({ role: 'assistant', ts: Date.now(), content: S.live + '\n\n（已停止）', src: mergeSources(ctxSrc, toolSrc) });
+    else if (S.live) MSGS.push({ role: 'assistant', ts: Date.now(), content: S.live + '\n\n（已停止）', src: mergeSources(ctxSrc, bgSrc, toolSrc) });
   }
   S.busy = false; S.ctl = null; S.live = '';
   S.msgs = MSGS.slice(-60);
