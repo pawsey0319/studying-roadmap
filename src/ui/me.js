@@ -1,11 +1,15 @@
 // “我的”：头像和简介、你的笔记和路线（每张卡片带点赞 / 引用），其余功能都收进右上角的设置
-import { $, esc } from '../util.js';
+import { $, esc, iso } from '../util.js';
 import * as M from '../model.js';
 import * as store from '../store/index.js';
 import { likeCount } from '../core/marks.js';
 import { act, refresh, toast } from './kit.js';
 import { reactBar } from './react.js';
 import { stageLabel } from './home.js';
+import { bumpStat, weekStats } from '../core/progress.js';
+
+// 使用统计只存这台设备（store.ui().stats），不同步、不上传
+export function stat(key) { const U = store.ui(); U.stats = bumpStat(U.stats, iso(new Date()), key); store.saveUi(); }
 
 const GEAR = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 14.6a1.6 1.6 0 0 0 .3 1.7l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.7-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.7.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.7 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.7.3h0a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.7-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.7v0a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"/></svg>';
 
@@ -45,6 +49,7 @@ export function renderMe() {
     <section class="me-head"><button type="button" class="avatar" data-act="me-edit" aria-label="编辑头像和简介">${P.img ? `<img src="${esc(P.img)}" alt="">` : esc(P.av)}</button>
       <div class="me-id"><h1>${esc(P.name)}</h1><p class="bio${P.bio ? '' : ' fnt'}">${esc(P.bio || '点头像，写一句话介绍你在学什么')}</p></div></section>
     <div class="me-stats"><div><b>${cards.length}</b><span>笔记</span></div><div><b>${T.length}</b><span>路线</span></div><div><b>${likes}</b><span>点赞</span></div><div><b>${refs}</b><span>引用</span></div></div>
+    ${(() => { const w = weekStats(U.stats, iso(new Date())); return `<p class="fnt small" style="margin:-6px 0 12px">最近 7 天：打开 ${w.open} 天 · 和 Agent 聊了 ${w.agent} 次 · 完成 ${w.tasks} 项任务（只记在这台设备）</p>`; })()}
     <div class="seg" role="tablist"><button role="tab" data-act="me-seg" data-v="notes" aria-selected="${seg === 'notes'}">笔记</button><button role="tab" data-act="me-seg" data-v="routes" aria-selected="${seg === 'routes'}">路线库</button></div>
     <div class="wf">${list}</div>`;
 }

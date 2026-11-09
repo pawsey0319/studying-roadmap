@@ -49,6 +49,12 @@ function cloudbase(env, key) {
     async refresh(s) {
       const { data: c } = await auth('/token', { client_id: env, grant_type: 'refresh_token', refresh_token: s.refresh });
       return { ...s, ...session(c, s.email), uid: s.uid || jwtSub(c.access_token) };
+    },
+    // 注销账号：先给登录邮箱发一个验证码（5 分钟内有效），再带着验证码删除账号
+    reauth: token => auth('/user/reauthenticate', { verify_opt: 'email_code' }, token).catch(e => { throw new Error('发送验证码失败：' + e.message); }),
+    async deleteMe(token, code) {
+      const url = `${base}/auth/v1/user/me?verify_code=${encodeURIComponent(String(code).trim())}&client_id=${encodeURIComponent(env)}`;
+      await http(url, { method: 'DELETE', headers: hd({ authorization: 'Bearer ' + token }) }).catch(e => { throw new Error('注销失败：' + e.message); });
     }
   };
 }

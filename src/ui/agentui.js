@@ -1,5 +1,5 @@
 // 学习 Agent 抽屉：对话、上下文、修改方案、工具调用、花费控制。
-import { $, esc } from '../util.js';
+import { $, esc, safeUrl } from '../util.js';
 import * as M from '../model.js';
 import * as store from '../store/index.js';
 import { md } from '../core/md.js';
@@ -16,9 +16,11 @@ import { stageLabel } from './home.js';
 import { openExport } from './export.js';
 import { searchPublic, publicText } from './public.js';
 import { channelsText, channelCard } from './channels.js';
+import { srcItem, mergeSources, SRC_LABEL } from '../core/sources.js';
+import { stat } from './me.js';
 
 /* ---------- 设置与花费（只存本设备） ---------- */
-// 网站接了云端时，默认用管理员提供的内测模型；否则默认魔搭
+// 网站提供平台模型时默认用它；否则默认魔搭（需要自己的 Key）
 export async function aiCfg() {
   let c = await store.localGet('ai');
   if (c && c.provider === 'hosted' && !cloud.hostedAI()) c = null;
@@ -28,7 +30,7 @@ export async function aiCfg() {
 export const saveCfg = c => { const { endpoint, ...rest } = c; return store.localSet('ai', rest); };
 // 能不能调用；不能时返回原因
 export function aiBlock(cfg) {
-  if (cfg.provider === 'hosted') return !cloud.hostedAI() ? '这个网站没有接云端，请在设置里换一个服务商' : !cloud.signedIn() ? '内测模型需要先登录：设置 → 账号与云端同步' : '';
+  if (cfg.provider === 'hosted') return !cloud.hostedAI() ? '这个网站没有提供平台模型，请在设置里换一个服务商' : !cloud.signedIn() ? '平台模型需要先登录：设置 → 账号与云端同步' : '';
   return cfg.key || cfg.provider === 'custom' ? '' : '还没有设置 AI 服务。去“设置”选一个服务商并填 Key';
 }
 const month = () => new Date().toISOString().slice(0, 7);
@@ -70,7 +72,10 @@ const KINDS = {
   card: id => { const c = store.get('cards', id); if (!c) return null; const s = c.at ? stageCtx(c.at) : null;
     return { title: '消化笔记', stageId: c.at && M.findStage(c.at) ? c.at : null, cardId: id, text: (s ? s.text + '\n\n' : '') + '用户想讨论的这条笔记：\n' + c.t, pills: ['这条笔记', c.at ? stageLabel(c.at) : null],
       auto: '这是我刚记下的一条笔记。帮我消化它：指出理解对不对、有没有偏差，补一个具体例子；需要的话问我一个检验理解的问题。最后把值得留下的内容放在 note 代码块里。' }; },
-  doc: id => { const s = stageCtx(id); const text = store.note(id); return { title: '讨论阶段文档', stageId: s ? id : null, text: (s ? s.text : routeCtx(id) || '') + '\n\n阶段文档：\n' + text.slice(0, 6000), pills: ['阶段文档'] }; },
+  doc: id => {
+    const s = stageCtx(id), rc = s ? null : routeCtx(id), text = store.note(id);
+    return { title: '讨论阶段文档', stageId: s ? id : null, docId: rc ? id : null, routeId: rc ? id : null, text: (s ? s.text : rc || '') + '\n\n阶段文档：\n' + text.slice(0, 6000), pills: ['阶段文档'] };
+  },
   organize: id => { const cards = Object.values(store.all('cards')).filter(c => c.at === id).sort((a, b) => a.c - b.c); const doc = store.note(id);
     return { title: '整理卡片', docId: id, text: `阶段：${stageLabel(id)}\n现有文档：\n${doc || '（空）'}\n\n卡片笔记：\n${cards.map(c => '- ' + c.t).join('\n')}`, pills: [`${cards.length} 张卡片`, '阶段文档'],
       auto: '把这些卡片整理进阶段文档：保留文档原有内容，合并重复的点，按主题分小标题，标出还没搞懂的问题。输出完整的新文档，放在 note 代码块里（text 字段是完整 Markdown，at 字段是阶段 ID）。' }; },
@@ -87,9 +92,50 @@ const KINDS = {
     return { title: '商机做 demo', bizId: id, text: `商机：${b.title}\n说明：${b.desc}\n参考：${(b.links || []).map(l => l.name + ' ' + l.url).join('；') || '无'}\n${doingText()}`, pills: ['这条商机'], label: '把这条商机做成 demo',
       auto: '我想把这条商机做成一个可演示的 demo，交给 AI 生成工具去做。先问我三件事：给谁用、核心场景是什么、最少要哪几页。每件事给 2–4 个可以直接选的选项（用“· 选项”列出），也允许我自己说。我回答清楚后，再输出需求包，放在 req 代码块里：{"title":"demo 名称","users":"给谁用","scene":"核心场景，一两句","pages":[{"name":"页面名","purpose":"用途","elements":["页面上要有的东西"]}],"data":["要用到的假数据，例如：10 条客户记录，字段有…"],"accept":["验收标准：能演示的具体操作"],"style":"界面风格"}。页面控制在 2–5 个，只做演示需要的。' }; },
   pub: id => ({ title: '看看这条公共路线', pubId: id, text: '用户在看公共区域的一条内容，ID：' + id + '。需要时用 get_public 工具读取全文。\n' + doingText(), pills: ['这条公共内容', '在学的阶段'],
-    auto: '先用工具读这条公共内容，再结合我的情况说说：适不适合我、和我现有的路线比多了什么少了什么、如果采用要先跳过哪些。最多 300 字。', label: '这条公共路线适不适合我' }),
+    auto: '先用工具读这条公共内容，再结合我的情况说说：适不适合我、和我现有的路线比多了什么少了什么、如果引用要先跳过哪些。最多 300 字。', label: '这条公共路线适不适合我' }),
   track: id => ({ title: '规划这个方向', text: trackCtx(id), pills: ['整个方向'], first: `想怎么调整“${M.track(id).name}”？可以说说你整体学到哪了、目标是什么。我会先问清楚，再对需要调整的阶段各给一份修改方案。` })
 };
+
+/* ---------- 回答的依据：这次请求实际放进上下文的资料（程序生成，不让模型自己报） ---------- */
+// 卡片的标题取第一行，去掉 Markdown 的 #、> 和空格（依据行里不显示这些符号）
+const cardTitle = t => String(t || '').split('\n')[0].replace(/^[#>\s]+/, '');
+function stageSources(id) {
+  const f = M.findStage(id); if (!f) return [];
+  const out = [srcItem('stage', id, f.s.title)];
+  if (store.note(id)) out.push(srcItem('note', id, f.s.title));
+  for (const [cid, c] of Object.entries(store.all('cards'))) if (c.at === id) out.push(srcItem('card', cid, cardTitle(c.t)));
+  for (const [lid, d] of Object.entries(store.all('library'))) if (d.at === id) out.push(srcItem('lib', lid, d.title));
+  return out;
+}
+function ctxSources(S) {
+  const c = S.cur, out = [];
+  if (c.stageId) out.push(...stageSources(c.stageId));
+  if (c.docId) {
+    const doc = store.note(c.docId);
+    if (doc) out.push(srcItem('note', c.docId, stageLabel(c.docId)));
+    // 只有“整理卡片”这类对话的上下文里真的带了卡片；单纯讨论一篇文档时不带
+    if (c.kind !== 'doc') for (const [cid, x] of Object.entries(store.all('cards'))) if (x.at === c.docId) out.push(srcItem('card', cid, cardTitle(x.t)));
+  }
+  if (c.cardId) { const x = store.get('cards', c.cardId); if (x) out.push(srcItem('card', c.cardId, cardTitle(x.t))); }
+  if (c.routeId && M.route(c.routeId)) out.push(srcItem('route', c.routeId, M.routeName(c.routeId)));
+  for (const id of c.newsIds || []) { const n = M.findItem(id); if (n) out.push(srcItem('news', id, n.t)); }
+  if (c.bizId) { const b = (M.C.biz.items || []).find(x => x.id === c.bizId); if (b) out.push(srcItem('biz', b.id, b.title)); }
+  if (c.kind === 'track' && M.track(c.id)) out.push(srcItem('track', c.id, M.track(c.id).name));
+  for (const g of relatedDigestEntries(S)) out.push(srcItem('digest', g[0], g[1].title));
+  return out;
+}
+const srcHref = x => x.t === 'card' ? `#/notes/${x.id}` : x.t === 'note' ? `#/notes/s/${encodeURIComponent(x.id)}` : x.t === 'digest' ? `#/method?tab=digests&g=${x.id}`
+  : x.t === 'route' ? `#/r/${encodeURIComponent(x.id)}` : x.t === 'track' ? `#/t/${x.id}` : x.t === 'stage' ? (M.findStage(x.id) ? `#/t/${M.findStage(x.id).t.id}?s=${encodeURIComponent(x.id)}` : '')
+  : x.t === 'lib' ? '#/import' : x.t === 'pub' ? `#/public?id=${x.id}` : x.t === 'biz' ? '#/biz' : x.t === 'news' ? safeUrl((M.findItem(x.id) || {}).u || '') : '';
+// 每条回答下面的一行：AI 标识 + 依据。旧消息没有 src 时只显示 AI 标识
+function srcHtml(m) {
+  const tag = '<span class="aitag" title="这条回答由 AI 生成">AI</span>';
+  if (!Array.isArray(m.src)) return tag;
+  if (!m.src.length) return `${tag}<span class="msrc">没有引用你的资料，以下是通用知识</span>`;
+  const one = x => { const h = srcHref(x), lab = `<span>${SRC_LABEL[x.t]}</span>「${esc(x.title)}」`;
+    return h ? `<a href="${esc(h)}"${x.t === 'news' ? ' target="_blank" rel="noopener"' : ' data-act="agent-close"'}>${lab}</a>` : lab; };
+  return `${tag}<span class="msrc"><span>参考了：</span>${m.src.map(one).join('、')}</span>`;
+}
 
 function newsBlock(n) {
   return `标题：${n.t}\n来源：${n.src || ''}（${n.lvl ? { A: '一手来源', B: '权威媒体', C: '社区讨论，未核实' }[n.lvl] : '未定级'}${n.via ? '，经 ' + n.via + ' 转载' : ''}）· ${n.d}\n链接：${n.u}\n摘要：${n.s || '（无）'}\n方向：${n.k.map(k => (M.track(k) || {}).name || k).join('、')}；前沿路线：${n.r.map(M.routeName).join('、') || '无'}`;
@@ -164,10 +210,11 @@ function indexSession(key, info, has) {
   }));
 }
 // 和当前话题相关的过去纪要：同一个阶段或路线的最近 3 份；自由对话带最近 2 份
-function relatedDigests(S = A()) {
-  const all = Object.values(store.all('digests')).sort((a, b) => b.c - a.c), at = S && ctxAt(S);
-  return at ? all.filter(g => g.at === at).slice(0, 3) : S && S.cur.kind === 'free' ? all.slice(0, 2) : [];
+function relatedDigestEntries(S = A()) {
+  const all = Object.entries(store.all('digests')).sort((a, b) => b[1].c - a[1].c), at = S && ctxAt(S);
+  return at ? all.filter(([, g]) => g.at === at).slice(0, 3) : S && S.cur.kind === 'free' ? all.slice(0, 2) : [];
 }
+const relatedDigests = (S = A()) => relatedDigestEntries(S).map(([, g]) => g);
 
 // 把一段对话整理成纪要，并更新学习方法档案。成功返回纪要 ID；AI 不可用时返回 null，对话保留
 async function closeSession(key, msgs, info, manual) {
@@ -182,7 +229,7 @@ async function closeSession(key, msgs, info, manual) {
   const userText = talk.filter(m => m.role === 'user' && !m.auto).map(m => m.show || m.content).join('\n');
   let d = null, ops = [];
   try {
-    const res = await chat(cfg, [{ role: 'system', content: digestPrompt(lines) }, { role: 'user', content: `对话主题：${info.title}${info.at ? '（' + stageLabel(info.at) + '）' : ''}\n\n${transcript}` }], { maxTokens: 1500, temperature: 0.2 });
+    const res = await chat(cfg, [{ role: 'system', content: digestPrompt(lines) }, { role: 'user', content: `对话主题：${info.title}${info.at ? '（' + stageLabel(info.at) + '）' : ''}\n\n${transcript}` }], { maxTokens: 1500, temperature: 0.2, feat: 'digest' });
     await addUsage(cfg, res.usage);
     const bl = extractBlocks(res.text).blocks;
     d = (bl.find(b => b.type === 'digest') || {}).data || null;
@@ -321,7 +368,7 @@ async function renderDrawer() {
       <textarea id="agentIn" rows="2" placeholder="${ATT.length ? '想问什么？直接按 Enter 就是让 Agent 解析' : '说说你的情况，或者问一个问题。可以把资讯拖进来。Enter 发送，Shift+Enter 换行'}"${ready ? '' : ' disabled'}></textarea>
       <div class="inb-r"><span class="fnt small">${busy ? '正在回答，可以切到别的话题或收起窗口，回答不会中断' : '需要时会自己去查你的笔记和资讯'}</span>
       <button class="btn pri" id="agentSend"${ready ? '' : ' disabled'}>${busy ? '停止' : '发送'}</button></div>
-      <div class="cost">${cfg.provider === 'hosted' ? `内测模型${cfg.model ? ' · ' + esc(cfg.model) : ''} · 本月 ${u.calls} 次` : `${esc(p.name)} · ${esc(cfg.model || p.model)} · 本月 ¥${u.cny.toFixed(2)}${cfg.budget ? ` / 上限 ¥${cfg.budget}` : ''} · ${u.calls} 次`}</div></form>`;
+      <div class="cost">${cfg.provider === 'hosted' ? `平台模型${cfg.model ? ' · ' + esc(cfg.model) : ''} · 本月 ${u.calls} 次` : `${esc(p.name)} · ${esc(cfg.model || p.model)} · 本月 ¥${u.cny.toFixed(2)}${cfg.budget ? ` / 上限 ¥${cfg.budget}` : ''} · ${u.calls} 次`}</div></form>`;
   const box = $('#msgs'); box.scrollTop = box.scrollHeight;
   const ta = $('#agentIn'); if (keep) ta.value = keep;
   ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); $('#agentForm').requestSubmit(); } });
@@ -341,7 +388,7 @@ function msgHtml(m, i) {
   const { text, blocks } = extractBlocks(m.content);
   const extra = blocks.map((b, k) => blockHtml(b, `${i}.${k}`)).join('') + gradeHtml(m, i);
   const save = blocks.some(b => b.type === 'note') ? '' : `<button class="lnk" data-act="msg-note" data-i="${i}">存进笔记</button>`;
-  return `<div class="ai"><div class="md">${md(text)}</div>${extra}<div class="fnt small mfoot">${save}${m.cost != null ? `<span>约 ${m.tin + m.tout} token · ¥${m.cost.toFixed(4)}${m.est ? '（估算）' : ''}</span>` : ''}</div></div>`;
+  return `<div class="ai"><div class="md">${md(text)}</div>${extra}<div class="fnt small mfoot">${srcHtml(m)}${save}${m.cost != null ? `<span>约 ${m.tin + m.tout} token · ¥${m.cost.toFixed(4)}${m.est ? '（估算）' : ''}</span>` : ''}</div></div>`;
 }
 
 const BLOCKS = new Map();
@@ -373,27 +420,37 @@ function blockHtml(b, key) {
 
 /* ---------- 发送 ---------- */
 const TOOLS = {
-  list_tracks: () => M.tracks().map(t => `${t.id}：${t.name}，当前阶段 ${M.state(t.id).current || '已学完'}`).join('\n'),
-  get_stage: a => { const c = stageCtx(a.id); return c ? c.text : '没有这个阶段 ID'; },
-  search_news: a => {
+  list_tracks: (a, add) => { M.tracks().forEach(t => add(srcItem('track', t.id, t.name))); return M.tracks().map(t => `${t.id}：${t.name}，当前阶段 ${M.state(t.id).current || '已学完'}`).join('\n'); },
+  get_stage: (a, add) => { const c = stageCtx(a.id); if (c) stageSources(a.id).forEach(add); return c ? c.text : '没有这个阶段 ID'; },
+  search_news: (a, add) => {
     const q = String(a.query || '').toLowerCase().split(/\s+/).filter(Boolean);
     const hits = M.news().filter(n => (!a.track || n.k.includes(a.track)) && q.every(w => (n.t + ' ' + (n.s || '')).toLowerCase().includes(w))).slice(0, 10);
+    hits.forEach(n => add(srcItem('news', n.id, n.t)));
     return hits.map(n => `- ${n.d} ${n.t}（${n.src || ''}）${n.u}`).join('\n') || '没有找到';
   },
-  get_notes: a => {
-    const cs = Object.values(store.all('cards')).filter(c => (a.at ? c.at === a.at : true) && (!a.query || c.t.includes(a.query))).slice(0, 20).map(c => '- ' + c.t.slice(0, 400));
+  get_notes: (a, add) => {
+    const E = Object.entries(store.all('cards')).filter(([, c]) => (a.at ? c.at === a.at : true) && (!a.query || c.t.includes(a.query))).slice(0, 20);
+    E.forEach(([cid, c]) => add(srcItem('card', cid, cardTitle(c.t))));
+    const cs = E.map(([, c]) => '- ' + c.t.slice(0, 400));
     const doc = a.at ? store.note(a.at) : '';
+    if (doc) add(srcItem('note', a.at, stageLabel(a.at)));
     return [doc && '阶段文档：\n' + doc.slice(0, 3000), cs.join('\n')].filter(Boolean).join('\n\n') || '没有笔记';
   },
-  get_route: a => routeCtx(a.id) || '没有这条路线',
+  get_route: (a, add) => { const t = routeCtx(a.id); if (t) add(srcItem('route', a.id, M.routeName(a.id))); return t || '没有这条路线'; },
   list_channels: () => channelsText(),
   search_public: a => searchPublic(a.query || ''),
-  get_public: a => publicText(a.id),
-  search_digests: async a => {
+  get_public: async (a, add) => {
+    const text = await publicText(a.id);
+    if (text !== '没有这条公共内容') add(srcItem('pub', String(+a.id || ''), '公共路线 ' + a.id));
+    return text;
+  },
+  search_digests: async (a, add) => {
     const all = store.all('digests'), ids = await searchDigests(a.query, 5);
     const q = String(a.query || '').toLowerCase().split(/\s+/).filter(Boolean);
-    const hits = ids && ids.length ? ids.map(id => all[id]).filter(Boolean)
-      : Object.values(all).filter(g => q.every(w => (g.title + ' ' + g.t).toLowerCase().includes(w))).sort((x, y) => y.c - x.c).slice(0, 5);
+    const E = ids && ids.length ? ids.filter(id => all[id]).map(id => [id, all[id]])
+      : Object.entries(all).filter(([, g]) => q.every(w => (g.title + ' ' + g.t).toLowerCase().includes(w))).sort((x, y) => y[1].c - x[1].c).slice(0, 5);
+    E.forEach(([id, g]) => add(srcItem('digest', id, g.title)));
+    const hits = E.map(([, g]) => g);
     return hits.map(g => `## ${new Date(g.c).toLocaleDateString('zh-CN')} ${g.title}\n${g.t.slice(0, 1200)}`).join('\n\n') || '没有找到相关的对话纪要';
   }
 };
@@ -419,14 +476,14 @@ async function send(S, text, opts = {}) {
     method: activeMethod(store.all('method')).map(([, x]) => `- ${x.d}：${x.t}`).join('\n'),
     digests: relatedDigests(S).map(g => `- ${new Date(g.c).toLocaleDateString('zh-CN')} ${g.title}：${g.t.replace(/\s+/g, ' ').slice(0, 700)}`).join('\n'),
     journal: journalText(S), tests: CUR.tests || '' });
-  const steps = 6;
+  const steps = 6, ctxSrc = ctxSources(S), toolSrc = [];
   try {
     for (let step = 0; step < steps; step++) {
       const history = MSGS.filter(m => m.role !== 'err').slice(-16).map(m => m.role === 'tool' ? { role: 'user', content: '工具结果：\n' + m.result } : { role: m.role, content: m.role === 'assistant' ? m.content.replace(NEXT_RE, '') : m.content });
       const messages = [{ role: 'system', content: sys + '\n\n当前上下文：\n' + CUR.text }, ...history];
       S.live = ''; S.ctl = new AbortController();
       // 生成中的文字存在这段对话上；只有它正显示在抽屉里时才更新画面
-      const res = await chat(cfg, messages, { signal: S.ctl.signal, onDelta: d => {
+      const res = await chat(cfg, messages, { signal: S.ctl.signal, feat: 'agent', onDelta: d => {
         S.live += d;
         if (S.key !== ACTIVE || !isOpen()) return;
         const el = $('#live'); if (!el) return;
@@ -434,20 +491,21 @@ async function send(S, text, opts = {}) {
         const box = $('#msgs'); if (box) box.scrollTop = box.scrollHeight;
       } });
       const c = cost(cfg, res.usage); await addUsage(cfg, res.usage);
-      MSGS.push({ role: 'assistant', ts: Date.now(), content: res.text, cost: c, tin: res.usage.in, tout: res.usage.out, est: res.estimated });
-      S.live = '';
+      MSGS.push({ role: 'assistant', ts: Date.now(), content: res.text, cost: c, tin: res.usage.in, tout: res.usage.out, est: res.estimated, src: mergeSources(ctxSrc, toolSrc) });
+      S.live = ''; stat('a');
       const { blocks } = extractBlocks(res.text);
       recordQuiz(S, blocks, MSGS.length - 1);
       const tool = blocks.find(b => b.type === 'tool');
+      if (tool) delete MSGS[MSGS.length - 1].src;   // 只是在调工具的那一步，不显示依据
       if (!tool) break;
       const fn = TOOLS[tool.data.name];
-      const out = fn ? String(await fn(tool.data.args || {})).slice(0, 6000) : '没有这个工具';
+      const out = fn ? String(await fn(tool.data.args || {}, x => { if (x) toolSrc.push(x); })).slice(0, 6000) : '没有这个工具';
       MSGS.push({ role: 'tool', ts: Date.now(), content: TOOL_LABEL[tool.data.name] || `调用 ${tool.data.name}`, result: out });
       await renderDrawer();
     }
   } catch (e) {
     if (e.name !== 'AbortError') MSGS.push({ role: 'err', content: e.message || String(e) });
-    else if (S.live) MSGS.push({ role: 'assistant', ts: Date.now(), content: S.live + '\n\n（已停止）' });
+    else if (S.live) MSGS.push({ role: 'assistant', ts: Date.now(), content: S.live + '\n\n（已停止）', src: mergeSources(ctxSrc, toolSrc) });
   }
   S.busy = false; S.ctl = null; S.live = '';
   S.msgs = MSGS.slice(-60);
@@ -524,7 +582,7 @@ act('agent-next', el => send(A(), el.dataset.q));
 act('msg-note', el => {
   const m = A().msgs[+el.dataset.i]; if (!m) return;
   const id = 'c' + uid('');
-  store.put('cards', id, { t: extractBlocks(m.content).text, at: ctxAt(), c: Date.now() });
+  store.put('cards', id, { t: extractBlocks(m.content).text, at: ctxAt(), c: Date.now(), ai: 1 });
   el.disabled = true; el.textContent = '已存进笔记'; toast('已存进笔记', () => store.del('cards', id));
 });
 act('blk-note', el => {
@@ -537,7 +595,7 @@ act('blk-note', el => {
     toast('已更新阶段文档', () => { store.setNote(CUR.docId, before); refresh(); });
   } else {
     const id = 'c' + uid(''), at = M.findStage(b.data.at) || M.route(b.data.at) ? b.data.at : (CUR.stageId || CUR.routeId || null);
-    store.put('cards', id, { t: text, at, c: Date.now() }); refresh();
+    store.put('cards', id, { t: text, at, c: Date.now(), ai: 1 }); refresh();
     toast('已存进笔记', () => { store.del('cards', id); refresh(); });
   }
   el.disabled = true; el.textContent = '已保存';

@@ -51,7 +51,7 @@ export function material(x, body) {
 export async function summarize(x, cfg, { signal, en = false } = {}) {
   const body = await articleText(x.u);
   const basis = body ? 'full' : x.s ? 'snippet' : 'title';
-  const res = await chat(cfg, [{ role: 'system', content: en ? SYSTEM + '\n请用英文写这份总结（标题、来源名保持原文）。' : SYSTEM }, { role: 'user', content: `【材料开始】\n${material(x, body)}\n【材料结束】` }], { signal, temperature: 0.2, maxTokens: 500 });
+  const res = await chat(cfg, [{ role: 'system', content: en ? SYSTEM + '\n请用英文写这份总结（标题、来源名保持原文）。' : SYSTEM }, { role: 'user', content: `【材料开始】\n${material(x, body)}\n【材料结束】` }], { signal, temperature: 0.2, maxTokens: 500, feat: 'summary' });
   const out = { text: String(res.text || '').trim(), basis, t: Date.now(), usage: res.usage };
   if (!out.text) throw new Error('模型没有返回内容');
   await saveSummary(x.id, { text: out.text, basis, t: out.t });

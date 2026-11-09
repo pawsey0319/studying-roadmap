@@ -180,7 +180,8 @@ export function renderTrack(id, sub, q) {
       <button class="btn tplan" data-act="agent-track" data-id="${t.id}" title="和 Agent 一起规划这个方向"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l1.9 4.6 4.6 1.9-4.6 1.9L12 16.5l-1.9-4.6L5.5 10l4.6-1.9z"/></svg><span class="lg-l">Agent 规划这个方向</span><span class="sm-l">规划</span></button></div>
       ${t.goal ? `<p class="tintro">${esc(t.goal)}</p>` : ''}
       <div class="tstat"><span>理论 <b>${st.doneStages}/${st.stages.length}</b></span><span>前沿路线 <b>${rs.length}</b></span>${nw ? `<span class="hasnew">${nw} 条有新进展</span>` : ''}</div></header>
-    ${t.pub ? `<p class="note">采用自公共区域：${esc(t.pub.by)} 的第 ${t.pub.v} 版。${(store.ui().upstream || {})[t.id] ? ` 作者已经更新到第 ${store.ui().upstream[t.id]} 版，<a href="#/public?id=${t.pub.id}">去看看改了什么</a>。` : ''}</p>` : ''}${t.note ? `<p class="note">${esc(t.note)}</p>` : ''}
+    ${t.source && /^引用自：/.test(t.source) && !t.pub ? `<p class="note">${esc(t.source)}。这是一份独立的副本，原路线之后的改动不会同步过来。</p>` : ''}
+    ${t.pub ? `<p class="note">引用自公共区域：${esc(t.pub.by)} 的第 ${t.pub.v} 版。${(store.ui().upstream || {})[t.id] ? ` 作者已经更新到第 ${store.ui().upstream[t.id]} 版，<a href="#/public?id=${t.pub.id}">去看看改了什么</a>。` : ''}</p>` : ''}${t.note ? `<p class="note">${esc(t.note)}</p>` : ''}
     ${tabsHtml(t, sub)}
     <div class="tbody">${body}</div>`;
 }

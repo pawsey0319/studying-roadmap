@@ -64,7 +64,7 @@ act('tr-board', async el => {
   try {
     for (let i = 0; i < L.length; i += 40) {
       const batch = L.slice(i, i + 40);
-      const res = await chat(cfg, [{ role: 'system', content: trPrompt() }, { role: 'user', content: JSON.stringify(batch) }], { maxTokens: 4000, temperature: 0.1 });
+      const res = await chat(cfg, [{ role: 'system', content: trPrompt() }, { role: 'user', content: JSON.stringify(batch) }], { maxTokens: 4000, temperature: 0.1, feat: 'translate' });
       const j = looseJSON(String(res.text).replace(/^[\s\S]*?```(?:json)?\s*|```[\s\S]*$/g, '')) || looseJSON(res.text) || {};
       const ok = Object.fromEntries(batch.filter(k => typeof j[k] === 'string' && j[k].trim()).map(k => [k, j[k].trim()]));
       n += Object.keys(ok).length; saveRuntime(ok);

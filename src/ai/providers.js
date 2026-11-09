@@ -1,8 +1,8 @@
 // 模型服务商：两套接口格式覆盖全部（OpenAI 兼容 / Anthropic），都用流式输出。
 // Key 只存在本设备（store.localSet），只发给你选的服务商。
 export const PROVIDERS = {
-  hosted: { name: '内测提供（管理员的模型，登录后可用）', base: '', model: '', fmt: 'openai', price: [0, 0], models: [], hosted: true,
-    help: '内测期间由管理员提供模型，不用自己注册 Key。需要先在下面“账号与云端同步”里登录；每人每天和每月有调用次数上限。' },
+  hosted: { name: '平台模型（登录后可用，有免费额度）', base: '', model: '', fmt: 'openai', price: [0, 0], models: [], hosted: true,
+    help: '由本站提供模型，不用自己注册 Key。需要先在下面“账号与云端同步”里用邮箱登录；每人每天和每月有免费次数，用完后可以换成自己的 Key。' },
   modelscope: { name: '魔搭 ModelScope（免费）', base: 'https://api-inference.modelscope.cn/v1', model: 'deepseek-ai/DeepSeek-V4.1-Flash', fmt: 'openai', price: [0, 0],
     models: ['deepseek-ai/DeepSeek-V4.1-Flash', 'ZhipuAI/GLM-5.3', 'deepseek-ai/DeepSeek-V4-Flash-0731', 'MiniMax/MiniMax-M2.7'],
     help: '在 modelscope.cn 注册并绑定阿里云账号后，在“访问令牌”里创建，免费每天 2000 次。' },
@@ -23,7 +23,7 @@ export const USD_CNY = 7.2;
 // messages：[{role:'system'|'user'|'assistant', content}]
 // onDelta(文本片段)；返回 { text, usage:{in,out}, estimated }
 import { replyRule } from '../i18n.js';
-export async function chat(cfg, messages, { onDelta, signal, temperature = 0.4, maxTokens = 2048 } = {}) {
+export async function chat(cfg, messages, { onDelta, signal, temperature = 0.4, maxTokens = 2048, feat = 'other' } = {}) {
   // 界面是英文时，所有模型回复都用英文（提示词本身是中文）
   const rule = replyRule();
   if (rule) messages = messages[0] && messages[0].role === 'system' ? [{ ...messages[0], content: messages[0].content + '\n\n' + rule }, ...messages.slice(1)] : [{ role: 'system', content: rule }, ...messages];
@@ -36,12 +36,12 @@ export async function chat(cfg, messages, { onDelta, signal, temperature = 0.4, 
   if (p.hosted) {
     const ep = await cfg.endpoint();
     url = ep.url; headers = { 'content-type': 'application/json', ...ep.headers };
-    body = { model: cfg.model || '', messages, temperature, max_tokens: maxTokens, stream: true };
+    body = { model: cfg.model || '', messages, temperature, max_tokens: maxTokens, stream: true, feat };
   } else if (fmt === 'anthropic') {
     const sys = messages.filter(m => m.role === 'system').map(m => m.content).join('\n\n');
     url = base + '/messages';
     headers = { 'content-type': 'application/json', 'x-api-key': cfg.key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' };
-    body = { model: cfg.model || p.model, max_tokens: maxTokens, temperature, stream: true, system: sys, messages: messages.filter(m => m.role !== 'system') };
+    body = { model: cfg.model || p.model, max_tokens: maxTokens, temperature, stream: true, messages: messages.filter(m => m.role !== 'system'), ...(sys ? { system: sys } : {}) };
   } else {
     url = base + '/chat/completions';
     headers = { 'content-type': 'application/json', ...(cfg.key ? { authorization: 'Bearer ' + cfg.key } : {}) };
@@ -57,7 +57,7 @@ export async function chat(cfg, messages, { onDelta, signal, temperature = 0.4, 
     let msg = '';
     try { const j = await r.json(); msg = (j.error && (j.error.message || j.error)) || j.message || JSON.stringify(j); } catch (e) { msg = await r.text().catch(() => ''); }
     const hint = r.status === 401 || r.status === 403 ? 'Key 不对或没有权限。' : r.status === 429 ? '请求太频繁或免费额度用完了，稍后再试或换一个服务商。' : r.status === 404 ? '模型名或地址不对。' : '';
-    if (p.hosted) throw new Error(String(msg || ('内测模型返回 ' + r.status)).slice(0, 200));
+    if (p.hosted) throw new Error(String(msg || ('平台模型返回 ' + r.status)).slice(0, 200));
     throw new Error(`服务商返回 ${r.status}。${hint}${msg ? '（' + String(msg).slice(0, 160) + '）' : ''}`);
   }
   if (p.hosted && r.headers.get('x-ai-format') === 'anthropic') fmt = 'anthropic';

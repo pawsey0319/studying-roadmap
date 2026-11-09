@@ -235,3 +235,120 @@ drop policy if exists lc_read on public.live_cache;
 create policy lc_read on public.live_cache for select to anon, authenticated using (true);
 revoke all on public.live_cache from anon, authenticated;
 grant select on public.live_cache to anon, authenticated;
+
+-- ==== 11. 平台模型：额度、用量和订阅预留（第一版；只给云函数 lh-ai 调用，网页和普通用户都不能直接读写） ====
+-- 前提：在下面第一行把 <调用口令> 换成一串 32 位以上的随机字符，和云函数环境变量 AI_DB_SECRET 填同一串。不要提交到仓库。
+create table if not exists public.ai_secret (id int primary key default 1 check (id = 1), secret text not null check (char_length(secret) >= 32));
+-- insert into public.ai_secret (id, secret) values (1, '<调用口令>') on conflict (id) do update set secret = excluded.secret;
+alter table public.ai_secret enable row level security;
+revoke all on public.ai_secret from anon, authenticated;
+
+-- 每人每天每个功能一行
+create table if not exists public.ai_usage (
+  user_id    varchar(64) not null,
+  day        date        not null default (now() at time zone 'Asia/Shanghai')::date,
+  feat       text        not null default 'other' check (feat ~ '^[a-z]{2,12}$'),
+  calls      int         not null default 0,
+  tin        bigint      not null default 0,
+  tout       bigint      not null default 0,
+  cost_micro bigint      not null default 0,
+  primary key (user_id, day, feat)
+);
+alter table public.ai_usage enable row level security;
+revoke all on public.ai_usage from anon, authenticated;
+
+-- 订阅预留：第一版不接支付，由管理员手动插入；plan = 'sub' 且 until 未到期时按订阅额度算
+create table if not exists public.ai_entitlements (
+  user_id     varchar(64) primary key,
+  plan        text        not null default 'free' check (plan in ('free', 'sub')),
+  day_limit   int         check (day_limit is null or day_limit between 0 and 100000),
+  month_limit int         check (month_limit is null or month_limit between 0 and 3000000),
+  until       timestamptz,
+  note        text        not null default '' check (char_length(note) <= 200),
+  updated_at  timestamptz not null default now()
+);
+alter table public.ai_entitlements enable row level security;
+revoke all on public.ai_entitlements from anon, authenticated;
+
+create or replace function public.ai_ok(p_secret text) returns boolean language sql stable security definer set search_path = public as $$
+  select exists (select 1 from ai_secret where id = 1 and secret = p_secret);
+$$;
+
+-- 记一次调用；超过上限返回 ok = false 且不计数。自动总结和翻译（summary、translate）单独限每天 p_light 次，不占主额度
+create or replace function public.ai_take(p_secret text, p_user varchar, p_feat text, p_day int, p_month int, p_light int)
+returns json language plpgsql security definer set search_path = public as $$
+declare d date := (now() at time zone 'Asia/Shanghai')::date; c_day int; c_month int; c_light int; light boolean := p_feat in ('summary', 'translate');
+begin
+  if not ai_ok(p_secret) then raise exception 'forbidden'; end if;
+  perform pg_advisory_xact_lock(hashtext('ai_take:' || p_user));
+  select coalesce(sum(calls) filter (where day = d and feat not in ('summary', 'translate')), 0),
+         coalesce(sum(calls) filter (where feat not in ('summary', 'translate')), 0),
+         coalesce(sum(calls) filter (where day = d and feat in ('summary', 'translate')), 0)
+    into c_day, c_month, c_light
+    from ai_usage where user_id = p_user and day >= date_trunc('month', d)::date;
+  if (light and c_light >= p_light) or (not light and (c_day >= p_day or c_month >= p_month)) then
+    return json_build_object('ok', false, 'day', c_day, 'month', c_month, 'light', c_light);
+  end if;
+  insert into ai_usage (user_id, day, feat, calls) values (p_user, d, p_feat, 1)
+    on conflict (user_id, day, feat) do update set calls = ai_usage.calls + 1;
+  return json_build_object('ok', true, 'day', c_day + (case when light then 0 else 1 end), 'month', c_month + (case when light then 0 else 1 end), 'light', c_light + (case when light then 1 else 0 end));
+end $$;
+
+-- 调用结束后补记 token 和成本；p_refund = true 表示上游失败，把刚才记的那一次退回
+create or replace function public.ai_record(p_secret text, p_user varchar, p_feat text, p_in bigint, p_out bigint, p_cost bigint, p_refund boolean)
+returns void language plpgsql security definer set search_path = public as $$
+declare d date := (now() at time zone 'Asia/Shanghai')::date; target date := d;
+begin
+  if not ai_ok(p_secret) then raise exception 'forbidden'; end if;
+  -- 退款可能跨北京时间零点才执行：退最近一条还没退完的记录，否则会找不到昨天的行、这次调用一直占着额度
+  if p_refund then
+    select max(day) into target from ai_usage
+      where user_id = p_user and feat = p_feat and calls > 0 and day >= date_trunc('month', d)::date;
+    target := coalesce(target, d);
+  end if;
+  update ai_usage set tin = tin + greatest(p_in, 0), tout = tout + greatest(p_out, 0), cost_micro = cost_micro + greatest(p_cost, 0),
+    calls = case when p_refund then greatest(calls - 1, 0) else calls end
+  where user_id = p_user and day = target and feat = p_feat;
+end $$;
+
+create or replace function public.ai_peek(p_secret text, p_user varchar)
+returns json language plpgsql stable security definer set search_path = public as $$
+declare d date := (now() at time zone 'Asia/Shanghai')::date; r json;
+begin
+  if not ai_ok(p_secret) then raise exception 'forbidden'; end if;
+  select json_build_object(
+    'day', coalesce(sum(calls) filter (where day = d and feat not in ('summary', 'translate')), 0),
+    'month', coalesce(sum(calls) filter (where feat not in ('summary', 'translate')), 0),
+    'light', coalesce(sum(calls) filter (where day = d and feat in ('summary', 'translate')), 0))
+  into r from ai_usage where user_id = p_user and day >= date_trunc('month', d)::date;
+  return r;
+end $$;
+
+-- 这个用户的套餐记录；没有记录返回 null
+create or replace function public.ai_plan(p_secret text, p_user varchar)
+returns json language plpgsql stable security definer set search_path = public as $$
+declare r json;
+begin
+  if not ai_ok(p_secret) then raise exception 'forbidden'; end if;
+  select json_build_object('plan', plan, 'day_limit', day_limit, 'month_limit', month_limit, 'until', until) into r from ai_entitlements where user_id = p_user;
+  return r;
+end $$;
+
+revoke execute on function public.ai_ok(text) from public, anon, authenticated;
+revoke execute on function public.ai_take(text, varchar, text, int, int, int) from public, anon;
+revoke execute on function public.ai_record(text, varchar, text, bigint, bigint, bigint, boolean) from public, anon;
+revoke execute on function public.ai_peek(text, varchar) from public, anon;
+revoke execute on function public.ai_plan(text, varchar) from public, anon;
+-- 服务端 API Key 以什么数据库角色执行不确定，所以四个函数对 authenticated 保留执行权限，由调用口令把关：
+-- 普通用户能调到函数，但不知道口令，函数第一行就拒绝。
+grant execute on function public.ai_take(text, varchar, text, int, int, int) to authenticated;
+grant execute on function public.ai_record(text, varchar, text, bigint, bigint, bigint, boolean) to authenticated;
+grant execute on function public.ai_peek(text, varchar) to authenticated;
+grant execute on function public.ai_plan(text, varchar) to authenticated;
+
+-- 管理员看用量（元）：select day, feat, sum(calls) calls, sum(tin) tin, sum(tout) tout, round(sum(cost_micro) / 1e6, 2) cny from ai_usage group by 1, 2 order by 1 desc, 2;
+-- 每人每月成本：select user_id, round(sum(cost_micro) / 1e6, 2) cny, sum(calls) calls from ai_usage where day >= date_trunc('month', now()) group by 1 order by 2 desc limit 50;
+-- 给某人开订阅额度（第一版没有支付，手动开 30 天）：
+--   insert into ai_entitlements (user_id, plan, until, note) values ('<用户 ID>', 'sub', now() + interval '30 days', '手动开通')
+--   on conflict (user_id) do update set plan = excluded.plan, until = excluded.until, note = excluded.note, updated_at = now();
+-- 邀请制（云函数 AI_INVITE_ONLY=1）时，给某人开免费额度：insert into ai_entitlements (user_id, plan, note) values ('<用户 ID>', 'free', '邀请') on conflict (user_id) do nothing;

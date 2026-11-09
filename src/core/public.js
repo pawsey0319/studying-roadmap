@@ -7,7 +7,7 @@ const last = id => String(id).split('.').pop();
 const clip = (s, n) => String(s || '').trim().slice(0, n);
 
 // 方向 → 快照。overlays 是你的个人调整：跳过的任务不公开，改写和新增的按改后的公开
-export function snapshot(track, overlays = {}) {
+export function snapshot(track, overlays = {}, { keepEmpty = false } = {}) {
   const used = new Set();
   const stages = track.stages.map(s => effectiveStage(s, overlays[s.id])).map((s, si) => {
     let sk = last(s.id); if (!/^s[0-9a-z]{2,12}$/.test(sk) || used.has(sk)) sk = 's' + String(si + 1).padStart(2, '0') + 'x'; used.add(sk);
@@ -17,7 +17,7 @@ export function snapshot(track, overlays = {}) {
       return { k: ik, text: clip(i.text, 500), mode: i.mode === 'practice' ? 'practice' : 'theory' };
     });
     return { k: sk, title: clip(s.title, 120), goal: clip(s.goal, 600), items, resources: (s.resources || []).slice(0, 40).map(r => ({ name: clip(r.name, 200), ...(/^https?:\/\//.test(r.url || '') ? { url: r.url } : {}) })), output: clip(s.output, 300) };
-  }).filter(s => s.items.length);
+  }).filter(s => s.items.length || keepEmpty);
   return { name: clip(track.name, 40), goal: clip(track.goal, 400), stages };
 }
 
@@ -67,3 +67,17 @@ export function adoptedMap(tracks) {
 }
 export const upstreamNewer = (local, item) => !!(local && item && +item.version > +local.v);
 export const okTrackId = id => TRACK_RE.test(id);
+
+// 引用整条路线：把一个方向（含你的个人调整）复制成你自己的一条新方向。跳过的任务不复制，改写和新增的按改后的复制。
+// 新方向的阶段和任务 ID 都换成 tid 开头，所以原方向的进度不会带过来；原方向不受影响。
+export function copyTrack(track, overlays, { tid, color }) {
+  // 复制时要保持阶段数：某个阶段的任务全被跳过时也保留这个空阶段（发布快照仍会去掉空阶段）
+  const body = snapshot(track, overlays || {}, { keepEmpty: true });
+  const stages = body.stages.map(s => {
+    const sid = `${tid}.${s.k}`;
+    return { id: sid, title: s.title, goal: s.goal, output: s.output,
+      items: s.items.map(i => ({ id: `${sid}.${i.k}`, kind: 'tech', mode: i.mode, text: i.text })),
+      resources: s.resources.map((r, k) => ({ id: `${sid}.r${String(k + 1).padStart(2, '0')}`, name: r.name, ...(r.url ? { url: r.url } : {}) })) };
+  });
+  return { id: tid, domain: 'mine', name: clip(body.name, 40), short: clip(body.name, 8), color: color || '#3C6E71', goal: clip(body.goal, 400), source: '引用自：' + clip(track.name, 40), stages };
+}

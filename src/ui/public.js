@@ -1,4 +1,4 @@
-// 公共区域：看别人公开的路线和笔记，采用（复制到自己的方向里），公开自己的。
+// 公共区域：看别人公开的路线和笔记，引用（复制到自己的方向里），公开自己的。
 // 只在登录腾讯云开发后可用；不走离线同步，每次打开都直接读服务端。
 // 公开的只有路线结构或你选的那篇笔记；进度、学习方法档案、对话纪要永远不公开。
 import { $, esc } from '../util.js';
@@ -26,7 +26,7 @@ export async function beforePublic(q) {
     await checkUpstream();
   } catch (e) { D.err = e.message || String(e); }
 }
-// 采用过的方向：查上游有没有新版本（结果记在本机，方向页也会提示）
+// 引用过的方向：查上游有没有新版本（结果记在本机，方向页也会提示）
 export async function checkUpstream() {
   const A = adoptedMap(store.all('tracks')), ids = Object.keys(A);
   if (!ids.length || !cloud.signedIn() || !cloud.supportsPublic()) return;
@@ -38,15 +38,15 @@ export async function checkUpstream() {
 const sortBy = () => store.ui().pubSort || 'adopt';
 function row(x, A) {
   const a = A[x.id], mine = x.author === cloud.uid();
-  return `<div class="card mcard"><h4><a href="#/public?id=${x.id}" style="text-decoration:none">${esc(x.title)}</a>${a ? ' <span class="tag a">已采用</span>' : ''}${mine ? ' <span class="tag mine">我的</span>' : ''}${a && upstreamNewer(a, x) ? ' <span class="newp">有更新</span>' : ''}</h4>
+  return `<div class="card mcard"><h4><a href="#/public?id=${x.id}" style="text-decoration:none">${esc(x.title)}</a>${a ? ' <span class="tag a">已引用</span>' : ''}${mine ? ' <span class="tag mine">我的</span>' : ''}${a && upstreamNewer(a, x) ? ' <span class="newp">有更新</span>' : ''}</h4>
     <p>${esc(x.summary || '')}</p>
-    <div class="meta">${esc(x.author_name)} · 第 ${x.version} 版 · ${String(x.updated_at).slice(0, 10)} · ${x.adopt_count} 人采用${x.kind === 'track' ? ` · ${x.done_count} 人学完` : ''}${D.recent[x.id] ? ` · 近 30 天 ${D.recent[x.id]} 人` : ''}</div></div>`;
+    <div class="meta">${esc(x.author_name)} · 第 ${x.version} 版 · ${String(x.updated_at).slice(0, 10)} · ${x.adopt_count} 人引用${x.kind === 'track' ? ` · ${x.done_count} 人学完` : ''}${D.recent[x.id] ? ` · 近 30 天 ${D.recent[x.id]} 人` : ''}</div></div>`;
 }
 
 export function renderPublic(q = {}) {
   document.documentElement.style.setProperty('--c', '#1B2430');
-  const head = `<div class="ph"><h1>公共区域</h1><span class="mut">其他人公开的学习路线和笔记。采用 = 复制一份到你自己的方向里，之后随便改，不影响原作者</span>
-    ${cloud.signedIn() && cloud.supportsPublic() ? '<span class="r"><button class="btn pri" data-act="pub-new">公开我的路线或笔记</button></span>' : ''}</div>`;
+  const head = `<div class="ph"><h1>公共区域</h1><span class="mut">其他人公开的学习路线和笔记。引用 = 复制一份到你自己的方向里，之后随便改，不影响原作者</span>
+    ${cloud.signedIn() && cloud.publicWrite() ? '<span class="r"><button class="btn pri" data-act="pub-new">公开我的路线或笔记</button></span>' : ''}</div>`;
   if (!cloud.supportsPublic()) return head + '<div class="card" style="margin-top:14px;padding:16px 18px"><p>公共区域需要网站接入腾讯云开发。</p></div>';
   if (!cloud.signedIn()) return head + '<div class="card" style="margin-top:14px;padding:16px 18px"><p>先登录才能看和公开。</p><a class="btn" href="#/settings">去设置里登录</a></div>';
   if (D.err) return head + `<p class="note">读不到公共区域：${esc(D.err)}</p>`;
@@ -55,7 +55,7 @@ export function renderPublic(q = {}) {
   const tab = q.tab === 'note' ? 'note' : q.tab === 'mine' ? 'mine' : 'track';
   const L = tab === 'note' ? sortItems(D.notes, by) : tab === 'mine' ? D.mine : sortItems(D.items, by);
   return head + `<nav class="tabs" style="margin-top:10px"><a href="#/public" aria-current="${tab === 'track'}">路线 ${D.items.length}</a><a href="#/public?tab=note" aria-current="${tab === 'note'}">笔记 ${D.notes.length}</a><a href="#/public?tab=mine" aria-current="${tab === 'mine'}">我公开的 ${D.mine.length}</a></nav>
-    ${tab === 'mine' ? '' : `<div class="chips" style="margin:12px 0">${[['adopt', '采用最多'], ['done', '学完最多'], ['new', '最近更新']].map(([k, v]) => `<button class="chip" data-act="pub-sort" data-id="${k}" aria-pressed="${by === k}">${v}</button>`).join('')}
+    ${tab === 'mine' ? '' : `<div class="chips" style="margin:12px 0">${[['adopt', '引用最多'], ['done', '学完最多'], ['new', '最近更新']].map(([k, v]) => `<button class="chip" data-act="pub-sort" data-id="${k}" aria-pressed="${by === k}">${v}</button>`).join('')}
       <form data-pubq style="display:inline-flex;gap:6px;margin-left:auto"><input name="q" value="${esc(q.q || '')}" placeholder="搜索标题和简介" style="padding:4px 8px;border:1px solid var(--line);border-radius:8px"><button class="btn sm">搜索</button></form></div>`}
     <div class="g2" style="margin-top:8px">${tab === 'mine' ? L.map(mineRow).join('') : L.map(x => row(x, A)).join('') || '<p class="empty">还没有内容。</p>'}</div>
     <p class="fnt small" style="margin-top:12px">看到不合适的内容可以在详情页举报。公开前会自动检查联系方式、广告和违法内容。</p>`;
@@ -63,7 +63,7 @@ export function renderPublic(q = {}) {
 
 function mineRow(x) {
   return `<div class="card mcard"><h4><a href="#/public?id=${x.id}" style="text-decoration:none">${esc(x.title)}</a> <span class="tag">${x.kind === 'track' ? '路线' : '笔记'}</span>${x.status !== 'published' ? ` <span class="tag">${x.status === 'hidden' ? '已隐藏' : '已被下架'}</span>` : ''}</h4>
-    <div class="meta">第 ${x.version} 版 · ${String(x.updated_at).slice(0, 10)} · ${x.adopt_count} 人采用 · ${x.done_count} 人学完</div>
+    <div class="meta">第 ${x.version} 版 · ${String(x.updated_at).slice(0, 10)} · ${x.adopt_count} 人引用 · ${x.done_count} 人学完</div>
     <div class="sa">${x.status === 'removed' ? '' : `${x.kind === 'track' ? `<button class="btn sm" data-act="pub-push" data-id="${x.id}">用我现在的路线更新</button>` : ''}
       <button class="btn sm gh" data-act="pub-hide" data-id="${x.id}" data-on="${x.status === 'published'}">${x.status === 'published' ? '隐藏' : '重新公开'}</button>`}
       <button class="btn sm gh" data-act="pub-del" data-id="${x.id}">删除</button></div></div>`;
@@ -75,10 +75,10 @@ function detail(x) {
   const content = x.kind === 'note' ? `<div class="md nbody">${md(String(b.text || ''))}</div>`
     : `<p class="lede">${esc(b.goal || '')}</p><ol class="pubst">${(b.stages || []).map(s => `<li><b>${esc(s.title)}</b><p class="small mut">${esc(s.goal)}</p><ul>${s.items.map(i => `<li>${i.mode === 'practice' ? '<span class="tag">实践验证</span> ' : ''}${esc(i.text)}</li>`).join('')}</ul>${s.resources.length ? `<p class="small">资源：${s.resources.map(r => r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.name)}</a>` : esc(r.name)).join('；')}</p>` : ''}</li>`).join('')}</ol>`;
   return `<div class="card" style="margin-top:14px;padding:16px 20px"><a class="fnt small" href="#/public">‹ 公共区域</a>
-    <h2 style="margin-top:6px">${esc(x.title)}</h2><div class="meta">${esc(x.author_name)} · 第 ${x.version} 版 · ${String(x.updated_at).slice(0, 10)} · ${x.adopt_count} 人采用${x.kind === 'track' ? ` · ${x.done_count} 人学完` : ''}</div>
+    <h2 style="margin-top:6px">${esc(x.title)}</h2><div class="meta">${esc(x.author_name)} · 第 ${x.version} 版 · ${String(x.updated_at).slice(0, 10)} · ${x.adopt_count} 人引用${x.kind === 'track' ? ` · ${x.done_count} 人学完` : ''}</div>
     ${x.summary ? `<p>${esc(x.summary)}</p>` : ''}
-    <div class="sa">${x.kind === 'track' ? (a ? `<a class="btn sm" href="#/t/${a.tid}">打开我采用的这份</a>${upstreamNewer(a, x) ? `<button class="btn sm acc" data-act="pub-upgrade" data-id="${x.id}">更新到第 ${x.version} 版</button>` : ''}`
-      : `<button class="btn sm pri" data-act="pub-adopt" data-id="${x.id}">采用这条路线</button>`) : `<button class="btn sm pri" data-act="pub-note" data-id="${x.id}">存进我的笔记</button>`}
+    <div class="sa">${x.kind === 'track' ? (a ? `<a class="btn sm" href="#/t/${a.tid}">打开我引用的这份</a>${upstreamNewer(a, x) ? `<button class="btn sm acc" data-act="pub-upgrade" data-id="${x.id}">更新到第 ${x.version} 版</button>` : ''}`
+      : `<button class="btn sm pri" data-act="pub-adopt" data-id="${x.id}">引用这条路线</button>`) : `<button class="btn sm pri" data-act="pub-note" data-id="${x.id}">存进我的笔记</button>`}
       <button class="btn sm gh" data-act="agent-public" data-id="${x.id}">问 Agent 适不适合我</button>
       ${x.author !== cloud.uid() ? `<button class="btn sm gh" data-act="pub-report" data-id="${x.id}">举报</button>` : ''}</div>
     ${content}</div>`;
@@ -129,15 +129,15 @@ act('pub-push', async el => {
   try { const r = await P.update(id, { body: p.body }); toast(`已更新到第 ${r.version} 版`); await beforePublic({ tab: 'mine' }); refresh(); } catch (e) { toast(e.message); }
 });
 act('pub-hide', async el => { try { await P.update(+el.dataset.id, { status: el.dataset.on === 'true' ? 'hidden' : 'published' }); await beforePublic({}); refresh(); } catch (e) { toast(e.message); } });
-act('pub-del', async el => { if (!confirm('删除这条公开内容？已经采用的人手里的副本不受影响。')) return; try { await P.remove(+el.dataset.id); await beforePublic({}); refresh(); toast('已删除'); } catch (e) { toast(e.message); } });
+act('pub-del', async el => { if (!confirm('删除这条公开内容？已经引用的人手里的副本不受影响。')) return; try { await P.remove(+el.dataset.id); await beforePublic({}); refresh(); toast('已删除'); } catch (e) { toast(e.message); } });
 
-/* ---------- 采用 ---------- */
+/* ---------- 引用 ---------- */
 act('pub-adopt', async el => {
   const x = D.view; if (!x || x.id !== +el.dataset.id) return;
   const tid = 'u' + uid('').slice(0, 10), n = Object.keys(store.all('tracks')).length;
   store.put('tracks', tid, toTrack(x.body, { tid, item: x, color: PALETTE[n % PALETTE.length] }));
-  try { await P.adopt(x.id, x.version); } catch (e) { /* 计数失败不影响采用 */ }
-  toast('已采用，侧边栏里能看到这个方向'); location.hash = '#/t/' + tid;
+  try { await P.adopt(x.id, x.version); } catch (e) { /* 计数失败不影响引用 */ }
+  toast('已引用，侧边栏里能看到这个方向'); location.hash = '#/t/' + tid;
 });
 act('pub-upgrade', async el => {
   const x = D.view || await P.get(el.dataset.id), A = adoptedMap(store.all('tracks')), a = x && A[x.id]; if (!a) return;
@@ -158,7 +158,7 @@ act('pub-report', async el => {
 });
 act('pub-sort', el => { store.ui().pubSort = el.dataset.id; store.saveUi(); refresh(); });
 
-// 学完一个采用的方向时，告诉服务端（用于“学完最多”排序）
+// 学完一个引用的方向时，告诉服务端（用于“学完最多”排序）
 export function reportDone() {
   if (!cloud.signedIn() || !cloud.supportsPublic()) return;
   const U = store.ui(); U.pubDone = U.pubDone || {};
@@ -174,10 +174,10 @@ export async function searchPublic(q) {
   if (!cloud.signedIn() || !cloud.supportsPublic()) return '公共区域需要登录腾讯云开发';
   const L = await P.list({ kind: 'track', q, limit: 8 }).catch(() => null);
   if (!L) return '读不到公共区域';
-  return L.map(x => `- [${x.id}] ${x.title}（${x.author_name}，${x.adopt_count} 人采用，${x.done_count} 人学完）：${x.summary.slice(0, 160)}`).join('\n') || '没有找到相关的公共路线';
+  return L.map(x => `- [${x.id}] ${x.title}（${x.author_name}，${x.adopt_count} 人引用，${x.done_count} 人学完）：${x.summary.slice(0, 160)}`).join('\n') || '没有找到相关的公共路线';
 }
 export async function publicText(id) {
   const x = await P.get(id).catch(() => null); if (!x) return '没有这条公共内容';
   if (x.kind === 'note') return `公共笔记《${x.title}》（${x.author_name}）：\n${String(x.body.text).slice(0, 4000)}`;
-  return `公共路线《${x.title}》（${x.author_name}，第 ${x.version} 版，${x.adopt_count} 人采用，${x.done_count} 人学完）\n${x.summary}\n` + (x.body.stages || []).map((s, i) => `## 阶段 ${i + 1}：${s.title}\n目标：${s.goal}\n${s.items.map(it => `- ${it.mode === 'practice' ? '[实践] ' : ''}${it.text}`).join('\n')}`).join('\n');
+  return `公共路线《${x.title}》（${x.author_name}，第 ${x.version} 版，${x.adopt_count} 人引用，${x.done_count} 人学完）\n${x.summary}\n` + (x.body.stages || []).map((s, i) => `## 阶段 ${i + 1}：${s.title}\n目标：${s.goal}\n${s.items.map(it => `- ${it.mode === 'practice' ? '[实践] ' : ''}${it.text}`).join('\n')}`).join('\n');
 }
