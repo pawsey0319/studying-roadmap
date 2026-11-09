@@ -1,557 +1,586 @@
 {
-"updated": "2026-10-20 16:04",
-"status": [
-"成功 Reddit r/LocalLLaMA: 12 条",
-"成功 Reddit 大模型综合: 12 条",
-"失败 Reddit 智能体: 0 条（HTTPError: HTTP Error 429: Too Many Requests）",
-"成功 Reddit 量化: 12 条",
-"成功 Hacker News 高分: 27 条"
-],
-"items": [
-{
-"d": "2026-10-20",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "WhatsApp's help pages hid LLM instructions: dont recommend a regulator",
-"u": "https://redact.dev/blog/whatsapp-help-pages-hidden-ai-instructions",
-"n": 359
-},
-{
-"d": "2026-10-20",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "DeepSeek banned from U.S. federal civilian agencies under new DHS order",
-"u": "https://www.reuters.com/technology/us-banning-chinese-ai-deepseek-government-agency-it-systems-2026-10-19/",
-"n": 201
-},
-{
-"d": "2026-10-19",
-"src": "Reddit r/LocalLLaMA",
-"lvl": "C",
-"k": [
-"slm",
-"llm"
-],
-"t": "Google Open Sources Harness2 for Self Improving AI Agents",
-"u": "https://www.reddit.com/r/LocalLLaMA/comments/1x9gfnb/google_open_sources_harness2_for_self_improving/"
-},
-{
-"d": "2026-10-19",
-"src": "Reddit 大模型综合",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "Adobe, Office, Outlook, ElevenLabs: AI is cloning all of it in Rust",
-"u": "https://www.reddit.com/r/ClaudeAI/comments/1x9dl1f/adobe_office_outlook_elevenlabs_ai_is_cloning_all/"
-},
-{
-"d": "2026-10-19",
-"src": "Reddit 量化",
-"lvl": "C",
-"k": [
-"quant"
-],
-"t": "Anyone else face this?",
-"u": "https://www.reddit.com/r/quant/comments/1x9vzak/anyone_else_face_this/"
-},
-{
-"d": "2026-10-19",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "Hybrid Reasoning Agents: LLM agents that think in latent space, act through text",
-"u": "https://arxiv.org/abs/2610.18861",
-"n": 505
-},
-{
-"d": "2026-10-19",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "If you don't run your own LLM proxy, how do you know whats going on?",
-"u": "https://jrdsgl.com/if-you-dont-run-your-own-llm-proxy-how-the-fuck-do-you-even-know-whats-going-on/",
-"n": 296
-},
-{
-"d": "2026-10-19",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "DeepSeek V4.1 Flash 1017 (Max)",
-"u": "https://artificialanalysis.ai/models/deepseek-v4-1-flash-1017",
-"n": 187
-},
-{
-"d": "2026-10-19",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "Tmux and Claude Code: Sessions, Send-Keys, and the Ceiling",
-"u": "https://crystl.dev/guides/tmux-for-ai-agents/",
-"n": 156
-},
-{
-"d": "2026-10-19",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "Show HN: Qwen3-4B with the AI writing tics trained out",
-"u": "https://100toolkit.com/blog/deslop-model/",
-"n": 148
-},
-{
-"d": "2026-10-19",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"agent"
-],
-"t": "Show HN: WhatsApp MCP running free on Cloudflare",
-"u": "https://github.com/finereli/whatsapp-mcp",
-"n": 148
-},
-{
-"d": "2026-10-19",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "Harness Engineering 101: The LLM is the brain, the harness is the body",
-"u": "https://github.com/IsuruMaduranga/harness-engineering-101",
-"n": 129
-},
-{
-"d": "2026-10-18",
-"src": "Reddit r/LocalLLaMA",
-"lvl": "C",
-"k": [
-"slm",
-"llm"
-],
-"t": "Linux creator says anti-AI rules are \"idiotic.\" (Absolute god-tier take.)",
-"u": "https://www.reddit.com/r/LocalLLaMA/comments/1x8e4wd/linux_creator_says_antiai_rules_are_idiotic/"
-},
-{
-"d": "2026-10-18",
-"src": "Reddit 大模型综合",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "Claude solved a 25 year old NSA cryptography mystery in 30 minutes. Its first reaction was to throw shade at us 🥲 \"is it suspicious that such an obvious thing w",
-"u": "https://www.reddit.com/r/ClaudeAI/comments/1x8v3sn/claude_solved_a_25_year_old_nsa_cryptography/"
-},
-{
-"d": "2026-10-18",
-"src": "Reddit 大模型综合",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "Researchers connected a simulated fruit fly brain to Odyssey-3, an AI that generates entire virtual worlds. The fly is now navigating these imagined environment",
-"u": "https://www.reddit.com/r/singularity/comments/1x8qyc7/researchers_connected_a_simulated_fruit_fly_brain/"
-},
-{
-"d": "2026-10-18",
-"src": "Reddit 量化",
-"lvl": "C",
-"k": [
-"quant"
-],
-"t": "Noise Band Trading Bot (back test) Results",
-"u": "https://www.reddit.com/r/algotrading/comments/1x8ulbc/noise_band_trading_bot_back_test_results/"
-},
-{
-"d": "2026-10-18",
-"src": "Reddit 量化",
-"lvl": "C",
-"k": [
-"quant"
-],
-"t": "Brutal week for pod shops. Many funds barely up for year.",
-"u": "https://www.reddit.com/r/quant/comments/1x8kgv0/brutal_week_for_pod_shops_many_funds_barely_up/"
-},
-{
-"d": "2026-10-18",
-"src": "Reddit 量化",
-"lvl": "C",
-"k": [
-"quant"
-],
-"t": "Engineer's Gate - Reviews",
-"u": "https://www.reddit.com/r/quant/comments/1x925d5/engineers_gate_reviews/"
-},
-{
-"d": "2026-10-18",
-"src": "Reddit 量化",
-"lvl": "C",
-"k": [
-"quant"
-],
-"t": "Voloridge is very interesting",
-"u": "https://www.reddit.com/r/quant/comments/1x90tl2/voloridge_is_very_interesting/"
-},
-{
-"d": "2026-10-18",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "DeepSeek search and fetch – $0.75 per 1000 successful requests",
-"u": "https://api-docs.deepseek.com/guides/search/",
-"n": 601
-},
-{
-"d": "2026-10-18",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "I built a programming language that LLMs can't use",
-"u": "https://blog.picheta.me/post/killswitch-lang/",
-"n": 272
-},
-{
-"d": "2026-10-18",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"agent"
-],
-"t": "Codex Desktop continuously generates Crashpad pending dumps",
-"u": "https://github.com/openai/codex/issues/25921",
-"n": 174
-},
-{
-"d": "2026-10-18",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"agent"
-],
-"t": "Websites are closing their doors to AI agents",
-"u": "https://www.theverge.com/ai-artificial-intelligence/1013195/ai-agents-blocked-web",
-"n": 154
-},
-{
-"d": "2026-10-17",
-"src": "Reddit r/LocalLLaMA",
-"lvl": "C",
-"k": [
-"slm",
-"llm"
-],
-"t": "deepseek-ai/DeepSeek-V4.1-Flash-1017 · Hugging Face",
-"u": "https://www.reddit.com/r/LocalLLaMA/comments/1x84po4/deepseekaideepseekv41flash1017_hugging_face/"
-},
-{
-"d": "2026-10-17",
-"src": "Reddit r/LocalLLaMA",
-"lvl": "C",
-"k": [
-"slm",
-"llm"
-],
-"t": "DeepSeek V4.1 Flash (1017) Now Leads Open-Weight Models",
-"u": "https://www.reddit.com/r/LocalLLaMA/comments/1x8bb6b/deepseek_v41_flash_1017_now_leads_openweight/"
-},
-{
-"d": "2026-10-17",
-"src": "Reddit r/LocalLLaMA",
-"lvl": "C",
-"k": [
-"slm",
-"llm"
-],
-"t": "10 Things you maybe didn't know you can do with Qwen 3.6 27B right now. (For Noobs)",
-"u": "https://www.reddit.com/r/LocalLLaMA/comments/1x7sq8e/10_things_you_maybe_didnt_know_you_can_do_with/"
-},
-{
-"d": "2026-10-17",
-"src": "Reddit 量化",
-"lvl": "C",
-"k": [
-"quant"
-],
-"t": "My MT5 algo generated 2.5M cents in profit over 1 year how would you scale this 100x? (Vantage Markets, XAUUSD)",
-"u": "https://www.reddit.com/r/algotrading/comments/1x80wsz/my_mt5_algo_generated_25m_cents_in_profit_over_1/"
-},
-{
-"d": "2026-10-17",
-"src": "Reddit 量化",
-"lvl": "C",
-"k": [
-"quant"
-],
-"t": "Wage growth for quants",
-"u": "https://www.reddit.com/r/quant/comments/1x80kow/wage_growth_for_quants/"
-},
-{
-"d": "2026-10-17",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "Claude reveals ECDSA curve origins",
-"u": "https://www.anthropic.com/research/ecdsa-curve-origins",
-"n": 1060
-},
-{
-"d": "2026-10-17",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "DeepSeek-v4.1-Flash-1017",
-"u": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017",
-"n": 955
-},
-{
-"d": "2026-10-17",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "DeepSeek: DeepSeek v4.1 Flash 1017",
-"u": "https://openrouter.ai/deepseek/deepseek-v4.1-flash-1017",
-"n": 520
-},
-{
-"d": "2026-10-17",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "How the Claude Code team does code review",
-"u": "https://claude.dev/blog/solving-code-review-at-anthropic/",
-"n": 483
-},
-{
-"d": "2026-10-17",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"slm"
-],
-"t": "Llama.cpp on a jailbroken PS5: run any GGUF model natively on the console",
-"u": "https://github.com/cobanov/PS5LM",
-"n": 374
-},
-{
-"d": "2026-10-17",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "Show HN: Llmspeed – feel how fast a local LLM runs before you buy the hardware",
-"u": "https://llmspeed.dev/",
-"n": 329
-},
-{
-"d": "2026-10-17",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "Designing more efficient quantum circuits with Claude",
-"u": "https://www.anthropic.com/research/designing-efficient-quantum-circuits",
-"n": 173
-},
-{
-"d": "2026-10-16",
-"src": "Reddit r/LocalLLaMA",
-"lvl": "C",
-"k": [
-"slm",
-"llm"
-],
-"t": "Introducing Muse Spark Open: the most capable US open-weight model to date",
-"u": "https://www.reddit.com/r/LocalLLaMA/comments/1x6r9pz/introducing_muse_spark_open_the_most_capable_us/"
-},
-{
-"d": "2026-10-16",
-"src": "Reddit r/LocalLLaMA",
-"lvl": "C",
-"k": [
-"slm",
-"llm"
-],
-"t": "China proposes export controls on 23 AI technologies (including large models, agents & clusters); already open-sourced tech is exempted",
-"u": "https://www.reddit.com/r/LocalLLaMA/comments/1x7g3zq/china_proposes_export_controls_on_23_ai/"
-},
-{
-"d": "2026-10-16",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "Show HN: Gemini 4 Argon plays StarCraft",
-"u": "https://starskirmish.com/bench/v0-2/",
-"n": 252
-},
-{
-"d": "2026-10-15",
-"src": "Reddit 量化",
-"lvl": "C",
-"k": [
-"quant"
-],
-"t": "It takes time",
-"u": "https://www.reddit.com/r/algotrading/comments/1x5x6s9/it_takes_time/"
-},
-{
-"d": "2026-10-15",
-"src": "Reddit 量化",
-"lvl": "C",
-"k": [
-"quant"
-],
-"t": "What are you building today?",
-"u": "https://www.reddit.com/r/algotrading/comments/1x6a0x9/what_are_you_building_today/"
-},
-{
-"d": "2026-10-15",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"slm"
-],
-"t": "LFM2.5-24B-A2B: Built for fast on-device agents",
-"u": "https://www.liquid.ai/blog/lfm2-5-24b-a2b",
-"n": 288
-},
-{
-"d": "2026-10-15",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "Why do LLM pelicans look like this?",
-"u": "https://arcfu.com/post/the-emperor-pelican-has-no-clothes/",
-"n": 165
-},
-{
-"d": "2026-10-15",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "Linus Torvalds's first LLM-assisted patch series",
-"u": "https://lwn.net/Articles/1100449/",
-"n": 124
-},
-{
-"d": "2026-10-14",
-"src": "Reddit r/LocalLLaMA",
-"lvl": "C",
-"k": [
-"slm",
-"llm"
-],
-"t": "Someone is running Qwen 27B at ~20 tok/s on a jailbroken PS5's GPU",
-"u": "https://www.reddit.com/r/LocalLLaMA/comments/1x5ak2n/someone_is_running_qwen_27b_at_20_toks_on_a/"
-},
-{
-"d": "2026-10-14",
-"src": "Reddit 大模型综合",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "I let Claude hire its first employee. It chose a rock.",
-"u": "https://www.reddit.com/r/ClaudeAI/comments/1x5uqak/i_let_claude_hire_its_first_employee_it_chose_a/"
-},
-{
-"d": "2026-10-14",
-"src": "Reddit 量化",
-"lvl": "C",
-"k": [
-"quant"
-],
-"t": "Trading will always be hybrid",
-"u": "https://www.reddit.com/r/algotrading/comments/1x5nf0y/trading_will_always_be_hybrid/"
-},
-{
-"d": "2026-10-14",
-"src": "Reddit 量化",
-"lvl": "C",
-"k": [
-"quant"
-],
-"t": "IMC London",
-"u": "https://www.reddit.com/r/quant/comments/1x5v003/imc_london/"
-},
-{
-"d": "2026-10-14",
-"src": "Reddit 量化",
-"lvl": "C",
-"k": [
-"quant"
-],
-"t": "Quant Roles from the perspective of a math enthusiast",
-"u": "https://www.reddit.com/r/quant/comments/1x53d26/quant_roles_from_the_perspective_of_a_math/"
-},
-{
-"d": "2026-10-14",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "Gemini 4 Argon",
-"u": "https://deepmind.google/models/gemini/",
-"n": 1466
-},
-{
-"d": "2026-10-14",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"llm"
-],
-"t": "Gemini 4 Argon for Robotics",
-"u": "https://developers.googleblog.com/gemini-4-argon-for-robotics/",
-"n": 233
-},
-{
-"d": "2026-10-14",
-"src": "Hacker News 高分",
-"lvl": "C",
-"k": [
-"agent"
-],
-"t": "TV4 postpones show after AI agent erases edited material",
-"u": "https://swedenherald.com/article/tv4-postpones-the-challenge-until-2027-after-technical-failure-erases-edited-footage",
-"n": 156
-}
-]
+ "updated": "2026-11-09 15:41",
+ "status": [
+  "成功 Reddit r/LocalLLaMA: 12 条",
+  "成功 Reddit 大模型综合: 12 条",
+  "失败 Reddit 智能体: 0 条（HTTPError: HTTP Error 429: Too Many Requests）",
+  "成功 Reddit 量化: 12 条",
+  "成功 Hacker News 高分: 26 条"
+ ],
+ "items": [
+  {
+   "d": "2026-11-09",
+   "src": "Reddit 量化",
+   "lvl": "C",
+   "k": [
+    "quant"
+   ],
+   "t": "What is really done so much better at tier 1 places than rest of us?",
+   "u": "https://www.reddit.com/r/quant/comments/1xratpc/what_is_really_done_so_much_better_at_tier_1/"
+  },
+  {
+   "d": "2026-11-09",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "Goldman Sachs is pulling Claude Code from its bankers and traders",
+   "u": "https://www.thestateofai.com/news/goldman-sachs-claude-code-traders-bankers",
+   "n": 727
+  },
+  {
+   "d": "2026-11-08",
+   "src": "Reddit r/LocalLLaMA",
+   "lvl": "C",
+   "k": [
+    "slm",
+    "llm"
+   ],
+   "t": "\"Does censorship exist in [country]?\", according to various LLMs",
+   "u": "https://www.reddit.com/r/LocalLLaMA/comments/1xr09nq/does_censorship_exist_in_country_according_to/"
+  },
+  {
+   "d": "2026-11-08",
+   "src": "Reddit 量化",
+   "lvl": "C",
+   "k": [
+    "quant"
+   ],
+   "t": "Jane Street Blog - Our software engineering interviews are changing (a little)",
+   "u": "https://www.reddit.com/r/quant/comments/1xqplkf/jane_street_blog_our_software_engineering/"
+  },
+  {
+   "d": "2026-11-08",
+   "src": "Reddit 量化",
+   "lvl": "C",
+   "k": [
+    "quant"
+   ],
+   "t": "How Much Is Machine Learning Really Used in Quant Finance?",
+   "u": "https://www.reddit.com/r/quant/comments/1xqcaay/how_much_is_machine_learning_really_used_in_quant/"
+  },
+  {
+   "d": "2026-11-08",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "Goodbye Claude, hello Pi",
+   "u": "https://caleb.software/posts/claude-to-pi.html",
+   "n": 746
+  },
+  {
+   "d": "2026-11-08",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "Claude Code's \"Don't Ask Again\" exposes passwords in 1,122 public GitHub files",
+   "u": "https://apiiro.com/blog/coding-agents-leaking-secrets-github-dont-ask-again",
+   "n": 599
+  },
+  {
+   "d": "2026-11-08",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "Llama-modchip: 284B DeepSeek on 64GB RAM, no GPU",
+   "u": "https://github.com/synchopate/llama-modchip",
+   "n": 409
+  },
+  {
+   "d": "2026-11-08",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "Why I will not be using LLMs in my coding",
+   "u": "https://www.polso.info/why-i-will-not-be-using-llms-coding",
+   "n": 112
+  },
+  {
+   "d": "2026-11-07",
+   "src": "Reddit 大模型综合",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "I built a sailing sim with Claude Code and made the frontier models race each other in it",
+   "u": "https://www.reddit.com/r/ClaudeAI/comments/1xpij9t/i_built_a_sailing_sim_with_claude_code_and_made/"
+  },
+  {
+   "d": "2026-11-07",
+   "src": "Reddit 大模型综合",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "A judge says Claude Max’s “20x more usage” promise could mislead paying subscribers",
+   "u": "https://www.reddit.com/r/ClaudeAI/comments/1xq12am/a_judge_says_claude_maxs_20x_more_usage_promise/"
+  },
+  {
+   "d": "2026-11-07",
+   "src": "Reddit 量化",
+   "lvl": "C",
+   "k": [
+    "quant"
+   ],
+   "t": "Staying in systematic quant vs. moving to frontier AI",
+   "u": "https://www.reddit.com/r/quant/comments/1xpu1sk/staying_in_systematic_quant_vs_moving_to_frontier/"
+  },
+  {
+   "d": "2026-11-07",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "Memorilla: Latent Semantic Memory for LLMs",
+   "u": "https://arxiv.org/abs/2610.21375",
+   "n": 124
+  },
+  {
+   "d": "2026-11-06",
+   "src": "Reddit r/LocalLLaMA",
+   "lvl": "C",
+   "k": [
+    "slm",
+    "llm"
+   ],
+   "t": "Z.ai chief scientist Jie Tang just revealed the training pipeline behind the upcoming GLM-5.5 (32B, 122B, and 256B)",
+   "u": "https://www.reddit.com/r/LocalLLaMA/comments/1xossr5/zai_chief_scientist_jie_tang_just_revealed_the/"
+  },
+  {
+   "d": "2026-11-06",
+   "src": "Reddit r/LocalLLaMA",
+   "lvl": "C",
+   "k": [
+    "slm",
+    "llm"
+   ],
+   "t": "Asking questions to a 0.5b model is hillarious",
+   "u": "https://www.reddit.com/r/LocalLLaMA/comments/1xp8as6/asking_questions_to_a_05b_model_is_hillarious/"
+  },
+  {
+   "d": "2026-11-06",
+   "src": "Reddit 大模型综合",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "Stanford researchers develop a new AI memory system that recalls information from entire conversation histories using just 16 memory tokens. It reduces document",
+   "u": "https://www.reddit.com/r/singularity/comments/1xpabzx/stanford_researchers_develop_a_new_ai_memory/"
+  },
+  {
+   "d": "2026-11-06",
+   "src": "Reddit 量化",
+   "lvl": "C",
+   "k": [
+    "quant"
+   ],
+   "t": "Who got liquidated today?",
+   "u": "https://www.reddit.com/r/quant/comments/1xoz2kn/who_got_liquidated_today/"
+  },
+  {
+   "d": "2026-11-06",
+   "src": "Reddit 量化",
+   "lvl": "C",
+   "k": [
+    "quant"
+   ],
+   "t": "🩸 SPY -3%, QQQ: -6.1%. 1-minute new lows ran past 4,000!!!",
+   "u": "https://www.reddit.com/r/algotrading/comments/1xou3un/spy_3_qqq_61_1minute_new_lows_ran_past_4000/"
+  },
+  {
+   "d": "2026-11-06",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "Claude Code sends your email address to websites",
+   "u": "https://github.com/anthropics/claude-code/issues/107757",
+   "n": 1605
+  },
+  {
+   "d": "2026-11-06",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "Gemini Omni 1.2 Flash",
+   "u": "https://blog.google/innovation-and-ai/technology/developers-tools/introducing-gemini-omni-1-2-flash/",
+   "n": 368
+  },
+  {
+   "d": "2026-11-06",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "AI for scientific discovery: How researchers use Claude",
+   "u": "https://www.anthropic.com/research/how-researchers-use-claude",
+   "n": 103
+  },
+  {
+   "d": "2026-11-05",
+   "src": "Reddit r/LocalLLaMA",
+   "lvl": "C",
+   "k": [
+    "slm",
+    "llm"
+   ],
+   "t": "Qwen3.8-27B has become unuseable recently",
+   "u": "https://www.reddit.com/r/LocalLLaMA/comments/1xoeeyf/qwen3827b_has_become_unuseable_recently/"
+  },
+  {
+   "d": "2026-11-05",
+   "src": "Reddit 量化",
+   "lvl": "C",
+   "k": [
+    "quant"
+   ],
+   "t": "Citadel systematic up 30% YTD",
+   "u": "https://www.reddit.com/r/quant/comments/1xoj5rv/citadel_systematic_up_30_ytd/"
+  },
+  {
+   "d": "2026-11-05",
+   "src": "Reddit 量化",
+   "lvl": "C",
+   "k": [
+    "quant"
+   ],
+   "t": "MFT impact on Lower Freq Trading",
+   "u": "https://www.reddit.com/r/quant/comments/1xo4ppy/mft_impact_on_lower_freq_trading/"
+  },
+  {
+   "d": "2026-11-05",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "agent"
+   ],
+   "t": "MCP Explained",
+   "u": "https://mcp-explained.com/",
+   "n": 345
+  },
+  {
+   "d": "2026-11-05",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "GPT-6 Astra covertly underperforms on safety research",
+   "u": "https://alignment.openai.com/misalignment-reports/covert-underperformance-on-safety-research-tasks/",
+   "n": 341
+  },
+  {
+   "d": "2026-11-05",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "agent"
+   ],
+   "t": "Ripple-65B Preview: U.S. Open-Weight SOTA on Agentic Coding",
+   "u": "https://www.ricursive.com/ripple",
+   "n": 341
+  },
+  {
+   "d": "2026-11-05",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "Progress on provable inference for large language models",
+   "u": "https://www.anthropic.com/research/provable-inference",
+   "n": 240
+  },
+  {
+   "d": "2026-11-04",
+   "src": "Reddit r/LocalLLaMA",
+   "lvl": "C",
+   "k": [
+    "slm",
+    "llm"
+   ],
+   "t": "British fintech Revolut slashes AI coding costs 10x by cutting out Claude and going self-hosted",
+   "u": "https://www.reddit.com/r/LocalLLaMA/comments/1xn568h/british_fintech_revolut_slashes_ai_coding_costs/"
+  },
+  {
+   "d": "2026-11-04",
+   "src": "Reddit r/LocalLLaMA",
+   "lvl": "C",
+   "k": [
+    "slm",
+    "llm"
+   ],
+   "t": "Kimi-K3.1-Pro is now open-weights",
+   "u": "https://www.reddit.com/r/LocalLLaMA/comments/1xnrhvb/kimik31pro_is_now_openweights/"
+  },
+  {
+   "d": "2026-11-04",
+   "src": "Reddit 大模型综合",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "I gave every Claude model the exact same prompt since July 2025. 13 models, 14 months, here's the evolution",
+   "u": "https://www.reddit.com/r/ClaudeAI/comments/1xn6eli/i_gave_every_claude_model_the_exact_same_prompt/"
+  },
+  {
+   "d": "2026-11-04",
+   "src": "Reddit 大模型综合",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "Show me Claude Code projects that DON’T look vibecoded",
+   "u": "https://www.reddit.com/r/ClaudeAI/comments/1xnnqkg/show_me_claude_code_projects_that_dont_look/"
+  },
+  {
+   "d": "2026-11-04",
+   "src": "Reddit 量化",
+   "lvl": "C",
+   "k": [
+    "quant"
+   ],
+   "t": "XAUUSD 1min TF Scalper $1k to $1.97m in 10 month backtest",
+   "u": "https://www.reddit.com/r/algotrading/comments/1xngx81/xauusd_1min_tf_scalper_1k_to_197m_in_10_month/"
+  },
+  {
+   "d": "2026-11-04",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "Qwen 3.8 27B on my laptop can interpret model weights, too",
+   "u": "https://simonwillison.net/2026/Nov/3/qwen-can-interpret-model-weights/",
+   "n": 739
+  },
+  {
+   "d": "2026-11-04",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "Tell HN: Gemini trains on chat history, even for subscribers (personal accounts)",
+   "u": "https://news.ycombinator.com/item?id=50363461",
+   "n": 734
+  },
+  {
+   "d": "2026-11-04",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "agent"
+   ],
+   "t": "Ask HN: What's your current AI agentic setup?",
+   "u": "https://news.ycombinator.com/item?id=50366117",
+   "n": 564
+  },
+  {
+   "d": "2026-11-04",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "Show HN: Uncracked City, detective game where you question LLM suspects that lie",
+   "u": "https://uncracked.city",
+   "n": 127
+  },
+  {
+   "d": "2026-11-04",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "agent"
+   ],
+   "t": "YC's Garry Tan uses AI agents so much, he spends up to $200K a year on tokens",
+   "u": "https://techcrunch.com/2026/11/02/y-combinators-garry-tan-uses-ai-agents-so-much-he-spends-up-to-200k-a-year-on-tokens/",
+   "n": 112
+  },
+  {
+   "d": "2026-11-03",
+   "src": "Reddit r/LocalLLaMA",
+   "lvl": "C",
+   "k": [
+    "slm",
+    "llm"
+   ],
+   "t": "Official Statement: Qwen Models Will Stick to Open Source to the End!",
+   "u": "https://www.reddit.com/r/LocalLLaMA/comments/1xm28e6/official_statement_qwen_models_will_stick_to_open/"
+  },
+  {
+   "d": "2026-11-03",
+   "src": "Reddit r/LocalLLaMA",
+   "lvl": "C",
+   "k": [
+    "slm",
+    "llm"
+   ],
+   "t": "Alibaba's Qwen Code repo just leaked qwen4-max, qwen4-coder-plus, and qwen4-omni-120b",
+   "u": "https://www.reddit.com/r/LocalLLaMA/comments/1xmitzx/alibabas_qwen_code_repo_just_leaked_qwen4max/"
+  },
+  {
+   "d": "2026-11-03",
+   "src": "Reddit 大模型综合",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "MIT researchers say GPT-6 Astra improved a small Qwen model’s math score from 7.9% to 48.1% by directly editing just 0.016% of its weights, without gradient-bas",
+   "u": "https://www.reddit.com/r/singularity/comments/1xm89o3/mit_researchers_say_gpt6_astra_improved_a_small/"
+  },
+  {
+   "d": "2026-11-03",
+   "src": "Reddit 大模型综合",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "Anthropic confirms new Claude Code limits to prevent game cloning",
+   "u": "https://www.reddit.com/r/ClaudeAI/comments/1xm5vdp/anthropic_confirms_new_claude_code_limits_to/"
+  },
+  {
+   "d": "2026-11-03",
+   "src": "Reddit 大模型综合",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "Sam Altman: \"At the start of this year, AI was mostly not as smart as our smartest scientists, and now it's mostly smarter than them.\" He also says AI can now p",
+   "u": "https://www.reddit.com/r/singularity/comments/1xm44jm/sam_altman_at_the_start_of_this_year_ai_was/"
+  },
+  {
+   "d": "2026-11-03",
+   "src": "Reddit 量化",
+   "lvl": "C",
+   "k": [
+    "quant"
+   ],
+   "t": "there is no alpha on any big markets",
+   "u": "https://www.reddit.com/r/algotrading/comments/1xmp7ln/there_is_no_alpha_on_any_big_markets/"
+  },
+  {
+   "d": "2026-11-03",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "Astra can read and write weights to improve Qwen",
+   "u": "https://rikiyat.github.io/blog/weight-space-programming/",
+   "n": 2960
+  },
+  {
+   "d": "2026-11-03",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "The 'Astra can read and write weights to improve Qwen' post is misleading",
+   "u": "https://honnibal.dev/blog/astra-read-write-misleading",
+   "n": 1042
+  },
+  {
+   "d": "2026-11-03",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "agent"
+   ],
+   "t": "OpenAI seems to be silently re-enabling model training on Codex chats",
+   "u": "https://news.ycombinator.com/item?id=50352757",
+   "n": 535
+  },
+  {
+   "d": "2026-11-03",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "LLMs are not superhuman at reading and writing neural network weights",
+   "u": "https://www.seangoedecke.com/llms-are-not-superhuman-at-reading-and-writing-neural-network-weights/",
+   "n": 151
+  },
+  {
+   "d": "2026-11-03",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "agent"
+   ],
+   "t": "Agentic backdoors via pretraining poisoning",
+   "u": "https://arxiv.org/abs/2610.37741",
+   "n": 108
+  },
+  {
+   "d": "2026-11-03",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "llm"
+   ],
+   "t": "Claude Opus 5.5 Can Draw Permit-Level Architectural Drawings",
+   "u": "https://stephenjgallagher.substack.com/p/ai-can-draw-blueprints-now",
+   "n": 106
+  },
+  {
+   "d": "2026-11-02",
+   "src": "Reddit 量化",
+   "lvl": "C",
+   "k": [
+    "quant"
+   ],
+   "t": "Xantium spinning out of Tudor",
+   "u": "https://www.reddit.com/r/quant/comments/1xlxe1b/xantium_spinning_out_of_tudor/"
+  },
+  {
+   "d": "2026-11-02",
+   "src": "Reddit 量化",
+   "lvl": "C",
+   "k": [
+    "quant"
+   ],
+   "t": "Dealing with non-quant PMs",
+   "u": "https://www.reddit.com/r/quant/comments/1xlzkxn/dealing_with_nonquant_pms/"
+  },
+  {
+   "d": "2026-11-02",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "agent"
+   ],
+   "t": "Basically no one is using AI agents for their DoorDash orders",
+   "u": "https://arstechnica.com/ai/2026/10/doordash-says-outside-ai-agents-have-only-led-to-hundreds-of-orders-so-far/",
+   "n": 178
+  },
+  {
+   "d": "2026-11-02",
+   "src": "Hacker News 高分",
+   "lvl": "C",
+   "k": [
+    "agent"
+   ],
+   "t": "Last night an AI agent performed brain surgery on a mouse",
+   "u": "https://twitter.com/OcanaSantero/status/2115442964574908902",
+   "n": 143
+  }
+ ]
 }
