@@ -1,0 +1,44 @@
+{
+  "scope": "real_local_cloudbase_handler_real_deepseek_upstream_fake_auth_and_quota_not_cloud_deployment",
+  "private_credentials_exposed": false,
+  "capabilities": {
+    "models": [
+      "DeepSeek-V4.1-Flash"
+    ],
+    "visionModels": [
+      "DeepSeek-V4.1-Flash"
+    ],
+    "plan": "free",
+    "day": 0,
+    "month": 0,
+    "light": 0,
+    "dayLimit": 30,
+    "monthLimit": 300,
+    "lightLimit": 60
+  },
+  "http_status": 200,
+  "format": "openai",
+  "cors": "http://127.0.0.1:8811",
+  "answer": "{\"科目\":\"英语口语\",\"时间\":\"明天下午三点\",\"时长\":\"20分钟\",\"状态\":\"未开始\"}",
+  "finish_reason": "stop",
+  "usage": {
+    "prompt_tokens": 355,
+    "completion_tokens": 214,
+    "total_tokens": 569,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 191
+    }
+  },
+  "seconds": 3.65,
+  "quota_rpc_calls": [
+    "ai_plan",
+    "ai_peek",
+    "ai_plan",
+    "ai_take",
+    "ai_record"
+  ],
+  "fields_exact": true
+}

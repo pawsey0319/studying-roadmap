@@ -1,0 +1,25 @@
+{
+  "repo": "mlx-community/whisper-small-mlx",
+  "revision": "45f3915923c7a79a5a5b5a7d909d39aeb0e5630e",
+  "endpoint_kind": "explicit_mirror",
+  "files": [
+    {
+      "file": "README.md",
+      "bytes": 343,
+      "sha256": "47bab1dbd0bd831bd6f1b76e9d5a774041c585c63a1ec29a60cee60cbb56a084",
+      "lfs_verified": false
+    },
+    {
+      "file": "config.json",
+      "bytes": 266,
+      "sha256": "e8f58e638208af66d5d5d67801259dc7a12d199e971967a9f9d33a8e3635668e",
+      "lfs_verified": false
+    },
+    {
+      "file": "weights.npz",
+      "bytes": 481307592,
+      "sha256": "55b6674c9b339702d486e2b1573839a66f8ec8f821ed2886993ef717a86b09f5",
+      "lfs_verified": true
+    }
+  ]
+}

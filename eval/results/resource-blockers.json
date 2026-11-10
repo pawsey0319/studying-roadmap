@@ -1,0 +1,36 @@
+{
+  "date": "2026-11-10",
+  "hardware": {"chip": "Apple M2", "physical_memory_bytes": 17179869184, "macos": "26.6.2"},
+  "direct_audio": {
+    "status": "not_evaluated_resource_blocked",
+    "candidate": "mlx-community/Qwen2-Audio-7B-Instruct-4bit",
+    "revision": "c65570002626f41b4dc08b7b54f42f99f3e82e7f",
+    "repository_bytes": 6574659991,
+    "weight_bytes": 6562540479,
+    "observed_partial_weight_mib_approx": 352,
+    "download_minutes_approx": 8,
+    "available_memory_gib_measured": 3.8967,
+    "conservative_load_gate_gib": 8,
+    "action": "managed_download_stopped; no_model_load_no_inference_no_claimed_quality",
+    "browser_preset_enabled": false,
+    "asr_fallback": false
+  },
+  "existing_llm_configuration": {
+    "credentials_printed": false,
+    "base_is_placeholder": false,
+    "key_is_placeholder": false,
+    "literal_host_is_private": false,
+    "read_only_models_count": 27,
+    "configured_models_found": true,
+    "audio_named_model_count": 0,
+    "inference_requested": false,
+    "note": "Model names do not establish audio capability or a free inference budget. No external inference authorized or attempted."
+  },
+  "network": {
+    "official_hf": "connection_reset",
+    "hf_explicit_public_mirror": "metadata_and_curl_weights_work; urllib_403; API_rate_limit_429_observed",
+    "official_pypi_wheels": "about_35KB_per_second; canceled_bounded_attempt",
+    "tsinghua_public_pypi_mirror": "isolated_runtime_install_completed"
+  },
+  "acceptance": {"human_speech": "not_done", "android": "not_done", "frozen_240_cases": "not_done", "commercial_inference": "not_used"}
+}

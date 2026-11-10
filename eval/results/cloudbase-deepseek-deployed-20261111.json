@@ -1,0 +1,72 @@
+{
+  "scope": "authorized_existing_lh_ai_production_update",
+  "environment": "studyingloop-d4gve2bc779a7d0ea",
+  "function": "lh-ai",
+  "state": "Active",
+  "changed_environment_keys": [
+    "AI_ALLOW_ORIGIN",
+    "AI_VISION_MODELS"
+  ],
+  "removed_environment_keys": [],
+  "existing_keys_unchanged_except_cors": true,
+  "runtime_specs_unchanged": {
+    "Type": true,
+    "Runtime": true,
+    "Timeout": true,
+    "MemorySize": true,
+    "Port": true
+  },
+  "vision_models": "deepseek-flash",
+  "remote_code_matches": {
+    "index.mjs": true,
+    "lib.mjs": true,
+    "package.json": true,
+    "scf_bootstrap": true
+  },
+  "probes": [
+    {
+      "method": "OPTIONS",
+      "origin": "http://127.0.0.1:8811",
+      "token_kind": "none",
+      "status": 204,
+      "allow_origin": "http://127.0.0.1:8811"
+    },
+    {
+      "method": "OPTIONS",
+      "origin": "https://localhost",
+      "token_kind": "none",
+      "status": 204,
+      "allow_origin": "https://localhost"
+    },
+    {
+      "method": "OPTIONS",
+      "origin": "https://pawsey0319.github.io",
+      "token_kind": "none",
+      "status": 204,
+      "allow_origin": "https://pawsey0319.github.io"
+    },
+    {
+      "method": "OPTIONS",
+      "origin": "https://untrusted.example.invalid",
+      "token_kind": "none",
+      "status": 403,
+      "allow_origin": null
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:8811",
+      "token_kind": "none",
+      "status": 401,
+      "allow_origin": "http://127.0.0.1:8811"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:8811",
+      "token_kind": "invalid",
+      "status": 401,
+      "allow_origin": "http://127.0.0.1:8811"
+    }
+  ],
+  "cloud_authenticated_image_chain_verified": false,
+  "reason": "No application-user access token available; management authorization is not an end-user session."
+}

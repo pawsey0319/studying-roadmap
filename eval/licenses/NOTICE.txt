@@ -1,0 +1,3 @@
+Built with Llama
+Llama 3.2 is licensed under the Llama 3.2 Community License, Copyright © Meta Platforms, Inc. All Rights Reserved.
+Ultravox components: MIT, see ultravox-MIT.txt. Additional Llama Community License and Acceptable Use Policy apply. Local research smoke is not legal clearance for public redistribution.

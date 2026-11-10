@@ -1,0 +1,22 @@
+{
+  "scope": "existing_gateway_real_deepseek_image_smoke_not_formal_acceptance",
+  "model_requested": "DeepSeek-V4.1-Flash",
+  "personal_material_sent": false,
+  "automatic_retries": 0,
+  "status": 200,
+  "seconds": 2.544,
+  "model_returned": "deepseek-v4.1-flash-1017",
+  "text": "{\"科目\":\"英语口语\",\"时间\":\"明天下午三点\",\"时长\":\"20分钟\",\"状态\":\"未开始\"}",
+  "finish_reason": "stop",
+  "usage": {
+    "prompt_tokens": 363,
+    "completion_tokens": 201,
+    "total_tokens": 564,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 178
+    }
+  }
+}

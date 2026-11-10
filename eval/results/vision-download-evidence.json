@@ -1,0 +1,73 @@
+{
+  "repo": "mlx-community/Qwen3.5-0.8B-MLX-4bit",
+  "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+  "endpoint_kind": "explicit_mirror",
+  "files": [
+    {
+      "file": "README.md",
+      "bytes": 2307,
+      "sha256": "7024f593c30b51462de050b5cdf938a5b0f0d554901e6ac3af3ed7af92fb5e5f",
+      "lfs_verified": false
+    },
+    {
+      "file": "chat_template.jinja",
+      "bytes": 7755,
+      "sha256": "273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80",
+      "lfs_verified": false
+    },
+    {
+      "file": "config.json",
+      "bytes": 3112,
+      "sha256": "ba7770da23eae5ebd6827571f086e331956b33f4442a9e876fb4aa10969a6772",
+      "lfs_verified": false
+    },
+    {
+      "file": "model.safetensors",
+      "bytes": 625229487,
+      "sha256": "f5a0d9dd3efa73510542a8023d610ff26be2b4b020d181cfc4bedaa1fcc5dd9e",
+      "lfs_verified": true
+    },
+    {
+      "file": "model.safetensors.index.json",
+      "bytes": 71473,
+      "sha256": "6e48f2fa5d6f033a6d77bf833abfa9698ca24d1715ecea4c67447bcfaee44650",
+      "lfs_verified": false
+    },
+    {
+      "file": "preprocessor_config.json",
+      "bytes": 390,
+      "sha256": "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516",
+      "lfs_verified": false
+    },
+    {
+      "file": "processor_config.json",
+      "bytes": 1300,
+      "sha256": "14932921ca485d458a04dafd8069fbb0a4505622a48208d19ed247115801385b",
+      "lfs_verified": false
+    },
+    {
+      "file": "tokenizer.json",
+      "bytes": 19989343,
+      "sha256": "87a7830d63fcf43bf241c3c5242e96e62dd3fdc29224ca26fed8ea333db72de4",
+      "lfs_verified": true
+    },
+    {
+      "file": "tokenizer_config.json",
+      "bytes": 1139,
+      "sha256": "e98f1901ac6f0adff67b1d540bfa0c36ac1a0cf59eb72ed78146ef89aafa1182",
+      "lfs_verified": false
+    },
+    {
+      "file": "video_preprocessor_config.json",
+      "bytes": 385,
+      "sha256": "7768af27c1fafa9cc9011c1dc20067e03f8915e03b63504550e11d5066986d13",
+      "lfs_verified": false
+    },
+    {
+      "file": "vocab.json",
+      "bytes": 6722759,
+      "sha256": "ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003",
+      "lfs_verified": false
+    }
+  ]
+}

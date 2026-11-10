@@ -1,4 +1,8 @@
 .DS_Store
+# Local isolated model runtime; never commit dependencies or private service presets.
+.venv/
+media.env
+media-browser.json
 __pycache__/
 # 快照由 GitHub Actions 每天生成，不进仓库
 data/sources.json

@@ -1,0 +1,905 @@
+{
+  "schema": "lh-project-visual-dev/1",
+  "suite_id": "zh-reading-dev-v1",
+  "scope": "24_synthetic_development_cards_not_production_acceptance",
+  "prompt_version": "strict-fields-locators-v1",
+  "renderer": {
+    "pillow": "13.0.0",
+    "font_sha256": "f8fa4a63e2cf500e98e64d4c73260daaba049306cf85dec9e3729bc285b7d645",
+    "font_file_name": "STHeiti Medium.ttc"
+  },
+  "provenance_counts": {
+    "synthetic_authored": 24,
+    "public_licensed": 0,
+    "consented_human": 0
+  },
+  "split_counts": {
+    "development": 24,
+    "frozen_acceptance": 0
+  },
+  "planned_formal_suite": {
+    "total": 240,
+    "per_modality": {
+      "asr": 60,
+      "direct_audio": 60,
+      "reading_visual": 60,
+      "pc_scene": 60
+    },
+    "status": "not_collected_or_frozen",
+    "accepted_formal_samples": 0,
+    "warning": "These 24 authored development cards and prior smoke do not complete any formal quota. No public or human samples claimed.",
+    "collection_requirements": [
+      "licensed public source manifest and original hashes",
+      "explicit consent for human/device recordings",
+      "independent reference review",
+      "split before tuning; frozen holdout access restricted",
+      "numbers/negation/noise/accents/art/formulas/PC occlusion/staleness coverage"
+    ]
+  },
+  "cases": [
+    {
+      "id": "study-specific",
+      "category": "detail",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "study-specific.png",
+      "sha256": "e285f25c5fb3350003c58bb5f3e7632a0231183584f4821411e7944cdacd1897",
+      "width": 900,
+      "height": 520,
+      "font_size": 32,
+      "requested_fields": [
+        "科目",
+        "时间",
+        "时长",
+        "状态"
+      ],
+      "reference": {
+        "科目": {
+          "value": "英语口语",
+          "locator": "L2"
+        },
+        "时间": {
+          "value": "明天下午三点",
+          "locator": "L3"
+        },
+        "时长": {
+          "value": "20分钟",
+          "locator": "L4"
+        },
+        "状态": {
+          "value": "未开始",
+          "locator": "L5"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    },
+    {
+      "id": "study-reading",
+      "category": "detail",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "study-reading.png",
+      "sha256": "f57e103df1c91ae1b4fe7f49ad5f8b87c5eb1c01f7f64d685950f47db54d503a",
+      "width": 900,
+      "height": 520,
+      "font_size": 32,
+      "requested_fields": [
+        "科目",
+        "时间",
+        "时长",
+        "状态"
+      ],
+      "reference": {
+        "科目": {
+          "value": "英语阅读",
+          "locator": "L2"
+        },
+        "时间": {
+          "value": "周五上午九点",
+          "locator": "L3"
+        },
+        "时长": {
+          "value": "35分钟",
+          "locator": "L4"
+        },
+        "状态": {
+          "value": "进行中",
+          "locator": "L5"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    },
+    {
+      "id": "study-mastery",
+      "category": "negation",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "study-mastery.png",
+      "sha256": "d0f9018c55103bc4e7dc0d56733dbf3d3d2e0a4dc6f5bf454d62a98d26d1ea23",
+      "width": 900,
+      "height": 520,
+      "font_size": 32,
+      "requested_fields": [
+        "任务",
+        "掌握度",
+        "测验",
+        "下一步"
+      ],
+      "reference": {
+        "任务": {
+          "value": "已完成",
+          "locator": "L2"
+        },
+        "掌握度": {
+          "value": "未确认",
+          "locator": "L3"
+        },
+        "测验": {
+          "value": "未参加",
+          "locator": "L4"
+        },
+        "下一步": {
+          "value": "用户决定",
+          "locator": "L5"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    },
+    {
+      "id": "study-correction",
+      "category": "correction",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "study-correction.png",
+      "sha256": "fa7070ca967afd6143991961d99667f759e0a40692eb26a747f0746dcf0e6c3c",
+      "width": 900,
+      "height": 520,
+      "font_size": 32,
+      "requested_fields": [
+        "原时间",
+        "现时间",
+        "科目",
+        "状态"
+      ],
+      "reference": {
+        "原时间": {
+          "value": "周一14:00",
+          "locator": "L2"
+        },
+        "现时间": {
+          "value": "周二16:30",
+          "locator": "L3"
+        },
+        "科目": {
+          "value": "法律基础",
+          "locator": "L4"
+        },
+        "状态": {
+          "value": "原时间已取消",
+          "locator": "L5"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    },
+    {
+      "id": "money-units",
+      "category": "numeric",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "money-units.png",
+      "sha256": "207ac4053733abc2f521e3f0f25fe1e170c605820eb8443ba670530c4454bf56",
+      "width": 900,
+      "height": 520,
+      "font_size": 32,
+      "requested_fields": [
+        "金额",
+        "税率",
+        "数量",
+        "截止日"
+      ],
+      "reference": {
+        "金额": {
+          "value": "1200.50元",
+          "locator": "L2"
+        },
+        "税率": {
+          "value": "6%",
+          "locator": "L3"
+        },
+        "数量": {
+          "value": "12件",
+          "locator": "L4"
+        },
+        "截止日": {
+          "value": "2026-12-03",
+          "locator": "L5"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    },
+    {
+      "id": "money-negative",
+      "category": "numeric",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "money-negative.png",
+      "sha256": "b14c27ab5f1a0f2369b0542bcd870977eb6bf692dfab9622704adea705f33625",
+      "width": 900,
+      "height": 520,
+      "font_size": 32,
+      "requested_fields": [
+        "收入",
+        "支出",
+        "净额",
+        "单位"
+      ],
+      "reference": {
+        "收入": {
+          "value": "800元",
+          "locator": "L2"
+        },
+        "支出": {
+          "value": "950元",
+          "locator": "L3"
+        },
+        "净额": {
+          "value": "-150元",
+          "locator": "L4"
+        },
+        "单位": {
+          "value": "人民币元",
+          "locator": "L5"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    },
+    {
+      "id": "money-percent",
+      "category": "numeric",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "money-percent.png",
+      "sha256": "2400f3fa1cb51c7299ce84c294a128d297e59f3dac6d3973e84fcb7aa8aba7d1",
+      "width": 900,
+      "height": 520,
+      "font_size": 32,
+      "requested_fields": [
+        "样本数",
+        "误差",
+        "比例",
+        "结论"
+      ],
+      "reference": {
+        "样本数": {
+          "value": "240",
+          "locator": "L2"
+        },
+        "误差": {
+          "value": "0.8%",
+          "locator": "L3"
+        },
+        "比例": {
+          "value": "12.5%",
+          "locator": "L4"
+        },
+        "结论": {
+          "value": "不保证收益",
+          "locator": "L5"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    },
+    {
+      "id": "money-decimal",
+      "category": "numeric",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "money-decimal.png",
+      "sha256": "1e148531dcd34dac4dd7d74d210d0adc53ce1b605a5c21a4ab79c21d79011a1f",
+      "width": 900,
+      "height": 520,
+      "font_size": 32,
+      "requested_fields": [
+        "温度",
+        "长度",
+        "质量",
+        "编号"
+      ],
+      "reference": {
+        "温度": {
+          "value": "-3.5℃",
+          "locator": "L2"
+        },
+        "长度": {
+          "value": "0.08米",
+          "locator": "L3"
+        },
+        "质量": {
+          "value": "2.05千克",
+          "locator": "L4"
+        },
+        "编号": {
+          "value": "A-0012",
+          "locator": "L5"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    },
+    {
+      "id": "legal-not",
+      "category": "negation",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "legal-not.png",
+      "sha256": "27a98627bdf50074357050b32f67a6cd98ae598732cbbfc913efbc7ba7e62537",
+      "width": 900,
+      "height": 520,
+      "font_size": 32,
+      "requested_fields": [
+        "允许",
+        "禁止",
+        "签署",
+        "付款"
+      ],
+      "reference": {
+        "允许": {
+          "value": "只读材料",
+          "locator": "L2"
+        },
+        "禁止": {
+          "value": "对外提交",
+          "locator": "L3"
+        },
+        "签署": {
+          "value": "不授权",
+          "locator": "L4"
+        },
+        "付款": {
+          "value": "不授权",
+          "locator": "L5"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    },
+    {
+      "id": "legal-except",
+      "category": "exception",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "legal-except.png",
+      "sha256": "5320d1fc07e653a82e3dc0586bdd98a0157ef26142819f60f62e5cfd7369357c",
+      "width": 900,
+      "height": 520,
+      "font_size": 32,
+      "requested_fields": [
+        "规则",
+        "例外",
+        "原文",
+        "有效期"
+      ],
+      "reference": {
+        "规则": {
+          "value": "不得转发",
+          "locator": "L2"
+        },
+        "例外": {
+          "value": "经书面同意可转发摘要",
+          "locator": "L3"
+        },
+        "原文": {
+          "value": "仍不得公开",
+          "locator": "L4"
+        },
+        "有效期": {
+          "value": "仅本次任务",
+          "locator": "L5"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    },
+    {
+      "id": "legal-before",
+      "category": "negation",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "legal-before.png",
+      "sha256": "f11d564e846522b7137efad29e1e0471fdc95b4b517d871aa1529c955d027605",
+      "width": 900,
+      "height": 520,
+      "font_size": 32,
+      "requested_fields": [
+        "提交前提",
+        "当前状态",
+        "能否提交",
+        "取消期限"
+      ],
+      "reference": {
+        "提交前提": {
+          "value": "管理员审核",
+          "locator": "L2"
+        },
+        "当前状态": {
+          "value": "尚未审核",
+          "locator": "L3"
+        },
+        "能否提交": {
+          "value": "不能",
+          "locator": "L4"
+        },
+        "取消期限": {
+          "value": "2026-11-30前",
+          "locator": "L5"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    },
+    {
+      "id": "legal-revoke",
+      "category": "negation",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "legal-revoke.png",
+      "sha256": "9fdaf6315d991946a0427279ff181e2e760c9bb1616b3f7a62d4c6da667092d0",
+      "width": 900,
+      "height": 520,
+      "font_size": 32,
+      "requested_fields": [
+        "历史权限",
+        "当前权限",
+        "待执行动作",
+        "旧操作"
+      ],
+      "reference": {
+        "历史权限": {
+          "value": "可写入",
+          "locator": "L2"
+        },
+        "当前权限": {
+          "value": "已撤销",
+          "locator": "L3"
+        },
+        "待执行动作": {
+          "value": "立即停止",
+          "locator": "L4"
+        },
+        "旧操作": {
+          "value": "不保证撤回",
+          "locator": "L5"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    },
+    {
+      "id": "absent-author",
+      "category": "absent",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "absent-author.png",
+      "sha256": "c2d45d4f2e6e7238d2e6ddac6f64374c0f9b72887273964294653314473c9b9e",
+      "width": 900,
+      "height": 520,
+      "font_size": 32,
+      "requested_fields": [
+        "标题",
+        "作者",
+        "日期",
+        "页码"
+      ],
+      "reference": {
+        "标题": {
+          "value": "河流与城市",
+          "locator": "L2"
+        },
+        "作者": {
+          "value": null,
+          "locator": null
+        },
+        "日期": {
+          "value": "2026-10-04",
+          "locator": "L3"
+        },
+        "页码": {
+          "value": "第2页",
+          "locator": "L4"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    },
+    {
+      "id": "absent-date",
+      "category": "absent",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "absent-date.png",
+      "sha256": "a4a0b4e92d79c5870bf1a93e31143b28d054be71345ce180347b9e685d082a77",
+      "width": 900,
+      "height": 520,
+      "font_size": 32,
+      "requested_fields": [
+        "标题",
+        "作者",
+        "日期",
+        "技法"
+      ],
+      "reference": {
+        "标题": {
+          "value": "色彩练习",
+          "locator": "L2"
+        },
+        "作者": {
+          "value": "示例作者甲",
+          "locator": "L3"
+        },
+        "日期": {
+          "value": null,
+          "locator": null
+        },
+        "技法": {
+          "value": "水彩",
+          "locator": "L4"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    },
+    {
+      "id": "absent-price",
+      "category": "absent",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "absent-price.png",
+      "sha256": "1be2a9e2e9b62184c06573b367351936c77ae7039685bce41014504cbee29fb6",
+      "width": 900,
+      "height": 520,
+      "font_size": 32,
+      "requested_fields": [
+        "展名",
+        "地点",
+        "票价",
+        "时间"
+      ],
+      "reference": {
+        "展名": {
+          "value": "合成空间",
+          "locator": "L2"
+        },
+        "地点": {
+          "value": "示例展厅",
+          "locator": "L3"
+        },
+        "票价": {
+          "value": null,
+          "locator": null
+        },
+        "时间": {
+          "value": "14:00",
+          "locator": "L4"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    },
+    {
+      "id": "absent-version",
+      "category": "absent",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "absent-version.png",
+      "sha256": "2a5d5d500e16ce34772c28b99a9133231ec1eaed5de5994e4c27cfd8c08c7535",
+      "width": 900,
+      "height": 520,
+      "font_size": 32,
+      "requested_fields": [
+        "工具",
+        "版本",
+        "系统",
+        "状态"
+      ],
+      "reference": {
+        "工具": {
+          "value": "示例编辑器",
+          "locator": "L2"
+        },
+        "版本": {
+          "value": null,
+          "locator": null
+        },
+        "系统": {
+          "value": "演示系统",
+          "locator": "L3"
+        },
+        "状态": {
+          "value": "未连接",
+          "locator": "L4"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    },
+    {
+      "id": "source-stale",
+      "category": "provenance",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "source-stale.png",
+      "sha256": "073d7d4c25f3f8c331b96acca96579e144f78be1fb13a28b16190e709cb5d0a0",
+      "width": 900,
+      "height": 520,
+      "font_size": 32,
+      "requested_fields": [
+        "图像时间",
+        "当前时间",
+        "来源状态",
+        "可否当实时"
+      ],
+      "reference": {
+        "图像时间": {
+          "value": "10:00:00",
+          "locator": "L2"
+        },
+        "当前时间": {
+          "value": "10:02:00",
+          "locator": "L3"
+        },
+        "来源状态": {
+          "value": "已过期",
+          "locator": "L4"
+        },
+        "可否当实时": {
+          "value": "不能",
+          "locator": "L5"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    },
+    {
+      "id": "source-hidden",
+      "category": "provenance",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "source-hidden.png",
+      "sha256": "0090d89c6be934bcb10d1d9c7a3caab49d59ba4115ec3a90332418ddabe1f44f",
+      "width": 900,
+      "height": 520,
+      "font_size": 32,
+      "requested_fields": [
+        "来源",
+        "当前画面",
+        "文章可见",
+        "引用状态"
+      ],
+      "reference": {
+        "来源": {
+          "value": "外部浏览器",
+          "locator": "L2"
+        },
+        "当前画面": {
+          "value": "咨询界面",
+          "locator": "L3"
+        },
+        "文章可见": {
+          "value": "否",
+          "locator": "L4"
+        },
+        "引用状态": {
+          "value": "待重新确认",
+          "locator": "L5"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    },
+    {
+      "id": "source-scope",
+      "category": "provenance",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "source-scope.png",
+      "sha256": "285767c59c7f365e5b06799ad650ad299b64678fe6bfd0f27f1048178e1c8d74",
+      "width": 900,
+      "height": 520,
+      "font_size": 32,
+      "requested_fields": [
+        "对象",
+        "范围",
+        "后台全文",
+        "权限"
+      ],
+      "reference": {
+        "对象": {
+          "value": "指定窗口",
+          "locator": "L2"
+        },
+        "范围": {
+          "value": "仅可见区域",
+          "locator": "L3"
+        },
+        "后台全文": {
+          "value": "不可读取",
+          "locator": "L4"
+        },
+        "权限": {
+          "value": "仅观察",
+          "locator": "L5"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    },
+    {
+      "id": "source-version",
+      "category": "provenance",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "source-version.png",
+      "sha256": "04cb90e92a8223788d77ed3ace82efc3e3bcde6dc51b6e855a8c45f3c54223ea",
+      "width": 900,
+      "height": 520,
+      "font_size": 32,
+      "requested_fields": [
+        "旧版本",
+        "新版本",
+        "旧行号",
+        "处理"
+      ],
+      "reference": {
+        "旧版本": {
+          "value": "r017",
+          "locator": "L2"
+        },
+        "新版本": {
+          "value": "r018",
+          "locator": "L3"
+        },
+        "旧行号": {
+          "value": "不可直接复用",
+          "locator": "L4"
+        },
+        "处理": {
+          "value": "重新定位",
+          "locator": "L5"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    },
+    {
+      "id": "small-tech",
+      "category": "small_text",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "small-tech.png",
+      "sha256": "0c011eaee5a34fa9672db750e1efbc516fadf97014c874c2d3aec9a3b6220498",
+      "width": 900,
+      "height": 520,
+      "font_size": 20,
+      "requested_fields": [
+        "模型",
+        "量化",
+        "上下文",
+        "权重"
+      ],
+      "reference": {
+        "模型": {
+          "value": "Qwen3.5-0.8B",
+          "locator": "L2"
+        },
+        "量化": {
+          "value": "4bit",
+          "locator": "L3"
+        },
+        "上下文": {
+          "value": "1024 tokens",
+          "locator": "L4"
+        },
+        "权重": {
+          "value": "不等于总内存",
+          "locator": "L5"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    },
+    {
+      "id": "small-english",
+      "category": "small_text",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "small-english.png",
+      "sha256": "09601ad9f54bc461ae802d760a4d2663f459c5d576579ca9dc02db3e25052d8a",
+      "width": 900,
+      "height": 520,
+      "font_size": 20,
+      "requested_fields": [
+        "模式",
+        "转写",
+        "默认输出",
+        "回退"
+      ],
+      "reference": {
+        "模式": {
+          "value": "direct_audio",
+          "locator": "L2"
+        },
+        "转写": {
+          "value": "dictation",
+          "locator": "L3"
+        },
+        "默认输出": {
+          "value": "文字",
+          "locator": "L4"
+        },
+        "回退": {
+          "value": "不得静默转换",
+          "locator": "L5"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    },
+    {
+      "id": "small-time",
+      "category": "small_text",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "small-time.png",
+      "sha256": "fa2bbe763103464fbfea4b4162cd05c3d4566e66a95eaa57543816ded6ba18e4",
+      "width": 900,
+      "height": 520,
+      "font_size": 20,
+      "requested_fields": [
+        "开始",
+        "结束",
+        "日期",
+        "时区"
+      ],
+      "reference": {
+        "开始": {
+          "value": "09:05",
+          "locator": "L2"
+        },
+        "结束": {
+          "value": "09:50",
+          "locator": "L3"
+        },
+        "日期": {
+          "value": "2026-12-08",
+          "locator": "L4"
+        },
+        "时区": {
+          "value": "Asia/Shanghai",
+          "locator": "L5"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    },
+    {
+      "id": "small-formula",
+      "category": "small_text",
+      "origin": "synthetic_authored",
+      "split": "development",
+      "image": "small-formula.png",
+      "sha256": "12f65b040d4963ccf4171a0f37cc4167c9bbb63e13becf42c45eca2a04bf94cc",
+      "width": 900,
+      "height": 520,
+      "font_size": 20,
+      "requested_fields": [
+        "公式",
+        "单位",
+        "条件",
+        "结果"
+      ],
+      "reference": {
+        "公式": {
+          "value": "E = mc²",
+          "locator": "L2"
+        },
+        "单位": {
+          "value": "J",
+          "locator": "L3"
+        },
+        "条件": {
+          "value": "v < c",
+          "locator": "L4"
+        },
+        "结果": {
+          "value": "未验证",
+          "locator": "L5"
+        }
+      },
+      "reference_review": "author_defined_not_independently_reviewed"
+    }
+  ]
+}

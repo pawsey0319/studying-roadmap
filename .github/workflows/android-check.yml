@@ -1,0 +1,47 @@
+name: Android build-only check
+
+# No push/tag trigger, release signing, deployment or release publication.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'src/**'
+      - 'tests/**'
+      - 'index.html'
+      - '.github/workflows/android-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  debug-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - name: Install compile SDK (not an emulator)
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Source and bridge contracts (not native lifecycle evidence)
+        run: node --test tests/screencontext.test.js
+      - name: Compile debug APK and Android lint (no release credentials)
+        run: bash app/verify-android.sh
+      - name: Keep lint reports only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-debug-lint-report
+          path: app/android/app/build/reports/lint-results-debug.*
+          if-no-files-found: ignore
+          retention-days: 7

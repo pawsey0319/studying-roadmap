@@ -1,0 +1,19 @@
+{
+  "scope": "local_readiness_snapshot_not_acceptance",
+  "model_services_running_observed": false,
+  "android_connected_devices": 0,
+  "adb_daemon_started_by_probe_then_stopped": true,
+  "available_memory_bytes_snapshot": 4528177152,
+  "memory_snapshot_is_model_peak": false,
+  "direct_audio_quality_passed": false,
+  "ultravox_preset_enabled_by_this_work": false,
+  "formal_240_accepted_samples": 0,
+  "cloudbase_deployed_by_this_work": false,
+  "external_requirements": [
+    "Android device and explicit OS screen-sharing authorization",
+    "isolated CloudBase deployment authorization and authenticated test identities",
+    "adequate safe compute for next model comparison",
+    "licensed independently reviewed formal evaluation data"
+  ],
+  "overall_acceptance_passed": false
+}

@@ -1,0 +1,10 @@
+{
+  "scenario": "call openAgent('free'), immediately closeAgent(), await pending open",
+  "runtime": "headless Chrome against existing local preview http://127.0.0.1:8811/?nostart=1#/; Network cache disabled",
+  "observed": {"hidden": true, "drawerOpen": false, "javascript_errors": []},
+  "passed": true,
+  "scope": "actual UI module asynchronous open/close regression only",
+  "image_decode_race": {"scenario": "delay createImageBitmap, close and reopen same topic, resolve old bitmap", "mediaChips": 0, "bitmapClosed": 1, "drawerOpen": true, "javascript_errors": [], "passed": true},
+  "not_proven": ["all interleavings of send preparation", "real Android capture", "account token refresh behavior"],
+  "supplementary_unit_tests": "tests/intent-boundary.test.js: 2/2, generation tickets remain invalid across A-to-B-to-A and stale preparation cannot consume new attachment array"
+}

@@ -37,9 +37,22 @@ if "SCHEDULE_EXACT_ALARM" not in m:
     m = m.replace('<manifest xmlns:android="http://schemas.android.com/apk/res/android">',
                   '<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">', 1)
     m = m.replace("</manifest>", '    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" tools:node="remove" />\n</manifest>', 1)
+# 按住说话：只声明录音权限，运行时仍由 WebView/系统逐次请求，不能自动授权。
+if 'android.permission.RECORD_AUDIO' not in m:
+    m = m.replace('</manifest>', '    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n</manifest>', 1)
+# MediaProjection 前台服务：OS 单次授权，非导出服务，不申请无障碍/悬浮窗。
+for permission in ["FOREGROUND_SERVICE", "FOREGROUND_SERVICE_MEDIA_PROJECTION", "POST_NOTIFICATIONS"]:
+    if f'android.permission.{permission}"' not in m:
+        m = m.replace('</manifest>', f'    <uses-permission android:name="android.permission.{permission}" />\n</manifest>', 1)
+if 'android:name=".ScreenCaptureService"' not in m:
+    m = m.replace('</application>', '    <service android:name=".ScreenCaptureService" android:exported="false" android:foregroundServiceType="mediaProjection" android:stopWithTask="true" />\n    </application>', 1)
 # App 内更新：安装新版需要“安装未知应用”的权限
 if "REQUEST_INSTALL_PACKAGES" not in m:
     m = m.replace("</manifest>", '    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />\n</manifest>', 1)
+# 权限声明统一放到 application 前；兼容已打过补丁的生成工程并保持幂等。
+permissions = re.findall(r'\s*<uses-permission\b[^>]*/>', m)
+m = re.sub(r'\s*<uses-permission\b[^>]*/>', '', m)
+m = m.replace('<application', '\n' + '\n'.join('    ' + p.strip() for p in permissions) + '\n    <application', 1)
 (A / "src" / "main" / "AndroidManifest.xml").write_text(m, encoding="utf-8")
 
 # 原生代码：App 内更新插件，替换生成的 MainActivity（注册插件）

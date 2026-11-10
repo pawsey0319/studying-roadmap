@@ -61,7 +61,12 @@ export const DOCS = {
   // 引用：q<随机> → {from:{k,id}, to:{k,id}, snap 引用时的文字, c}
   refs: (k, v) => refOk(k, v),
   // 资讯渠道：u<随机> → 自己加的订阅源；off.<哈希> → 关掉的内置渠道名
-  channels: (k, v) => channelOk(k, v)
+  channels: (k, v) => channelOk(k, v),
+  // 对学习 Agent 回答的反馈：f<随机> → {rating, reason, note, at, spec, provider, model, kind, title, excerpt, src}
+  feedback: (k, v) => /^f[0-9a-z]{6,24}$/.test(k) && isObj(v) && (v.rating === 'up' || v.rating === 'down')
+    && str(v.reason || '', 40) && str(v.note || '', 600) && typeof v.at === 'number' && str(v.spec || '', 40)
+    && str(v.provider || '', 30) && str(v.model || '', 80) && str(v.kind || '', 20) && str(v.title || '', 80)
+    && str(v.excerpt || '', 500) && Array.isArray(v.src) && v.src.length <= 8 && size(v) < 4000
 };
 export const DOC_NAMES = Object.keys(DOCS);
 export const validFor = name => DOCS[name] || (() => false);

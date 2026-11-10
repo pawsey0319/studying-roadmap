@@ -6,6 +6,7 @@ import { newsId } from './core/ids.js';
 import { tagNews, visibleRoutes, hasNew } from './core/routes.js';
 import { byDateDesc } from './core/feed.js';
 import { buildIndex } from './core/related.js';
+import { mergeStages } from './core/routeedit.js';
 
 export let C = null;        // 公共内容（content.js 读取的结果）
 export const today = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
@@ -21,7 +22,10 @@ export function tracks() {
   const mine = store.all('tracks'), use = new Set(store.adopted());
   const pub = C.tracks.filter(t => use.has(t.id)).map(t => {
     const ext = mine['ext.' + t.id];
-    return ext && ext.stages && ext.stages.length ? { ...t, stages: t.stages.concat(ext.stages.map(s => ({ ...s, imported: true }))) } : t;
+    if (!ext) return t;
+    // 个人扩展：新增的阶段标成“导入/自建”，隐藏的阶段不显示
+    const stages = mergeStages(t.stages, ext).map(s => (ext.stages || []).some(x => x.id === s.id) ? { ...s, imported: true } : s);
+    return { ...t, stages };
   });
   const own = Object.entries(mine).filter(([k]) => k.startsWith('u')).map(([, t]) => ({ ...t, mine: true }));
   const hidden = store.ui().hiddenTracks || {};

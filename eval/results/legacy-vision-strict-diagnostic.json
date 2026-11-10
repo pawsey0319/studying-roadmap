@@ -1,0 +1,38 @@
+{
+  "schema": "lh-legacy-vision-diagnostic/1",
+  "source_result_sha256": "0acc298c5037a82035b733cf28de933ec220afdcb82cfa7af967bc3a59cba7e6",
+  "fixture_sha256": "5e09cee7352b30804a19a55ebcf9bff1bb0111b7f84ed99a478797bd4c519cdf",
+  "model_snapshot": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+  "new_inference": false,
+  "scope": "single_original_synthetic_smoke_offline_recheck",
+  "method": "exact_field_text_after_colon_split_and_outer_whitespace_trim",
+  "fields": {
+    "学习科目": {
+      "expected": "英语口语",
+      "actual": "英语",
+      "correct": false
+    },
+    "计划时间": {
+      "expected": "明天下午三点",
+      "actual": "明天下午三点",
+      "correct": true
+    },
+    "每日时长": {
+      "expected": "20分钟",
+      "actual": "20分钟",
+      "correct": true
+    },
+    "当前状态": {
+      "expected": "未开始",
+      "actual": "未开始",
+      "correct": true
+    }
+  },
+  "correct_fields": 3,
+  "total_fields": 4,
+  "field_check_passed": false,
+  "locator_passed": null,
+  "behavioral_passed": null,
+  "production_eligible": false,
+  "warning": "Missing 口语 specificity fails exact field check. Original result unchanged; no new suite responses or frozen acceptance evidence."
+}

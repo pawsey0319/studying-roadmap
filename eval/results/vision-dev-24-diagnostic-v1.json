@@ -1,0 +1,14 @@
+{
+  "scope": "offline_diagnostic_only_not_strict_pass",
+  "normalization": "strip exact markdown json fence; accept flat object for value-only diagnostic; ignore locators",
+  "source": "vision-dev-24-v1.jsonl",
+  "parsed_cases": 15,
+  "field_values_correct_on_parsed": 60,
+  "fields_on_parsed": 60,
+  "request_seconds_p50": 1.0829,
+  "request_seconds_p95_nearest_rank": 1.9418,
+  "strict_cases_correct": 0,
+  "strict_case_total": 24,
+  "passed": null,
+  "production_eligible": false
+}

@@ -1,0 +1,21 @@
+{
+  "scope": "real_frontend_provider_local_production_proxy_real_upstream_fake_auth_quota",
+  "text": "文字链路正常",
+  "completion": {
+    "finishReason": "stop",
+    "refusal": null
+  },
+  "usage": {
+    "in": 41,
+    "out": 4
+  },
+  "stream_matches": true,
+  "upstream_calls": 1,
+  "rpc": [
+    "ai_plan",
+    "ai_take",
+    "ai_record"
+  ],
+  "seconds": 1.282,
+  "exact": true
+}

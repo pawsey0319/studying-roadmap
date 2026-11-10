@@ -1,0 +1,12 @@
+{
+  "review_type": "agent_manual_text_semantic_review_not_human_listening_benchmark",
+  "source": "eval/results/local-media-final.json",
+  "scope": "3_system_TTS_speech_cases_only; not_statistical_accuracy_not_240_case_acceptance",
+  "normalization_policy": "reported CER preserves simplified/traditional and lexical/digit differences; no posthoc score replacement",
+  "cases": [
+    {"id": "zh-clean", "reference": "请把今天的学习任务改到明天下午三点。", "output": "請把今天的學習任務改到明天下午3點", "semantic_smoke": "preserved", "reason": "Task change to tomorrow 3pm preserved; traditional spelling and 3 vs 三 are literal differences"},
+    {"id": "zh-entity", "reference": "我想学习英语口语，每天练习二十分钟。", "output": "我想學習英語口語,每天練習20分鐘。", "semantic_smoke": "preserved", "reason": "English speaking practice and 20 minutes daily preserved; traditional spelling and numeral form differ"},
+    {"id": "en-clean", "reference": "Please help me practice English for twenty minutes every day.", "output": "Please help me practice English for 20 minutes every day.", "semantic_smoke": "preserved", "reason": "Only twenty vs 20 difference observed in text"}
+  ],
+  "summary": "3/3 text semantic smoke checks preserved in these generated cases; not a population accuracy estimate. Literal CER alone cannot establish semantic quality or failure."
+}

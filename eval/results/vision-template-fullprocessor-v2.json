@@ -1,0 +1,8 @@
+{
+  "processor": "Qwen3VLProcessor",
+  "actual_load_path": true,
+  "prompt_preserved_exactly": true,
+  "formatted_prompt": "<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>你是逐字抄录器。只返回下面形状的一个合法JSON对象，禁止markdown围栏、数组或额外解释。每个指定字段都保留value与locator两项；将空值替换为图片中该字段冒号后的原文和同一行左侧L编号。L1是页面标题行，不可用页面标题替换正文中的同名字段。找不到该字段时两项均保持null，不能猜测。必须逐字复制Unicode字符，不换单位，不改公式或数字，不概括，不漏时间限定词。输出结构（null仅为空位，不是答案）：{\"fields\":{\"科目\":{\"value\":null,\"locator\":null},\"时间\":{\"value\":null,\"locator\":null}}}<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n",
+  "new_inference": false,
+  "production_eligible": false
+}

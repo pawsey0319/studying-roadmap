@@ -1,0 +1,35 @@
+{
+  "scope": "same_synthetic_development_set_prompt_tuning_not_held_out",
+  "decision": "neither_prompt_satisfies_structured_extraction_contract",
+  "runs": [
+    {
+      "prompt_version": "strict-fields-locators-v1",
+      "responses_file": "eval/results/vision-dev-24-v1.jsonl",
+      "score_file": "eval/results/vision-dev-24-score-v1.json",
+      "real_inference_requests": 24,
+      "strict_cases_correct": 0,
+      "case_total": 24,
+      "request_seconds_p50": 1.0829,
+      "request_seconds_p95_nearest_rank": 1.9418,
+      "resource_measurements_saved": false
+    },
+    {
+      "prompt_version": "strict-fields-locators-v2",
+      "responses_file": "eval/results/vision-dev-24-v2.jsonl",
+      "score_file": "eval/results/vision-dev-24-score-v2.json",
+      "real_inference_requests": 24,
+      "strict_cases_correct": 0,
+      "case_total": 24,
+      "request_seconds_p50": 1.17405,
+      "request_seconds_p95_nearest_rank": 1.459,
+      "resource_measurements_saved": false
+    }
+  ],
+  "production_eligible": false,
+  "passed": null,
+  "notes": [
+    "No original responses or scorer were changed.",
+    "Schema failure is not proof that every OCR value was wrong.",
+    "Next candidate should preserve v1 images and scoring; select prompt before formal held-out evaluation."
+  ]
+}

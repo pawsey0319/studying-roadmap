@@ -1,0 +1,23 @@
+{
+  "scope": "production_config_official_upstream_direct_not_cloud_user_auth",
+  "model": "deepseek-flash",
+  "personal_data": false,
+  "retries": 0,
+  "status": 200,
+  "text": "{\"科目\":\"英语口语\",\"时间\":\"明天下午三点\",\"时长\":\"20分钟\",\"状态\":\"未开始\"}",
+  "finish_reason": "stop",
+  "usage": {
+    "prompt_tokens": 352,
+    "completion_tokens": 227,
+    "total_tokens": 579,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 204
+    },
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 352
+  },
+  "seconds": 2.663
+}

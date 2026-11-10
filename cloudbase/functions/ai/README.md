@@ -21,6 +21,7 @@
 | `AI_BASE` | 是 | 模型接口地址，填到 `/v1` 为止 |
 | `AI_KEY` | 是 | 模型接口的 Key |
 | `AI_MODELS` | 是 | 允许的模型，逗号分隔，第一个是默认 |
+| `AI_VISION_MODELS` | 否 | 显式允许图片的模型，逗号分隔，**默认空（拒图）**。必须同时出现在 `AI_MODELS` 且 `AI_FORMAT` 为 OpenAI 格式；例如 `deepseek-flash`，不能按模型名称猜测能力 |
 | `AI_FORMAT` | 否 | 接口是 Anthropic 格式时填 `anthropic` |
 | `AI_PRICES` | 否 | 成本单价，JSON，单位“元 / 百万 token”，例如 `{"deepseek-chat":[2,8]}`；不填按 0 记 |
 | `AI_FREE_DAY` / `AI_FREE_MONTH` | 否 | 免费额度，默认每天 30 次、每月 300 次 |
@@ -37,6 +38,15 @@
    `https://studyingloop-d4gve2bc779a7d0ea-1396624416.ap-shanghai.app.tcloudbase.com/lh-ai`。
    配置随网页发布后，“AI 服务”才会出现“平台模型”；现有用户选择的自带 Key 服务商不会自动切换。
    原 `/v1/functions/lh-ai?webfn=true` 入口在此次公开 Key 探测中被网关拒绝，不能据此假设 HTTP 函数代码不可用，应以配置后的 HTTP 路由实测为准。
+
+### 图片能力与部署边界
+
+- 额度查询的同一个 GET 入口返回 `visionModels`，内容为 `AI_VISION_MODELS` 与 `AI_MODELS` 的交集；Anthropic 格式始终返回空数组。前端应以该字段判断平台图片能力，旧部署缺失字段也视为不支持。
+- DeepSeek 图片接入需管理员确认上游实际能力后，手动设置 `AI_MODELS=deepseek-flash`、`AI_VISION_MODELS=deepseek-flash`、`AI_FORMAT=openai` 及既有 `AI_BASE`/`AI_KEY`。只改源码或 README **不会自动发布云函数或更新生产变量**；本次不执行部署、不改凭据、不自动扩大测试费用。
+- 只允许白名单模型的 `user.content` 为 `text` / `image_url` 数组。图片 URL 只能是内联 `data:image/png|jpeg|webp|gif;base64,...`，严格校验规范 base64、MIME 对应魔数/基础头部（非完整图像解码）。拒绝远程 URL、音频、未知块/字段及非 user 图片，不静默丢弃附件。可选 `image_url.detail` 仅允许 `auto`/`low`/`high`。
+- 图片每张最多 2MiB，所有消息共最多 4 张、总计 6MiB。文字预算仍为全部字符串及 text 块合计 200000 字符，**不含 base64**；超过时整次拒绝，不截断。启用视觉时 HTTP 读取上限约 9.3MiB（6MiB 媒体的 base64 + 文字最坏 JSON 转义 + 64KiB 包装），未配置时维持原 1000000 字节。部署网关也须允许对应请求体，否则网关会提前拒绝，不能仅放大函数额度或文字限制来解决。
+- 登录/邀请校验不变，所有正文/媒体校验在 `ai_take` 扣额前；上游失败仍退款。原有纯文本 OpenAI/Anthropic 请求保持兼容；图片原始内容不写日志或落盘。缺少上游 token 用量时仅估算文字 token，图片成本不能据此宣称准确。
+- 本地协议回归：`node --test tests/n12.test.js`（假上游验证完整内联图片转发、拒绝不扣额、旧文本与退款，不代表真实 API 能力/质量验收）。
 
 ### 两类 Key 与故障定位
 

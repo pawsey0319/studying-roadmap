@@ -1,0 +1,26 @@
+{
+  "scope": "public_preflight_and_anonymous_read_only_no_remote_mutation",
+  "results": [
+    {
+      "method": "OPTIONS",
+      "origin": "http://127.0.0.1:8811",
+      "status": 403,
+      "allow_origin": null,
+      "body": "{\"error\":\"这个来源不允许调用\"}"
+    },
+    {
+      "method": "OPTIONS",
+      "origin": "https://pawsey0319.github.io",
+      "status": 204,
+      "allow_origin": "https://pawsey0319.github.io"
+    },
+    {
+      "method": "GET",
+      "origin": "https://pawsey0319.github.io",
+      "status": 401,
+      "allow_origin": "https://pawsey0319.github.io",
+      "body": "{\"error\":\"平台模型需要先登录：设置 → 账号与云端同步\"}"
+    }
+  ],
+  "signed_in_cloud_image_chain_verified": false
+}

@@ -3,12 +3,14 @@
 // 模型 Key、数据库服务端 Key、调用口令都只在云函数环境变量里，不进网页、不进仓库。
 import http from 'node:http';
 import crypto from 'node:crypto';
-import { bearer, limitsFor, cleanBody, usageFromSSE, textFromSSE, estimate, costMicro, allowOrigin, quotaMessage } from './lib.mjs';
+import { bearer, limitsFor, cleanBody, usageFromSSE, textFromSSE, estimate, costMicro, allowOrigin, quotaMessage, VISION_BODY_BYTES } from './lib.mjs';
 
 const env = (k, d = '') => String(process.env[k] ?? d).trim();
 const GW = () => `https://${env('CB_ENV')}.api.tcloudbasegateway.com`;
 const MODELS = () => env('AI_MODELS').split(',').map(s => s.trim()).filter(Boolean);
 const FMT = () => (env('AI_FORMAT') === 'anthropic' ? 'anthropic' : 'openai');
+// 显式能力白名单，默认无；只公布实际可选择且使用 OpenAI 协议的模型。
+const VISION_MODELS = () => FMT() === 'openai' ? [...new Set(env('AI_VISION_MODELS').split(',').map(s => s.trim()).filter(s => s && MODELS().includes(s)))] : [];
 const price = m => { try { const p = JSON.parse(env('AI_PRICES', '{}'))[m]; return Array.isArray(p) ? p : [0, 0]; } catch (e) { return [0, 0]; } };
 const sha = s => crypto.createHash('sha256').update(String(s)).digest('hex').slice(0, 16);
 
@@ -49,10 +51,21 @@ async function whoami(token) {
 }
 
 // 字节上限只防超大请求；真正的 20 万字限制在 cleanBody 里按字符判断（中文一个字 3 字节）
-async function readBody(req, max = 1000000) {
-  let n = 0; const parts = [];
-  for await (const c of req) { n += c.length; if (n > max) throw Object.assign(new Error('内容太长，请缩短后再试'), { status: 413 }); parts.push(c); }
-  return Buffer.concat(parts).toString('utf8');
+function readBody(req, max = 1000000) {
+  return new Promise((resolve, reject) => {
+    let n = 0, tooLarge = false; const parts = [];
+    req.on('data', c => {
+      n += c.length;
+      if (tooLarge) return; // 丢弃后续字节但不销毁 socket，确保客户端收到明确 413 而不是 ECONNRESET。
+      if (n > max) {
+        tooLarge = true; parts.length = 0;
+        reject(Object.assign(new Error('内容太长，请缩短后再试'), { status: 413 }));
+      } else parts.push(c);
+    });
+    req.on('end', () => { if (!tooLarge) resolve(Buffer.concat(parts).toString('utf8')); });
+    req.on('error', reject);
+    req.on('aborted', () => reject(new Error('请求已中止')));
+  });
 }
 const refund = (u, feat) => rpc('ai_record', { p_user: u.id, p_feat: feat, p_in: 0, p_out: 0, p_cost: 0, p_refund: true }).catch(() => {});
 
@@ -73,12 +86,16 @@ export async function handle(req, res) {
   const lim = limitsFor(ent, process.env);
   if (req.method === 'GET') {
     const p = await rpc('ai_peek', { p_user: u.id });
-    return json(res, h, 200, { models: MODELS(), plan: lim.plan, day: p.day, month: p.month, light: p.light, dayLimit: lim.day, monthLimit: lim.month, lightLimit: lim.light });
+    return json(res, h, 200, { models: MODELS(), visionModels: VISION_MODELS(), plan: lim.plan, day: p.day, month: p.month, light: p.light, dayLimit: lim.day, monthLimit: lim.month, lightLimit: lim.light });
   }
   if (req.method !== 'POST') return json(res, h, 405, { error: '只支持 GET 和 POST' });
 
   let b;
-  try { b = cleanBody(JSON.parse(await readBody(req)), MODELS(), { maxTokens: +env('AI_MAX_TOKENS', '4000') || 4000 }); }
+  try {
+    const visionModels = VISION_MODELS();
+    b = cleanBody(JSON.parse(await readBody(req, visionModels.length ? VISION_BODY_BYTES : 1000000)), MODELS(),
+      { maxTokens: +env('AI_MAX_TOKENS', '4000') || 4000, visionModels });
+  }
   catch (e) { return json(res, h, e.status || 400, { error: e.status ? e.message : '请求格式不对' }); }
   if (!b.ok) return json(res, h, b.status, { error: b.error });
 

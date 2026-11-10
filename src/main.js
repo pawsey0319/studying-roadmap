@@ -5,6 +5,7 @@ import * as M from './model.js';
 import * as store from './store/index.js';
 import * as gist from './store/gist.js';
 import * as cloud from './store/cloud.js';
+import { setupFeedback } from './ai/feedback-client.js';
 import { initNative, isNative, scheduleReminder } from './native.js';
 import { checkUpdate } from './update.js';
 import { initI18n, isEn, setLang } from './i18n.js';
@@ -12,6 +13,7 @@ import { addBoardButtons } from './ui/translate.js';
 import { setupLive, loadOne } from './live.js';
 import { act, bindActs, setRender, refresh, toast, pickBar } from './ui/kit.js';
 import { renderHome } from './ui/home.js';
+import { renderLearningSessions, afterLearningSessions } from './ui/learning-sessions.js';
 import { renderTrack, afterTrack } from './ui/track.js';
 import { renderRoute, renderBiz, renderSuggestions, renderLater, renderLibrary } from './ui/pages.js';
 import { renderNotes, openQuick } from './ui/notes.js';
@@ -28,6 +30,7 @@ import './ui/export.js';
 import './ui/reader.js';
 import { renderPublic, beforePublic, reportDone, checkUpstream } from './ui/public.js';
 import { renderMe } from './ui/me.js';
+import './ui/routeedit.js';
 import { renderChannels, loadUserNews, refreshChannels } from './ui/channels.js';
 import { applyAppearance } from './ui/appearance.js';
 import { stat } from './ui/me.js';
@@ -40,6 +43,13 @@ async function renderLegal(name) {
 import './ui/react.js';
 import './ui/tabsort.js';
 import './ui/floatwin.js';
+
+/* ---------- 工作台里的工具：笔记、商机、稍后读等不再是侧栏的一级入口 ---------- */
+const DESK_TABS = [['home', '概览'], ['notes', '笔记'], ['sessions', '学习记录'], ['later', '稍后读'], ['biz', '落地与商机'], ['suggestions', '待确认'], ['method', '学习方法'], ['library', '路线库'], ['import', '导入'], ['channels', '渠道']];
+const DESK_PAGES = DESK_TABS.map(([k]) => k);
+function deskBar(page) {
+  return `<nav class="deskbar" aria-label="工作台工具"><span class="dk-t">工作台</span>${DESK_TABS.map(([k, n]) => `<a class="dk" href="${k === 'home' ? '#/' : '#/' + k}" aria-current="${page === k ? 'page' : 'false'}">${n}</a>`).join('')}</nav>`;
+}
 
 /* ---------- 路由：#/  #/t/<方向>[/news][?s=阶段]  #/r/<路线>  #/notes[/<卡片>|/s/<阶段>]  #/biz  #/import  #/settings  #/later  #/suggestions ---------- */
 function parse() {
@@ -59,6 +69,7 @@ async function render(opts = {}) {
     else if (page === 't') { html = renderTrack(seg[1], seg[2], q); after = () => afterTrack(seg[1], seg[2], q); }
     else if (page === 'r') html = renderRoute(seg.slice(1).join('/'));
     else if (page === 'notes') html = renderNotes(seg[1], { id: seg.slice(2).join('/') });
+    else if (page === 'sessions') { html = await renderLearningSessions(); after = afterLearningSessions; }
     else if (page === 'biz') html = renderBiz(q);
     else if (page === 'later') html = renderLater();
     else if (page === 'library') html = renderLibrary();
@@ -78,6 +89,7 @@ async function render(opts = {}) {
     html = `<p class="note">这个页面出错了：${esc(e.message)}。可以先回到<a href="#/">工作台</a>，或在设置里导出备份后刷新页面。</p>`;
   }
   document.body.dataset.page = page === 'more' ? 'me' : page;
+  if (DESK_PAGES.includes(page)) html = deskBar(page) + html;
   $('#view').innerHTML = html;
   addBoardButtons($('#view'));
   renderNav(page, seg);
@@ -91,27 +103,24 @@ setRender(render);
 function renderNav(page, seg) {
   const tid = page === 't' ? seg[1] : page === 'r' ? (M.route(seg[1]) || {}).track : null;
   const cur = (p, id) => ((p === page && (!id || id === tid)) ? 'page' : 'false');
+  const homeOn = ['home', ...DESK_PAGES].includes(page);
   $('#side').innerHTML = `<div class="brand"><i></i>我的学习路线</div>
-    <a class="nav" href="#/" aria-current="${cur('home')}">工作台</a>
-    <a class="nav" href="#/notes" aria-current="${cur('notes')}">笔记</a>
-    <a class="nav" href="#/biz" aria-current="${cur('biz')}">落地与商机</a>
-    <a class="nav" href="#/later" aria-current="${cur('later')}">稍后读<span class="n">${Object.keys(store.all('later')).filter(id => !M.isRead(id)).length || ''}</span></a>
-    <a class="nav" href="#/search" aria-current="${cur('search')}">搜索</a>
+    <a class="nav" href="#/" aria-current="${homeOn ? 'page' : 'false'}">工作台</a>
     <a class="nav" href="#/me" aria-current="${['me', 'more'].includes(page) ? 'page' : 'false'}">我的</a>
-    <a class="nav" href="#/method" aria-current="${cur('method')}">我的学习方法</a>
+    <a class="nav" href="#/search" aria-current="${cur('search')}">搜索</a>
     ${cloud.supportsPublic() ? `<a class="nav" href="#/public" aria-current="${cur('public')}">公共区域</a>` : ''}
     <div class="gh">学习方向</div>
     ${M.tracks().map(t => { const st = M.state(t.id); return `<a class="nav" href="#/t/${t.id}" aria-current="${tid === t.id ? 'page' : 'false'}"><span class="dot" style="background:${t.color}"></span>${esc(t.name)}<span class="n">${st.doneStages}/${st.stages.length}</span></a>`; }).join('')}
     ${M.tracks().length ? '' : '<p class="fnt small" style="padding:2px 10px 6px">还没有方向</p>'}
-    <a class="nav" href="#/library" aria-current="${cur('library')}" style="margin-top:4px"><span class="dot" style="background:none;border:1.5px dashed var(--faint)"></span>路线库</a>
-    <a class="nav" href="#/import" aria-current="${cur('import')}"><span class="dot" style="background:none;border:1.5px dashed var(--faint)"></span>导入文档</a>
+    <a class="nav" href="#/library" aria-current="false" style="margin-top:4px"><span class="dot" style="background:none;border:1.5px dashed var(--faint)"></span>添加方向</a>
     <div class="ft"><button class="nav lang" data-act="lang" title="${isEn() ? '切换到中文' : 'Switch to English'}">${isEn() ? '中文' : 'English'}</button><a class="nav" href="#/settings" aria-current="${cur('settings')}">设置</a><p class="fnt small" id="syncState" style="padding:4px 10px"></p></div>`;
   const mt = page === 't' || page === 'r';
-  $('#mtop').innerHTML = mt ? `<div class="chips">${M.tracks().map(t => `<a class="chip" href="#/t/${t.id}" aria-pressed="${tid === t.id}" style="text-decoration:none${tid === t.id ? `;background:${t.color};border-color:${t.color};color:#fff` : ''}">${esc(t.short || t.name)}</a>`).join('')}</div>` : ({ home: '<b>首页</b>', search: '<b>搜索</b>' }[page] || '');
+  const deskTitle = { home: '工作台', notes: '笔记', later: '稍后读', biz: '落地与商机', suggestions: '待确认', method: '学习方法', library: '路线库', import: '导入', channels: '资讯渠道' }[page];
+  $('#mtop').innerHTML = mt ? `<div class="chips">${M.tracks().map(t => `<a class="chip" href="#/t/${t.id}" aria-pressed="${tid === t.id}" style="text-decoration:none${tid === t.id ? `;background:${t.color};border-color:${t.color};color:#fff` : ''}">${esc(t.short || t.name)}</a>`).join('')}</div>` : (deskTitle ? `<b>${deskTitle}</b>` : ({ search: '<b>搜索</b>' }[page] || ''));
   const ic = d => `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   const domainHref = M.tracks().length ? '#/t/' + (tid && M.track(tid) ? tid : M.track(UI().lastTrack) ? UI().lastTrack : M.tracks()[0].id) : '#/library';
-  const meOn = ['me', 'more', 'channels', 'notes', 'biz', 'later', 'settings', 'import', 'method', 'library', 'public', 'suggestions'].includes(page);
-  $('#mnav').innerHTML = `<a href="#/" aria-current="${cur('home')}">${ic('<path d="M4 11 12 4l8 7"/><path d="M6 10v9h12v-9"/>')}<span>首页</span></a>
+  const meOn = ['me', 'more', 'settings'].includes(page);
+  $('#mnav').innerHTML = `<a href="#/" aria-current="${homeOn ? 'page' : 'false'}">${ic('<path d="M4 11 12 4l8 7"/><path d="M6 10v9h12v-9"/>')}<span>首页</span></a>
     <a href="${domainHref}" aria-current="${mt ? 'page' : 'false'}">${ic('<path d="M4 6h16M4 12h10M4 18h13"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/>')}<span>领域</span></a>
     <button class="agent" data-act="agent-open" aria-label="学习 Agent">${ic('<path d="M12 3.5l1.9 4.6 4.6 1.9-4.6 1.9L12 16.5l-1.9-4.6L5.5 10l4.6-1.9z"/><path d="M18.5 15.5l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8z"/>')}</button>
     <a href="#/search" aria-current="${cur('search')}">${ic('<circle cx="11" cy="11" r="6"/><path d="m20 20-4.2-4.2"/>')}<span>搜索</span></a>
@@ -165,6 +174,8 @@ const HOT_NAMES = [['cls', '财联社电报'], ['wallstreet', '华尔街见闻�
 
 /* ---------- 启动 ---------- */
 async function boot() {
+  const stage = text => { window.__lhBootStage = text; };
+  stage('读取公共内容与语言');
   let C;
   try { [C] = await Promise.all([loadContent(), initI18n()]); }
   catch (e) {
@@ -173,9 +184,12 @@ async function boot() {
   }
   M.setContent(C);
   initNative();
+  stage('打开本机学习数据库');
   await store.init({ legacyMap: C.legacy, defaultTab: C.tracks[0].id, today: iso(new Date()) });
+  stage('初始化账号与渠道');
   applyAppearance();
   cloud.setup(C.config);
+  setupFeedback(C.config);
   store.ensureAdopted(C.tracks.map(t => t.id));
   await loadUserNews(C);   // 自己添加的渠道上次读到的内容，先显示，后台再更新
   const linked = await cloud.consumeLink();
@@ -202,7 +216,9 @@ async function boot() {
   gist.onStatus(setSyncStatus); cloud.onStatus(setSyncStatus);
   window.addEventListener('hashchange', () => render());
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncNow(); });
+  stage('显示当前页面');
   await render();
+  stage('完成');
   stat('o');
   // 直接打开“我的”时，统计行是在 stat('o') 之前渲染的；补一次刷新，今天才会算进“打开 N 天”
   if (parse().seg[0] === 'me' || parse().seg[0] === 'more') refresh();
@@ -219,7 +235,7 @@ async function boot() {
   setTimeout(() => sweepSessions().catch(() => {}), 3000);
   setTimeout(() => checkUpstream().then(() => { if (Object.keys(store.ui().upstream || {}).length) refresh(); }).catch(() => {}), 4000);
   // 第一次使用：开局规划（可以跳过）
-  if (!store.get('meta', 'onboarded') && !store.ui().obSeen && !location.hash.includes('settings')) setTimeout(() => openOnboard(), 400);
+  if (!store.get('meta', 'onboarded') && !store.ui().obSeen && !location.hash.includes('settings') && new URLSearchParams(location.search).get('nostart') !== '1') setTimeout(() => openOnboard(), 400);
   if ('serviceWorker' in navigator && location.protocol === 'https:' && !isNative()) {
     // 旧版缓存规则会让发布后的第一次打开仍是旧代码：新的缓存程序接管时自动刷新一次
     const had = !!navigator.serviceWorker.controller;

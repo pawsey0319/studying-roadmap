@@ -1,0 +1,10 @@
+{
+  "scope": "known_local_media_credentials_and_packaged_paths_only_not_full_security_audit",
+  "apk_sha256": "64fe63bba84502551708fda665471bc2c83759c9c3a578d3b7a660a9d4350230",
+  "known_private_credentials_checked": 1,
+  "credential_values_recorded": false,
+  "known_credential_hits": [],
+  "forbidden_packaged_paths": [],
+  "passed": true,
+  "release_authorized": false
+}

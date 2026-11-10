@@ -1,0 +1,33 @@
+[
+  {
+    "id": "zh-clean",
+    "path": "eval/fixtures/zh-clean.wav",
+    "reference": "请把今天的学习任务改到明天下午三点。",
+    "kind": "system_tts_not_human",
+    "voice": "Tingting",
+    "sha256": "673f76366e9e5ab876df5ec8ee4730614b4f09d4ec0e4ee73d45c55545cb467e"
+  },
+  {
+    "id": "zh-entity",
+    "path": "eval/fixtures/zh-entity.wav",
+    "reference": "我想学习英语口语，每天练习二十分钟。",
+    "kind": "system_tts_not_human",
+    "voice": "Tingting",
+    "sha256": "8dc66691973f657968b3f35ece32c8b571ebe93652f418499b81918b3c9b2151"
+  },
+  {
+    "id": "en-clean",
+    "path": "eval/fixtures/en-clean.wav",
+    "reference": "Please help me practice English for twenty minutes every day.",
+    "kind": "system_tts_not_human",
+    "voice": "Samantha",
+    "sha256": "6c8117fa8e140af8b7a9c82cf6913d0f7e713487c5af4dfd7dfe749cef1603d2"
+  },
+  {
+    "id": "silence",
+    "path": "eval/fixtures/silence.wav",
+    "reference": "",
+    "kind": "digital_silence",
+    "sha256": "20eaebffe1816e0ffa6f7f854f5ef4ea80d5349faaf0ce1fec1b713e7fde58fa"
+  }
+]

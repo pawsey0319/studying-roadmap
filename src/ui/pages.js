@@ -90,6 +90,7 @@ export function renderLibrary() {
       <div class="sa">${on ? `<a class="btn sm" href="#/t/${t.id}">打开</a><button class="btn sm gh" data-act="lib-remove" data-id="${t.id}">移出我的方向</button>`
         : `<button class="btn sm pri" data-act="lib-add" data-id="${t.id}">加入我的方向</button>`}</div></div>`; };
   return `<div class="ph"><h1>路线库</h1><span class="mut">现成的学习方向。加进来后在方向页里可以跳过、改写、新增任务，或者让 Agent 按你的情况调整</span></div>
+    <p class="sa" style="margin-top:12px"><button class="btn pri" data-act="new-track">＋ 新建空白路线</button><span class="fnt small">自己定阶段和任务，不经过 Agent；建好后随时能加阶段。</span></p>
     <div class="g2" style="margin-top:14px">${L.map(card).join('')}</div>
     <p class="fnt small" style="margin-top:12px">没有合适的？<a href="#" data-act="onboard">和 Agent 规划一个新方向</a>，或者<a href="#/import">导入你自己的大纲</a>。登录后还可以去<a href="#/public">公共区域</a>看其他人公开的路线。</p>`;
 }

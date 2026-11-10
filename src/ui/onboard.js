@@ -16,50 +16,48 @@ let S = null;   // { msgs, summary, round, step: 'talk'|'gen'|'done', plans:[], 
 async function addUsage(cfg, us) { const u = await usage(); u.cny += cost(cfg, us); u.tin += us.in; u.tout += us.out; u.calls++; await store.localSet('usage', u); }
 
 export async function openOnboard() {
-  S = (await store.localGet('onboard')) || { msgs: [], summary: null, round: 0, step: 'talk', plans: [], drafts: [] };
+  const saved = (await store.localGet('onboard')) || {};
+  // 每次打开都从一张白纸开始：保留已经理清的摘要，对话不堆在窗口里。
+  S = { msgs: [], summary: saved.summary || null, round: 0, step: 'talk', plans: [], drafts: [], replan: false };
+  await save();
   const d = $('#obDlg'); render(); if (!d.open) d.showModal();
 }
 const save = () => store.localSet('onboard', S);
 
-function summaryHtml() {
-  const s = S.summary || {}, st = summaryStatus(s);
-  const row = (k, label, val) => `<li class="${st[k] ? 'ok' : 'todo'}"><span>${st[k] ? '✓' : '·'}</span><b>${label}</b><div>${val || '<span class="fnt">还不清楚</span>'}</div></li>`;
-  const tracks = (s.tracks || []).map(t => `${esc(t.name)}${t.id ? '' : ' <span class="tag mine">新方向</span>'}`).join('、');
-  const levels = (s.tracks || []).map(t => `${esc(t.name)}：${esc(t.level || '？')}`).join('；');
-  return `<ul class="obsum">${row('tracks', '方向', tracks)}${row('levels', '程度', levels)}${row('purpose', '目的', esc(s.purpose))}${row('outputs', '产出', esc(s.outputs))}${row('ratio', '产品/技术', esc(s.ratio))}${row('materials', '已有资料', esc(s.materials))}</ul>
-    <button class="btn sm gh" data-act="ob-edit-sum">直接改摘要</button>`;
-}
-
 function render() {
-  const d = $('#obDlg'), cfgOk = true;
+  const d = $('#obDlg');
   if (S.step === 'talk') {
-    const st = summaryStatus(S.summary), clear = Object.values(st).every(Boolean);
-    d.innerHTML = `<div class="ob"><div class="ob-h"><h3>规划我的学习路线</h3><span class="fnt small">第 ${Math.min(S.round + 1, MAX_ROUNDS)} / ${MAX_ROUNDS} 轮</span><button class="x" data-act="ob-close" aria-label="关闭">×</button></div>
+    const hasSummary = !!(S.summary && (S.summary.tracks || []).length);
+    d.innerHTML = `<div class="ob ob-min"><div class="ob-h"><h3>规划我的学习路线</h3><button class="x" data-act="ob-close" aria-label="关闭">×</button></div>
       <div class="ob-b"><div class="ob-chat" id="obChat">
-        ${S.msgs.length ? '' : `<div class="ai md"><p>先用一段话说说：想学哪些方向、每个方向学到哪了、想达到什么目标。说不全也没关系，我会追问。路线库里有现成的方向可以直接用，没有的我来起草。</p><p class="fnt small">例如：“在准备 AI 产品经理求职。Transformer 懂，Agent 的 ReAct 学过但细节忘了，MCP 没写过；量化完全没接触过。想做出几个能放进作品集的项目。”</p></div>`}
+        ${S.msgs.length ? '' : `<p class="ob-prompt">说说你想学什么、现在学到哪了、想达到什么目标。</p><p class="ob-sub">说不全也没关系，Agent 会追问。已经在学的路线不会被重做。</p>`}
         ${S.msgs.map(m => m.role === 'user' ? `<div class="me">${esc(m.content)}</div>` : m.role === 'err' ? `<div class="ai err">${esc(m.content)}</div>` : `<div class="ai md">${md(extractBlocks(m.content).text)}</div>`).join('')}
-      </div><aside class="ob-sum"><b>学习路线摘要</b><p class="fnt small">理清的打勾，模糊的标黄</p>${summaryHtml()}</aside></div>
-      <form class="ob-in" id="obForm"><textarea id="obText" rows="3" placeholder="${S.msgs.length ? '回答上面的问题，或补充说明' : '说说你的情况'}"></textarea>
+      </div></div>
+      <form class="ob-in" id="obForm"><textarea id="obText" rows="3" placeholder="${S.msgs.length ? '继续说，或者回答上面的问题' : '例如：想学 Agent，做过一点 RAG，目标是做出能放进作品集的项目'}" aria-label="描述你的学习目标"></textarea>
         <div class="ob-f"><button type="button" class="btn gh" data-act="ob-default">先去路线库挑</button>
-          <button type="button" class="btn" data-act="ob-gen"${S.summary && (S.summary.tracks || []).length ? '' : ' disabled'}>${clear ? '确认，生成方案' : '按现在的理解生成'}</button>
+          ${hasSummary ? `<label class="ck small ob-replan"><input type="checkbox" id="obReplan"${S.replan ? ' checked' : ''}> 连已有路线一起重新规划</label>` : ''}
+          <button type="button" class="btn" data-act="ob-gen"${hasSummary ? '' : ' disabled'}>生成方案</button>
           <button class="btn pri" id="obSend">发送</button></div></form></div>`;
     const ta = $('#obText');
     ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); $('#obForm').requestSubmit(); } });
     $('#obForm').addEventListener('submit', e => { e.preventDefault(); const v = ta.value.trim(); if (v) talk(v); });
-    const c = $('#obChat'); c.scrollTop = c.scrollHeight; setTimeout(() => ta.focus(), 30);
+    const cb = $('#obReplan'); if (cb) cb.onchange = () => { S.replan = cb.checked; };
+    const c = $('#obChat'); c.scrollTop = c.scrollHeight; if (matchMedia('(min-width: 821px)').matches) setTimeout(() => ta.focus(), 30);
   } else if (S.step === 'gen') {
-    d.innerHTML = `<div class="ob"><div class="ob-h"><h3>生成方案</h3><button class="x" data-act="ob-close" aria-label="关闭">×</button></div>
-      <div class="ob-gen" id="obGen"><p class="mut">正在为每个方向生成方案…</p></div></div>`;
+    d.innerHTML = `<div class="ob ob-min"><div class="ob-h"><h3>生成方案</h3><button class="x" data-act="ob-close" aria-label="关闭">×</button></div>
+      <div class="ob-gen" id="obGen"><p class="mut">正在生成…已有路线会保留，只处理新增的方向。</p></div></div>`;
   } else {
     const plans = S.plans.map(p => registerPlan(p));
     const byTrack = {};
     plans.forEach(p => { (byTrack[p.track] = byTrack[p.track] || []).push(p); });
-    d.innerHTML = `<div class="ob"><div class="ob-h"><h3>你的个人方案</h3><button class="x" data-act="ob-close" aria-label="关闭">×</button></div>
-      <div class="ob-gen"><p class="mut">只在原有路线上裁剪和改写。逐条勾选、逐个方向应用；跳过和“已掌握”默认不勾，需要你自己勾上。应用后阶段卡片上会显示“已个性化”，随时能恢复原版。</p>
+    const kept = S.kept || [];
+    d.innerHTML = `<div class="ob ob-min"><div class="ob-h"><h3>你的个人方案</h3><button class="x" data-act="ob-close" aria-label="关闭">×</button></div>
+      <div class="ob-gen">${kept.length ? `<p class="small mut">已保留：${kept.map(x => esc(x)).join('、')}。这些路线原样不动，需要调整可以到方向页点“Agent 规划这个方向”。</p>` : ''}
+      <p class="mut">只在原有路线上裁剪和改写。逐条勾选、逐个方向应用；跳过和“已掌握”默认不勾，需要你自己勾上。应用后阶段卡片上会显示“已个性化”，随时能恢复原版。</p>
       ${Object.entries(byTrack).map(([tid, ps]) => `<section class="obt"><h4 style="color:${M.track(tid)?.color || 'inherit'}">${esc(M.track(tid)?.name || tid)}</h4>${ps.map(p => planCard(p)).join('')}</section>`).join('')}
       ${S.drafts.map((t, i) => `<section class="obt"><h4>${esc(t.name)} <span class="tag mine">新方向草稿</span></h4><p class="small mut">${t.stages.length} 个阶段：${t.stages.map(s => esc(s.title)).join(' → ')}</p>
         <div class="pf"><button class="btn sm gh" data-act="ob-draft-drop" data-i="${i}">不要</button><button class="btn sm acc" data-act="ob-draft-add" data-i="${i}">加入为我的方向</button></div></section>`).join('')}
-      ${!plans.length && !S.drafts.length ? '<p class="empty">Agent 没有给出修改，路线保持原版。</p>' : ''}
+      ${!plans.length && !S.drafts.length ? '<p class="empty">没有需要新增的内容，现有路线保持原样。</p>' : ''}
       ${S.genNotes ? `<div class="md small mut">${md(S.genNotes)}</div>` : ''}
       <div class="ob-f"><button class="btn" data-act="ob-restart">重新描述</button><button class="btn pri" data-act="ob-finish">完成</button></div></div></div>`;
   }
@@ -72,7 +70,9 @@ async function talk(text) {
   const chatEl = $('#obChat'); const el = document.createElement('div'); el.className = 'ai md fnt'; el.textContent = '思考中…'; chatEl.appendChild(el);
   $('#obSend').disabled = true;
   try {
-    const sys = onboardPrompt([...M.library(), ...M.tracks().filter(t => t.mine)]);
+    const base = onboardPrompt([...M.library(), ...M.tracks().filter(t => t.mine)]);
+    const known = S.summary && (S.summary.tracks || []).length ? `\n\n已经理清的信息（除非用户这次改口，不要重复问）：${JSON.stringify(S.summary).slice(0, 3000)}` : '';
+    const sys = base + known;
     const history = S.msgs.filter(m => m.role !== 'err').map(m => ({ role: m.role, content: m.content }));
     if (S.round >= MAX_ROUNDS - 1) history.push({ role: 'user', content: '（已经是最后一轮了：不要再追问，把仍不清楚的项写进 unclear，按合理默认值填好摘要，ready 设为 true。）' });
     let acc = '';
@@ -92,11 +92,13 @@ async function generate() {
   const box = $('#obGen'), line = t => { box.insertAdjacentHTML('beforeend', `<p class="small">${t}</p>`); };
   const profile = profileFromSummary(sum, (store.get('meta', 'profile') || '').slice(0, 300));
   store.put('meta', 'profile', profile.slice(0, 8000)); store.put('meta', 'summary', sum);
-  S.plans = []; S.drafts = []; S.genNotes = '';
+  S.plans = []; S.drafts = []; S.kept = []; S.genNotes = '';
   const sys = '你是学习路线规划助手，用中文。学习者档案：' + profile;
   for (const t of sum.tracks || []) {
     // 路线库里有的方向：先加入，再在它的基础上按用户情况调整；没有的：起草新方向
     const lib = M.library().find(x => x.id === t.id) || M.library().find(x => x.name === t.name);
+    const already = M.tracks().some(x => x.id === (lib ? lib.id : '') || x.name === t.name);
+    if (already && !S.replan) { line(`“${esc(t.name)}”已有路线，保留原样。`); S.kept.push(t.name); continue; }
     if (lib && !M.adopted(lib.id)) { store.setAdopted(lib.id, true); M.invalidate(); }
     const pub = lib ? M.track(lib.id) : M.tracks().find(x => x.name === t.name);
     try {
@@ -128,7 +130,7 @@ const PALETTE = ['#3C6E71', '#B5446E', '#5B7F1F', '#AF6E1A', '#2E6FA7', '#7A4E9C
 act('ob-close', () => { store.ui().obSeen = true; store.saveUi(); $('#obDlg').close(); });
 act('ob-gen', () => generate());
 act('ob-default', async () => { store.ui().obSeen = true; store.saveUi(); $('#obDlg').close(); location.hash = '#/library'; });
-act('ob-restart', async () => { S = { msgs: [], summary: S.summary, round: 0, step: 'talk', plans: [], drafts: [] }; await save(); render(); });
+act('ob-restart', async () => { S = { msgs: [], summary: S.summary, round: 0, step: 'talk', plans: [], drafts: [], kept: [], replan: false }; await save(); render(); });
 act('ob-finish', async () => { store.put('meta', 'onboarded', new Date().toISOString().slice(0, 10)); await store.localSet('onboard', null); $('#obDlg').close(); refresh(); });
 act('ob-draft-add', el => {
   const t = S.drafts[+el.dataset.i]; if (!t) return;

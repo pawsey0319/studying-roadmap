@@ -1,0 +1,12 @@
+{
+ "date":"2026-11-10",
+ "path":"Chrome headless -> src/ai/providers.js chat -> authenticated localhost:8791 -> Qwen3.5-0.8B MLX 4bit",
+ "origin":"http://127.0.0.1:8811",
+ "fixture":"eval/fixtures/study-card.png",
+ "text":"根据图片内容，逐字读取如下：\n\n- **科目**：英语\n- **时间**：下午三点\n- **时长**：20分钟\n- **状态**：未开始",
+ "elapsed_ms":968,
+ "javascript_errors":[],
+ "real_inference":true,
+ "scope":"one synthetic fixture, warm model, browser CORS+provider real inference; not accuracy acceptance",
+ "known_omissions":["英语口语 reduced to 英语", "明天下午三点 reduced to 下午三点"]
+}

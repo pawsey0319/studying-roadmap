@@ -50,9 +50,9 @@ export function appearanceHtml() {
   const t = current();
   const row = (key, label) => `<div class="ap-row"><span class="ap-l">${label}</span><div class="chips">${OPTIONS[key].map(([v, n]) =>
     `<button type="button" class="chip${key === 'accent' ? ' sw' : ''}" data-act="ap-set" data-k="${key}" data-v="${v}" aria-pressed="${t[key] === v}">${key === 'accent' ? `<i style="background:${ACCENTS[v][0]}"></i>` : ''}${esc(n)}</button>`).join('')}</div></div>`;
-  return `<section class="card set ap"><h3>外观</h3>
+  return `<details class="card set ap"${matchMedia('(max-width: 820px)').matches ? '' : ' open'}><summary><h3>外观</h3><span class="chev">›</span></summary><div class="set-b">
     <p class="hint">只对这台设备生效。宋体和楷体用系统自带的字体，没有安装时会退回黑体。</p>
     ${row('mode', '主题')}${row('font', '界面字体')}${row('noteFont', '笔记字体')}${row('size', '字号')}${row('accent', '强调色')}${row('density', '密度')}
-    <p class="ap-demo md" style="margin-top:10px"><b>读一段样例：</b>理论给方向，实践给证据。<br><span class="small mut">字体、字号和强调色会立刻生效。</span></p></section>`;
+    <p class="ap-demo md" style="margin-top:10px"><b>读一段样例：</b>理论给方向，实践给证据。<br><span class="small mut">字体、字号和强调色会立刻生效。</span></p></div></details>`;
 }
 act('ap-set', el => { setAppearance({ [el.dataset.k]: el.dataset.v }); refresh(); });

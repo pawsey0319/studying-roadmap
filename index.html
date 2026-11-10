@@ -14,7 +14,21 @@
 <!-- 脚本模块一次性并行预取，不用一层一层地发现 -->
 <link rel="modulepreload" href="src/ai/agent.js">
 <link rel="modulepreload" href="src/ai/embed.js">
+<link rel="modulepreload" href="src/ai/harness.js">
 <link rel="modulepreload" href="src/ai/providers.js">
+<link rel="modulepreload" href="src/ai/capabilities.js">
+<link rel="modulepreload" href="src/ai/feedback-client.js">
+<link rel="modulepreload" href="src/core/learning-session.js">
+<link rel="modulepreload" href="src/core/agent-release.js">
+<link rel="modulepreload" href="src/core/session-log.js">
+<link rel="modulepreload" href="src/core/media-preset.js">
+<link rel="modulepreload" href="src/core/chat-snapshot.js">
+<link rel="modulepreload" href="src/core/session-lock.js">
+<link rel="modulepreload" href="src/core/screencontext.js">
+<link rel="modulepreload" href="src/ui/learning-sessions.js">
+<link rel="modulepreload" href="src/ui/screen-consult.js">
+<link rel="modulepreload" href="src/core/voice.js">
+<link rel="modulepreload" href="src/core/wav.js">
 <link rel="modulepreload" href="src/ai/summary.js">
 <link rel="modulepreload" href="src/content.js">
 <link rel="modulepreload" href="src/core/adopt.js">
@@ -33,6 +47,7 @@
 <link rel="modulepreload" href="src/core/public.js">
 <link rel="modulepreload" href="src/core/related.js">
 <link rel="modulepreload" href="src/core/routes.js">
+<link rel="modulepreload" href="src/core/routeedit.js">
 <link rel="modulepreload" href="src/core/schema.js">
 <link rel="modulepreload" href="src/core/search.js">
 <link rel="modulepreload" href="src/core/sources.js">
@@ -67,6 +82,7 @@
 <link rel="modulepreload" href="src/ui/public.js">
 <link rel="modulepreload" href="src/ui/react.js">
 <link rel="modulepreload" href="src/ui/reader.js">
+<link rel="modulepreload" href="src/ui/routeedit.js">
 <link rel="modulepreload" href="src/ui/search.js">
 <link rel="modulepreload" href="src/ui/settings.js">
 <link rel="modulepreload" href="src/ui/suggest.js">
@@ -101,6 +117,19 @@ try { var t = JSON.parse(localStorage.getItem("lh.theme") || "null"), r = docume
 if (location.protocol === 'file:') document.getElementById('view').innerHTML =
   '<p class="note">本地文件不能直接双击打开。请在仓库目录运行 <code>python3 -m http.server</code>（Windows 用 <code>python -m http.server</code>），再打开 http://localhost:8000/ 。线上网址不受影响。</p>';
 </script>
-<script type="module" src="src/main.js"></script>
+<script>
+// 启动异常必须可见：不让用户永久停在骨架，也不清除学习数据。
+window.__lhBootStage = '加载页面脚本';
+window.addEventListener('error', function (e) { window.__lhBootError = e.message || '脚本资源未加载'; });
+window.addEventListener('unhandledrejection', function (e) { window.__lhBootError = e.reason && e.reason.message || '启动请求失败'; });
+setTimeout(function () {
+  var v = document.getElementById('view');
+  if (!v || !v.querySelector('.skel')) return;
+  var p = document.createElement('p'); p.className = 'note'; p.setAttribute('role', 'status');
+  p.textContent = '页面启动尚未完成。当前步骤：' + window.__lhBootStage + (window.__lhBootError ? '；错误：' + window.__lhBootError : '。请将这行状态反馈给开发者；不要清除浏览器数据。');
+  v.replaceChildren(p);
+}, 12000);
+</script>
+<script type="module" src="src/main.js?boot=20261111b"></script>
 </body>
 </html>

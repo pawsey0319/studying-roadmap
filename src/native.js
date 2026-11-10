@@ -1,6 +1,6 @@
 // 安卓 App（Capacitor）专用的几处适配。网页版里这些函数什么都不做或走浏览器的默认做法。
 // 插件用 Capacitor 注入的全局对象调用，不需要打包工具。
-const C = () => window.Capacitor;
+const C = () => globalThis.window?.Capacitor;
 export const isNative = () => !!(C() && C().isNativePlatform && C().isNativePlatform());
 const plugin = name => { const c = C(); return c && ((c.Plugins && c.Plugins[name]) || (c.registerPlugin && c.registerPlugin(name))); };
 
@@ -54,6 +54,21 @@ export async function scheduleReminder(cfg, body) {
   await ln.schedule({ notifications: [{ id: 1, title: '该学习了', body: String(body || '打开看看今天学什么').slice(0, 120), schedule: { on: { hour: cfg.hour, minute: cfg.minute }, allowWhileIdle: true } }] });
   return '';
 }
+
+// Images remain memory-only; this bridge never uploads or invokes a model.
+const screenCall = async (method, args = {}) => {
+  if (!isNative()) throw Object.assign(new Error('仅 Android App 支持系统屏幕共享'), { code: 'UNSUPPORTED' });
+  const p = plugin('ScreenContext');
+  if (!p?.[method]) throw Object.assign(new Error('请更新 Android App 以启用屏幕共享'), { code: 'UNSUPPORTED' });
+  return p[method](args);
+};
+export const screenContext = Object.freeze({
+  start: ({ consent } = {}) => screenCall('start', { consent: consent === true }),
+  status: () => screenCall('status'),
+  requestFrame: ({ delayMs = 3000 } = {}) => screenCall('requestFrame', { delayMs }),
+  preview: () => screenCall('preview'),
+  stop: () => screenCall('stop'),
+});
 
 export function initNative() {
   if (!isNative()) return;

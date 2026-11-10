@@ -1,0 +1,17 @@
+{
+  "real_inference": true,
+  "scope": "single_generated_card_not_benchmark",
+  "model_snapshot": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+  "fixture_sha256": "5e09cee7352b30804a19a55ebcf9bff1bb0111b7f84ed99a478797bd4c519cdf",
+  "text": "学习科目：英语  \n计划时间：明天下午三点  \n每日时长：20分钟  \n当前状态：未开始",
+  "literal_field_matches": {
+    "英语": true,
+    "三点": true,
+    "20": true,
+    "未开始": true
+  },
+  "load_seconds": 1.85,
+  "inference_seconds": 3.671,
+  "process_rss_bytes": 1015988224,
+  "mlx_peak_bytes": 1042834994
+}

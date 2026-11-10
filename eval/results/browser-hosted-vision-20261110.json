@@ -1,0 +1,30 @@
+{
+  "evidence": {
+    "evidence": "Real Chromium DOM and production screen-consult module; fake capability/capture/endpoint boundaries, no paid API",
+    "refused": "平台未明确声明当前模型支持图片，拒绝图片发送；请更新平台配置或选择支持视觉的模型。",
+    "retained": true,
+    "confirmations": [
+      "把预览中的这一帧发送到 https://platform.example（模型 flash）？画面可能包含个人信息。"
+    ],
+    "calls": [
+      [
+        "confirm",
+        {
+          "frameId": "browser-mock-frame",
+          "sourceLabel": "浏览器模拟文章"
+        }
+      ],
+      [
+        "authorize",
+        {
+          "frameId": "browser-mock-frame",
+          "destination": "https://platform.example"
+        }
+      ]
+    ],
+    "success": true,
+    "consumedOnce": true,
+    "noCredentialLeak": true
+  },
+  "errors": []
+}

@@ -1,0 +1,1317 @@
+{
+  "schema": "lh-project-field-score/1",
+  "manifest_sha256": "552d1dfddeb56dfaef748cf1cedc1594946af62d4e51b89030f5f0ea2d9e89d7",
+  "responses_sha256": "1ae10e9aa01efc28ecb0e5ae458d8b7044876f08e76bba02411bd09b71dcc1eb",
+  "scope": "24_synthetic_development_cards_not_production_acceptance",
+  "judge": "deterministic_exact_unicode_values_and_locators_no_model_self_score",
+  "run_metadata": [
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    },
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    },
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    },
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    },
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    },
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    },
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    },
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    },
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    },
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    },
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    },
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    },
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    },
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    },
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    },
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    },
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    },
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    },
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    },
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    },
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    },
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    },
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    },
+    {
+      "model_id": "local-vision",
+      "revision": "5d894f8cc4ef3e6c88537bf3746ed262f549da6a",
+      "quantization": "MLX 4bit",
+      "hardware": "arm64 Apple M2 16GiB",
+      "framework": "mlx-vlm 0.7.12",
+      "license": "Apache-2.0 (Qwen3.5-0.8B)",
+      "input_policy": "900x520 inline PNG original, service processing, no external crops"
+    }
+  ],
+  "case_total": 24,
+  "cases_run": 24,
+  "cases_correct": 0,
+  "field_total_run": 96,
+  "field_values_correct": 0,
+  "field_locators_correct": 0,
+  "field_value_accuracy_on_run": 0.0,
+  "passed": null,
+  "production_eligible": false,
+  "warning": "Development diagnostic only. Missing responses stay not_run; no benchmark/production pass. Strict exact matching intentionally counts omitted specificity and format changes.",
+  "cases": [
+    {
+      "id": "study-specific",
+      "category": "detail",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "科目": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "英语口语",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "时间": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "明天下午三点",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "时长": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "20分钟",
+            "locator": "L4"
+          },
+          "actual": null
+        },
+        "状态": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "未开始",
+            "locator": "L5"
+          },
+          "actual": null
+        }
+      }
+    },
+    {
+      "id": "study-reading",
+      "category": "detail",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "科目": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "英语阅读",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "时间": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "周五上午九点",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "时长": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "35分钟",
+            "locator": "L4"
+          },
+          "actual": null
+        },
+        "状态": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "进行中",
+            "locator": "L5"
+          },
+          "actual": null
+        }
+      }
+    },
+    {
+      "id": "study-mastery",
+      "category": "negation",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "任务": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "已完成",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "掌握度": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "未确认",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "测验": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "未参加",
+            "locator": "L4"
+          },
+          "actual": null
+        },
+        "下一步": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "用户决定",
+            "locator": "L5"
+          },
+          "actual": null
+        }
+      }
+    },
+    {
+      "id": "study-correction",
+      "category": "correction",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "原时间": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "周一14:00",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "现时间": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "周二16:30",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "科目": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "法律基础",
+            "locator": "L4"
+          },
+          "actual": null
+        },
+        "状态": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "原时间已取消",
+            "locator": "L5"
+          },
+          "actual": null
+        }
+      }
+    },
+    {
+      "id": "money-units",
+      "category": "numeric",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "金额": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "1200.50元",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "税率": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "6%",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "数量": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "12件",
+            "locator": "L4"
+          },
+          "actual": null
+        },
+        "截止日": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "2026-12-03",
+            "locator": "L5"
+          },
+          "actual": null
+        }
+      }
+    },
+    {
+      "id": "money-negative",
+      "category": "numeric",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "收入": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "800元",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "支出": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "950元",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "净额": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "-150元",
+            "locator": "L4"
+          },
+          "actual": null
+        },
+        "单位": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "人民币元",
+            "locator": "L5"
+          },
+          "actual": null
+        }
+      }
+    },
+    {
+      "id": "money-percent",
+      "category": "numeric",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "样本数": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "240",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "误差": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "0.8%",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "比例": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "12.5%",
+            "locator": "L4"
+          },
+          "actual": null
+        },
+        "结论": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "不保证收益",
+            "locator": "L5"
+          },
+          "actual": null
+        }
+      }
+    },
+    {
+      "id": "money-decimal",
+      "category": "numeric",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "温度": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "-3.5℃",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "长度": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "0.08米",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "质量": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "2.05千克",
+            "locator": "L4"
+          },
+          "actual": null
+        },
+        "编号": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "A-0012",
+            "locator": "L5"
+          },
+          "actual": null
+        }
+      }
+    },
+    {
+      "id": "legal-not",
+      "category": "negation",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "允许": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "只读材料",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "禁止": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "对外提交",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "签署": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "不授权",
+            "locator": "L4"
+          },
+          "actual": null
+        },
+        "付款": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "不授权",
+            "locator": "L5"
+          },
+          "actual": null
+        }
+      }
+    },
+    {
+      "id": "legal-except",
+      "category": "exception",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "规则": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "不得转发",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "例外": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "经书面同意可转发摘要",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "原文": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "仍不得公开",
+            "locator": "L4"
+          },
+          "actual": null
+        },
+        "有效期": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "仅本次任务",
+            "locator": "L5"
+          },
+          "actual": null
+        }
+      }
+    },
+    {
+      "id": "legal-before",
+      "category": "negation",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "提交前提": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "管理员审核",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "当前状态": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "尚未审核",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "能否提交": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "不能",
+            "locator": "L4"
+          },
+          "actual": null
+        },
+        "取消期限": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "2026-11-30前",
+            "locator": "L5"
+          },
+          "actual": null
+        }
+      }
+    },
+    {
+      "id": "legal-revoke",
+      "category": "negation",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "历史权限": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "可写入",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "当前权限": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "已撤销",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "待执行动作": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "立即停止",
+            "locator": "L4"
+          },
+          "actual": null
+        },
+        "旧操作": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "不保证撤回",
+            "locator": "L5"
+          },
+          "actual": null
+        }
+      }
+    },
+    {
+      "id": "absent-author",
+      "category": "absent",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "标题": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "河流与城市",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "作者": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": null,
+            "locator": null
+          },
+          "actual": null
+        },
+        "日期": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "2026-10-04",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "页码": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "第2页",
+            "locator": "L4"
+          },
+          "actual": null
+        }
+      }
+    },
+    {
+      "id": "absent-date",
+      "category": "absent",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "标题": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "色彩练习",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "作者": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "示例作者甲",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "日期": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": null,
+            "locator": null
+          },
+          "actual": null
+        },
+        "技法": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "水彩",
+            "locator": "L4"
+          },
+          "actual": null
+        }
+      }
+    },
+    {
+      "id": "absent-price",
+      "category": "absent",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "展名": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "合成空间",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "地点": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "示例展厅",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "票价": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": null,
+            "locator": null
+          },
+          "actual": null
+        },
+        "时间": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "14:00",
+            "locator": "L4"
+          },
+          "actual": null
+        }
+      }
+    },
+    {
+      "id": "absent-version",
+      "category": "absent",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "工具": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "示例编辑器",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "版本": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": null,
+            "locator": null
+          },
+          "actual": null
+        },
+        "系统": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "演示系统",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "状态": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "未连接",
+            "locator": "L4"
+          },
+          "actual": null
+        }
+      }
+    },
+    {
+      "id": "source-stale",
+      "category": "provenance",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "图像时间": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "10:00:00",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "当前时间": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "10:02:00",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "来源状态": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "已过期",
+            "locator": "L4"
+          },
+          "actual": null
+        },
+        "可否当实时": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "不能",
+            "locator": "L5"
+          },
+          "actual": null
+        }
+      }
+    },
+    {
+      "id": "source-hidden",
+      "category": "provenance",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "来源": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "外部浏览器",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "当前画面": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "咨询界面",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "文章可见": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "否",
+            "locator": "L4"
+          },
+          "actual": null
+        },
+        "引用状态": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "待重新确认",
+            "locator": "L5"
+          },
+          "actual": null
+        }
+      }
+    },
+    {
+      "id": "source-scope",
+      "category": "provenance",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "对象": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "指定窗口",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "范围": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "仅可见区域",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "后台全文": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "不可读取",
+            "locator": "L4"
+          },
+          "actual": null
+        },
+        "权限": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "仅观察",
+            "locator": "L5"
+          },
+          "actual": null
+        }
+      }
+    },
+    {
+      "id": "source-version",
+      "category": "provenance",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "旧版本": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "r017",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "新版本": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "r018",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "旧行号": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "不可直接复用",
+            "locator": "L4"
+          },
+          "actual": null
+        },
+        "处理": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "重新定位",
+            "locator": "L5"
+          },
+          "actual": null
+        }
+      }
+    },
+    {
+      "id": "small-tech",
+      "category": "small_text",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "模型": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "Qwen3.5-0.8B",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "量化": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "4bit",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "上下文": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "1024 tokens",
+            "locator": "L4"
+          },
+          "actual": null
+        },
+        "权重": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "不等于总内存",
+            "locator": "L5"
+          },
+          "actual": null
+        }
+      }
+    },
+    {
+      "id": "small-english",
+      "category": "small_text",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "模式": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "direct_audio",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "转写": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "dictation",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "默认输出": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "文字",
+            "locator": "L4"
+          },
+          "actual": null
+        },
+        "回退": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "不得静默转换",
+            "locator": "L5"
+          },
+          "actual": null
+        }
+      }
+    },
+    {
+      "id": "small-time",
+      "category": "small_text",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "开始": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "09:05",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "结束": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "09:50",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "日期": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "2026-12-08",
+            "locator": "L4"
+          },
+          "actual": null
+        },
+        "时区": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "Asia/Shanghai",
+            "locator": "L5"
+          },
+          "actual": null
+        }
+      }
+    },
+    {
+      "id": "small-formula",
+      "category": "small_text",
+      "status": "completed",
+      "schema_correct": false,
+      "passed": false,
+      "fields": {
+        "公式": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "E = mc²",
+            "locator": "L2"
+          },
+          "actual": null
+        },
+        "单位": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "J",
+            "locator": "L3"
+          },
+          "actual": null
+        },
+        "条件": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "v < c",
+            "locator": "L4"
+          },
+          "actual": null
+        },
+        "结果": {
+          "value_correct": false,
+          "locator_correct": false,
+          "expected": {
+            "value": "未验证",
+            "locator": "L5"
+          },
+          "actual": null
+        }
+      }
+    }
+  ]
+}

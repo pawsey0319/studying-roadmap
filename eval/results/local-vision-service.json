@@ -1,0 +1,28 @@
+{
+  "real_http_inference": true,
+  "scope": "single_synthetic_card_not_benchmark",
+  "http_status": 200,
+  "cors_origin": "http://127.0.0.1:8811",
+  "wall_seconds": 6.331,
+  "response": {
+    "id": "local-vision-response",
+    "object": "chat.completion",
+    "model": "local-vision",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "学习科目：英语  \n计划时间：明天下午三点  \n每日时长：20分钟  \n当前状态：未开始"
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "evidence": {
+      "mode": "vision",
+      "inference_seconds": 6.2978,
+      "process_rss_bytes": 582729728,
+      "mlx_peak_bytes": 1072250248
+    }
+  }
+}

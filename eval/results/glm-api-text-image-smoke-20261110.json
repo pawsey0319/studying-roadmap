@@ -1,0 +1,18 @@
+{
+  "scope": "two_request_glm_api_smoke_not_formal_quality_acceptance",
+  "created_at": "2026-11-10T14:57:54.274834+00:00",
+  "model": "glm-5.3-flash",
+  "authorized_budget_cny": 1,
+  "max_requests": 2,
+  "max_output_tokens_per_request": 512,
+  "automatic_retries": 0,
+  "personal_material_sent": false,
+  "billing_amount_confirmed": false,
+  "results": [
+    {
+      "kind": "text",
+      "http_status": 429,
+      "stopped": true
+    }
+  ]
+}

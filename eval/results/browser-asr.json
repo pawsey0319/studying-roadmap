@@ -1,0 +1,12 @@
+{
+ "date":"2026-11-10",
+ "path":"Chrome headless -> src/ai/providers.js transcribe -> authenticated localhost:8790 -> Whisper-small MLX",
+ "origin":"http://127.0.0.1:8811",
+ "fixture":"eval/fixtures/zh-clean.wav",
+ "text":"請把今天的學習任務改到明天下午3點",
+ "elapsed_ms":2654,
+ "javascript_errors":[],
+ "real_inference":true,
+ "microphone_capture":"not_tested_this_run",
+ "scope":"one synthetic fixture through browser CORS and real provider, not human speech accuracy or Android acceptance"
+}

@@ -1,0 +1,20 @@
+{
+  "model_repo": "mlx-community/Qwen3-VL-2B-Instruct-4bit",
+  "revision": "9c4f5209e57b31f4b9dfba735de3fb983739c9cc",
+  "experiment": "single_card_original_v1_prompt_guarded_http",
+  "status": "resource_guard_stopped",
+  "error": "RuntimeError: memory_guard_stopped_experiment",
+  "guard": {"available_memory_min_bytes": 536870912, "swap_growth_max_bytes": 536870912, "condition": "either threshold violated"},
+  "triggering_metric": null,
+  "triggering_metric_note": "Initial supervisor did not persist the exact triggering measurement; do not infer which disjunct fired or assign a model peak from later system readings.",
+  "model_answer_recorded": false,
+  "quality_passed": null,
+  "production_eligible": false,
+  "supervisor_exit_code": 1,
+  "server_exit_code": -15,
+  "cleanup_verified_no_experiment_processes": true,
+  "post_cleanup_system_available_bytes": 6045057024,
+  "post_cleanup_system_swap_used_bytes": 5454233600,
+  "post_cleanup_note": "System-wide snapshot after cleanup, not model-attributed peak or the guard-trigger measurement.",
+  "action": "No batch run, no preset change, no lowered safety threshold. Weight download verification is independent from inference or quality success."
+}

@@ -28,7 +28,7 @@ export function renderSearch(q = {}) {
       <div class="meta"><span class="tag">${x.kind}</span>${x.at ? esc(stageLabel(x.at)) : ''}${x.time ? ' · ' + new Date(x.time).toLocaleDateString('zh-CN') : ''}</div></li>`).join('');
   const show = k => scope === 'all' || scope === k;
   return `<div class="ph"><h1>搜索</h1><span class="mut">网站里的资讯和你自己的笔记、对话纪要、导入的资料</span></div>
-    <form class="srch" data-search><input name="q" type="search" value="${esc(term)}" placeholder="输入关键词，多个词用空格分开" aria-label="搜索"><button class="btn pri">搜索</button></form>
+    <form class="srch" data-search><input name="q" type="search" inputmode="search" enterkeyhint="search" autocomplete="off" readonly value="${esc(term)}" placeholder="输入关键词，多个词用空格分开" aria-label="搜索"><button class="btn pri">搜索</button></form>
     <div class="chips" style="margin:10px 0">${tab('all', '全部', notes.length + news.length)}${tab('notes', '我的笔记', notes.length)}${tab('news', '资讯', news.length)}</div>
     ${!toks.length ? '<p class="empty">输入关键词开始搜索。笔记里的内容只在这台设备上搜索，不会发出去。</p>' : ''}
     ${toks.length && show('notes') ? `<div class="sh"><h3>我的笔记</h3><span class="fnt small">${notes.length} 条${notes.length > MAX ? `，只显示最近 ${MAX} 条` : ''}</span></div>
@@ -36,6 +36,21 @@ export function renderSearch(q = {}) {
     ${toks.length && show('news') ? `<div class="sh"><h3>资讯</h3><span class="fnt small">${news.length} 条${news.length > MAX ? `，只显示前 ${MAX} 条` : ''}，你在学的方向排在前面</span></div>
       <div class="card"><ul class="nlist">${news.slice(0, MAX).map(n => newsRow(n, { showTrack: true })).join('') || '<li><span></span><div class="fnt">资讯里没有找到。</div><span></span></li>'}</ul></div>` : ''}`;
 }
+
+// 手机：从底部导航点“搜索”时，新页面刚好出现在手指下面，浏览器会把随后的 click 落到输入框上并弹出键盘。
+// 先用 readonly 挡住；只有真的按在输入框上（pointerdown/touchstart 或键盘）才解锁。
+document.addEventListener('pointerdown', e => {
+  const i = e.target.closest && e.target.closest('form[data-search] input[name=q]');
+  if (i) i.removeAttribute('readonly');
+}, true);
+document.addEventListener('touchstart', e => {
+  const i = e.target.closest && e.target.closest('form[data-search] input[name=q]');
+  if (i) i.removeAttribute('readonly');
+}, { capture: true, passive: true });
+document.addEventListener('keydown', e => {
+  const i = e.target.closest && e.target.closest('form[data-search] input[name=q]');
+  if (i) i.removeAttribute('readonly');
+}, true);
 
 document.addEventListener('submit', e => {
   const f = e.target.closest && e.target.closest('form[data-search]');

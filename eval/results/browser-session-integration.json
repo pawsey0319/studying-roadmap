@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-10",
+  "environment": "Chrome via CDP, existing test profile, preview port 8811",
+  "protocol": "mock model answer; real IndexedDB and session-log integration",
+  "hasSession": true,
+  "eventTypes": ["audio", "answer", "audio", "answer", "message", "answer"],
+  "checkpoints": 1,
+  "hasStableInstanceId": true,
+  "storesRawPixels": false,
+  "errors": [],
+  "limitations": ["Model answer is mocked", "Existing synthetic test history retained", "Not fresh-database migration or Android device verification"]
+}

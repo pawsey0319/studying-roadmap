@@ -200,3 +200,12 @@
 .msrc a{color:inherit;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:2px}
 .msrc a>span:first-child,.msrc>span:first-child{color:var(--faint)}
 .dw.min .dw-h .aitag{display:inline-block}
+
+/* 手机：工作台工具条可以横向滑，标题不被挤掉 */
+@media (max-width:820px){
+  .deskbar{margin:0 -14px 10px;padding:0 14px 6px;top:0}
+  .deskbar .dk{min-height:36px;font-size:13px}
+  .ob-prompt{font-size:18px}
+  .ob-min .ob-chat{min-height:170px}
+  .inb-tools .btn{min-height:34px}
+}

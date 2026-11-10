@@ -1,0 +1,99 @@
+{
+  "timestamp_utc": "2026-11-10T08:27:29Z",
+  "real_inference_attempted": true,
+  "scope": "synthetic_smoke_only_not_240_case_acceptance",
+  "results": [
+    {
+      "id": "zh-clean",
+      "path": "eval/fixtures/zh-clean.wav",
+      "reference": "请把今天的学习任务改到明天下午三点。",
+      "kind": "system_tts_not_human",
+      "voice": "Tingting",
+      "sha256": "673f76366e9e5ab876df5ec8ee4730614b4f09d4ec0e4ee73d45c55545cb467e",
+      "mode": "asr",
+      "fixture_hash_verified": true,
+      "text": "請把今天的學習任務改到明天下午3點",
+      "cer": 0.35294117647058826,
+      "exact_normalized": false,
+      "evidence": {
+        "mode": "asr",
+        "audio_samples": 63241,
+        "sample_rate": 16000,
+        "inference_seconds": 2.1142,
+        "process_rss_bytes": 230621184,
+        "mlx_peak_bytes": 1226412966
+      },
+      "status": "real_inference_completed",
+      "wall_seconds": 2.183
+    },
+    {
+      "id": "zh-entity",
+      "path": "eval/fixtures/zh-entity.wav",
+      "reference": "我想学习英语口语，每天练习二十分钟。",
+      "kind": "system_tts_not_human",
+      "voice": "Tingting",
+      "sha256": "8dc66691973f657968b3f35ece32c8b571ebe93652f418499b81918b3c9b2151",
+      "mode": "asr",
+      "fixture_hash_verified": true,
+      "text": "我想學習英語口語,每天練習20分鐘。",
+      "cer": 0.5625,
+      "exact_normalized": false,
+      "evidence": {
+        "mode": "asr",
+        "audio_samples": 64521,
+        "sample_rate": 16000,
+        "inference_seconds": 0.4756,
+        "process_rss_bytes": 238731264,
+        "mlx_peak_bytes": 1226412966
+      },
+      "status": "real_inference_completed",
+      "wall_seconds": 0.505
+    },
+    {
+      "id": "en-clean",
+      "path": "eval/fixtures/en-clean.wav",
+      "reference": "Please help me practice English for twenty minutes every day.",
+      "kind": "system_tts_not_human",
+      "voice": "Samantha",
+      "sha256": "6c8117fa8e140af8b7a9c82cf6913d0f7e713487c5af4dfd7dfe749cef1603d2",
+      "mode": "asr",
+      "fixture_hash_verified": true,
+      "text": "Please help me practice English for 20 minutes every day.",
+      "cer": 0.11764705882352941,
+      "exact_normalized": false,
+      "evidence": {
+        "mode": "asr",
+        "audio_samples": 50124,
+        "sample_rate": 16000,
+        "inference_seconds": 0.4355,
+        "process_rss_bytes": 239468544,
+        "mlx_peak_bytes": 1226412966
+      },
+      "status": "real_inference_completed",
+      "wall_seconds": 0.459
+    },
+    {
+      "id": "silence",
+      "path": "eval/fixtures/silence.wav",
+      "reference": "",
+      "kind": "digital_silence",
+      "sha256": "20eaebffe1816e0ffa6f7f854f5ef4ea80d5349faaf0ce1fec1b713e7fde58fa",
+      "mode": "asr",
+      "fixture_hash_verified": true,
+      "text": "",
+      "cer": 0.0,
+      "exact_normalized": true,
+      "evidence": {
+        "mode": "asr",
+        "audio_samples": 32000,
+        "sample_rate": 16000,
+        "inference_seconds": 0.0012,
+        "process_rss_bytes": 239468544,
+        "mlx_peak_bytes": 1226412966
+      },
+      "status": "real_inference_completed",
+      "wall_seconds": 0.024
+    }
+  ],
+  "completed": 4
+}

@@ -1,0 +1,19 @@
+{
+  "repo": "ggml-org/ultravox-v0_5-llama-3_2-1b-GGUF",
+  "revision": "5390c7c41cbd6f261f7f205fc0c5ae61bbdca650",
+  "endpoint_kind": "explicit_mirror",
+  "files": [
+    {
+      "file": "Llama-3.2-1B-Instruct-Q4_K_M.gguf",
+      "bytes": 807694464,
+      "sha256": "6f85a640a97cf2bf5b8e764087b1e83da0fdb51d7c9fab7d0fece9385611df83",
+      "lfs_verified": true
+    },
+    {
+      "file": "mmproj-ultravox-v0_5-llama-3_2-1b-f16.gguf",
+      "bytes": 1371123616,
+      "sha256": "b34dde1835752949d6b960528269af93c92fec91c61ea0534fcc73f96c1ed8b2",
+      "lfs_verified": true
+    }
+  ]
+}

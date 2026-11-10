@@ -1,0 +1,95 @@
+{
+  "timestamp_utc": "2026-11-10T09:37:01Z",
+  "real_inference_attempted": true,
+  "scope": "synthetic_smoke_only_not_240_case_acceptance",
+  "results": [
+    {
+      "id": "zh-clean",
+      "path": "eval/fixtures/zh-clean.wav",
+      "reference": "请把今天的学习任务改到明天下午三点。",
+      "kind": "system_tts_not_human",
+      "voice": "Tingting",
+      "sha256": "673f76366e9e5ab876df5ec8ee4730614b4f09d4ec0e4ee73d45c55545cb467e",
+      "mode": "direct_audio",
+      "fixture_hash_verified": true,
+      "text": "今天的学习任务是 \"请把今天的学习任务改到明天下午三点\"。在这句话中，实际上没有任何声音或语言。它是用来描述一个具体的时间，表达的是将任务从今天改为明天下午三点。",
+      "semantic_grade": "requires_human_review_not_automatic_pass",
+      "evidence": {
+        "mode": "direct_audio",
+        "audio_samples": 63241,
+        "sample_rate": 16000,
+        "inference_seconds": 2.7925,
+        "process_rss_bytes": 52592640,
+        "mlx_peak_bytes": 0
+      },
+      "status": "real_inference_completed",
+      "wall_seconds": 3.086
+    },
+    {
+      "id": "zh-entity",
+      "path": "eval/fixtures/zh-entity.wav",
+      "reference": "我想学习英语口语，每天练习二十分钟。",
+      "kind": "system_tts_not_human",
+      "voice": "Tingting",
+      "sha256": "8dc66691973f657968b3f35ece32c8b571ebe93652f418499b81918b3c9b2151",
+      "mode": "direct_audio",
+      "fixture_hash_verified": true,
+      "text": "我在你面前说出这句话时，会听到一个轻微的“哇”声和“嘘”声，这是你在你嘴唇上轻轻咬住的感觉。随后，会听到一个轻微的“哇”声和“嘘”声，这是你在你嘴唇上咬住的感觉。随后，会听到一个轻微的“哇”声和“嘘",
+      "semantic_grade": "requires_human_review_not_automatic_pass",
+      "evidence": {
+        "mode": "direct_audio",
+        "audio_samples": 64521,
+        "sample_rate": 16000,
+        "inference_seconds": 2.6286,
+        "process_rss_bytes": 67747840,
+        "mlx_peak_bytes": 0
+      },
+      "status": "real_inference_completed",
+      "wall_seconds": 2.648
+    },
+    {
+      "id": "en-clean",
+      "path": "eval/fixtures/en-clean.wav",
+      "reference": "Please help me practice English for twenty minutes every day.",
+      "kind": "system_tts_not_human",
+      "voice": "Samantha",
+      "sha256": "6c8117fa8e140af8b7a9c82cf6913d0f7e713487c5af4dfd7dfe749cef1603d2",
+      "mode": "direct_audio",
+      "fixture_hash_verified": true,
+      "text": "I'd be happy to help you practice English for 20 minutes every day. Here's a 20-minute English practice session for you:\n\n**Minutes 1-5: Vocabulary Building**\n\n* Listen to a podcast or a news article about a topic you're interested in (e.g., science, technology, or history).\n* Repeat the main words and phrases out loud, trying to pronounce them correctly.\n* Write down the words and phrases you hear on a piece of paper,",
+      "semantic_grade": "requires_human_review_not_automatic_pass",
+      "evidence": {
+        "mode": "direct_audio",
+        "audio_samples": 50124,
+        "sample_rate": 16000,
+        "inference_seconds": 2.6251,
+        "process_rss_bytes": 68648960,
+        "mlx_peak_bytes": 0
+      },
+      "status": "real_inference_completed",
+      "wall_seconds": 2.643
+    },
+    {
+      "id": "silence",
+      "path": "eval/fixtures/silence.wav",
+      "reference": "",
+      "kind": "digital_silence",
+      "sha256": "20eaebffe1816e0ffa6f7f854f5ef4ea80d5349faaf0ce1fec1b713e7fde58fa",
+      "mode": "direct_audio",
+      "fixture_hash_verified": true,
+      "text": "I'm a large language model, and I don't have the ability to hear or perceive the physical world. I exist solely as a digital entity, and my interactions are limited to text-based communication.\n\nHowever, I can describe the sounds and language that I'm trained on, which are the digital representations of words and phrases that I've been trained on.\n\nThe sounds I hear are the digital representations of words and phrases, which are represented by a combination of letters, numbers, and",
+      "semantic_grade": "requires_human_review_not_automatic_pass",
+      "evidence": {
+        "mode": "direct_audio",
+        "audio_samples": 32000,
+        "sample_rate": 16000,
+        "inference_seconds": 2.6505,
+        "process_rss_bytes": 68960256,
+        "mlx_peak_bytes": 0
+      },
+      "status": "real_inference_completed",
+      "wall_seconds": 2.674
+    }
+  ],
+  "completed": 4
+}

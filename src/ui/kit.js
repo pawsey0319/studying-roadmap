@@ -3,6 +3,24 @@ import { $, esc, link } from '../util.js';
 import * as M from '../model.js';
 import * as store from '../store/index.js';
 
+/* ---------- 弹窗打开时锁住背景滚动 ---------- */
+// 弹窗的 ::backdrop 不吃滚轮，背景页面仍会跟着上下滑；统一在 showModal/close 时给根节点加标记。
+if (typeof HTMLDialogElement !== 'undefined' && !HTMLDialogElement.prototype.__lhLocked) {
+  const proto = HTMLDialogElement.prototype, show = proto.showModal, close = proto.close;
+  const sync = () => {
+    const on = !!document.querySelector('dialog[open]');
+    document.documentElement.classList.toggle('modal-open', on);
+    document.body.classList.toggle('modal-open', on);
+  };
+  proto.showModal = function (...a) { const r = show.apply(this, a); sync(); return r; };
+  proto.close = function (...a) { const r = close.apply(this, a); setTimeout(sync, 0); return r; };
+  proto.__lhLocked = true;
+  // Esc、method=dialog、表单提交关闭等不走 close()，用 close 事件兜底
+  document.addEventListener('close', () => setTimeout(sync, 0), true);
+  document.addEventListener('toggle', () => setTimeout(sync, 0), true);
+  sync();
+}
+
 /* ---------- 动作：<button data-act="名称" data-x="..."> ---------- */
 const ACTS = {};
 export const act = (name, fn) => { ACTS[name] = fn; };
