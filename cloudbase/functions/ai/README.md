@@ -46,6 +46,20 @@
 - 上游 401 `invalid key`：核对 `AI_KEY` 是否为真实的模型 API Key，不是请求编号、登录密码或其他平台凭据。不要在聊天、日志或仓库中输出 Key。
 - 已验证：2026-11-09 真实账号额度 GET 返回 200；模型 POST 返回 200；两次模型测试后日/月计数为 2；自带 Key 直连经用户更正 Key 后恢复。最终 Agent 页面正文与上线验收仍需另做。
 
+### 内部测试注销后的数据清理
+
+账号删除接口会删除账号及应用数据，但 `ai_usage` / `ai_entitlements` 没有开放给浏览器删除权限。内部测试期间由管理员在 PostgreSQL 控制台按已注销用户 ID 清理：
+
+```sql
+-- 先确认，再执行；不要把结果或用户 ID 发到公开聊天
+select * from public.ai_usage where user_id = '<已注销用户 ID>';
+select * from public.ai_entitlements where user_id = '<已注销用户 ID>';
+delete from public.ai_usage where user_id = '<已注销用户 ID>';
+delete from public.ai_entitlements where user_id = '<已注销用户 ID>';
+```
+
+正式公开前应将这项清理做成服务端注销事务/后台保留期限任务，并由法务确定保存期限；当前版本不把管理员权限放进网页。
+
 ## 自测
 
 ```bash

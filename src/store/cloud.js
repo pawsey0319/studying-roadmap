@@ -10,7 +10,7 @@ import { sameDoc } from '../core/doc.js';
 import { makeBackend, http } from './backend.js';
 
 const SKEY = 'learning-hub.cloud';
-let B = null, S = {}, timer = null, syncing = false, HOSTED = false, FN = '', PUBW = false, AIURL = '';
+let B = null, S = {}, timer = null, syncing = false, deleting = false, HOSTED = false, FN = '', PUBW = false, AIURL = '';
 export let error = '';
 const statusFns = new Set();
 export const onStatus = fn => statusFns.add(fn);
@@ -79,12 +79,16 @@ export async function startDelete() { if (!canDelete()) throw new Error('这个�
 export async function finishDelete(code) {
   if (!canDelete()) throw new Error('这个后端不支持在网站里注销');
   if (!/^\d{6}$/.test(String(code).trim())) throw new Error('请填邮件里的 6 位验证码');
-  const t = await ensureToken();
-  // 公开内容、引用和举报记录随 public_items 级联删除；docs、digest_vecs 是本人数据，行级权限允许本人删除
-  for (const p of ['/public_items?author=eq.' + encodeURIComponent(S.uid), '/adoptions?user_id=eq.' + encodeURIComponent(S.uid), '/digest_vecs?user_id=eq.' + encodeURIComponent(S.uid), '/docs?user_id=eq.' + encodeURIComponent(S.uid)])
-    await rest(p, { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
-  await B.deleteMe(t, code);
-  signOut();
+  if (!S.uid || deleting) throw new Error('注销操作正在进行，请稍候');
+  deleting = true; clearTimeout(timer); syncing = true;
+  try {
+    const t = await ensureToken();
+    // 这些表允许用户本人删除；验证码错误仍会在 deleteMe 前才暴露原子性限制，内部测试先保留本机数据
+    for (const p of ['/public_items?author=eq.' + encodeURIComponent(S.uid), '/adoptions?user_id=eq.' + encodeURIComponent(S.uid), '/digest_vecs?user_id=eq.' + encodeURIComponent(S.uid), '/docs?user_id=eq.' + encodeURIComponent(S.uid)])
+      await rest(p, { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
+    await B.deleteMe(t, code);
+    signOut();
+  } finally { syncing = false; deleting = false; }
 }
 
 export async function ensureToken() {
@@ -117,7 +121,7 @@ export async function pullPublic() {
 
 /* ---------- 同步 ---------- */
 export async function syncNow() {
-  if (!signedIn() || syncing) return;
+  if (deleting || !signedIn() || syncing) return;
   syncing = true; status('正在同步…');
   try {
     await ensureToken();
