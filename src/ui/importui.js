@@ -117,7 +117,7 @@ act('imp-agent', async () => {
   try {
     const parts = EX.text.length > 24000 ? EX.text.slice(0, 24000) + '\n（后面内容过长已截断）' : EX.text;
     const res = await chat(cfg, [{ role: 'system', content: '你把用户导入的文档整理成学习路线，用中文。只使用文档里有的内容，不要编造资源链接；文档里的链接原样保留。' },
-      { role: 'user', content: draftTrackPrompt(EX.title, { level: '按文档内容整理' }).replace('请起草一条理论路线，4–6 个阶段', '请把下面这份文档整理成一条学习路线，阶段数按文档实际结构来（最多 30 个）') + '\n\n文档内容：\n' + parts }], { maxTokens: 6000 });
+      { role: 'user', content: draftTrackPrompt(EX.title, { level: '按文档内容整理' }).replace('请起草一条理论路线，4–6 个阶段', '请把下面这份文档整理成一条学习路线，阶段数按文档实际结构来（最多 30 个）') + '\n\n文档内容：\n' + parts }], { maxTokens: 6000, feat: 'import' });
     const u = await usage(); u.cny += cost(cfg, res.usage); u.calls++; await store.localSet('usage', u);
     const b = extractBlocks(res.text).blocks.find(x => x.type === 'track');
     if (!b) throw new Error('Agent 没有给出可用的路线结构，可以换个模型再试，或作为资料保存');

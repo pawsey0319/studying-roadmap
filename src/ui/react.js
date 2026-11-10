@@ -6,6 +6,9 @@ import { uid } from '../core/ids.js';
 import { likeKey, isLiked, refIndex, citedBy, citesOf, makeRef, quoteMd, refStatus } from '../core/marks.js';
 import { act, refresh, toast } from './kit.js';
 import { applyToStage } from './suggest.js';
+import { copyTrack } from '../core/public.js';
+
+const PALETTE = ['#3C6E71', '#B5446E', '#5B7F1F', '#AF6E1A', '#2E6FA7', '#7A4E9C'];
 
 const HEART = '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M8 13.6S2.2 10.2 2.2 6.1A3 3 0 0 1 8 5a3 3 0 0 1 5.8 1.1C13.8 10.2 8 13.6 8 13.6Z"/></svg>';
 const QUOTE = '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5V8.2C3 6 4.2 4.6 6.2 4.2M9 11.5V8.2c0-2.2 1.2-3.6 3.2-4"/><path d="M3 11.5h3v-3H3M9 11.5h3v-3H9"/></svg>';
@@ -63,6 +66,7 @@ act('cite-open', el => {
   const dd = dlg();
   dd.innerHTML = `<div class="dlg"><h3>引用</h3><p class="small mut">${KNAME[k]}「${esc(d.title)}」</p>
     <label class="field"><span>放到哪里</span><select id="citeTo">
+      ${k === 'track' && M.track(id) ? '<option value="copy">复制成我的一条新路线（整条引用）</option>' : ''}
       <option value="new">新的笔记卡片</option>
       ${cards.length ? `<optgroup label="追加到已有笔记">${cards.map(([cid, c]) => `<option value="card:${cid}">${esc(c.t.split('\n')[0].slice(0, 36))}</option>`).join('')}</optgroup>` : ''}
       ${stages.length ? M.tracks().map(t => `<optgroup label="加一项参考任务：${esc(t.name)}">${stages.filter(x => x.t.id === t.id).map(x => `<option value="stage:${x.s.id}">${x.i + 1}. ${esc(x.s.title)}</option>`).join('')}</optgroup>`).join('') : ''}</select></label>
@@ -75,6 +79,17 @@ act('cite-do', () => {
   if (!SRC) return;
   const v = $('#citeTo').value, now = Date.now(), refId = 'q' + uid('');
   let from, msg = '已引用';
+  if (v === 'copy') {
+    const t = M.track(SRC.id); if (!t) return;
+    const tid = 'u' + uid('').slice(0, 10), n = Object.keys(store.all('tracks')).length;
+    // 先给“（我的版本）”留出位置，免得原名较长时后缀被 40 字上限截掉
+    const suffix = '（我的版本）', name = (String(t.name || '').slice(0, 40 - suffix.length) + suffix).slice(0, 40);
+    store.put('tracks', tid, { ...copyTrack(t, store.all('overlay'), { tid, color: PALETTE[n % PALETTE.length] }), name, short: name.slice(0, 8) });
+    from = { k: 'track', id: tid }; msg = '已复制成新路线，原路线不变';
+    try { const [id, r] = makeRef({ from, to: { k: 'track', id: t.id }, text: t.goal || t.name, id: refId, now }); store.put('refs', id, r); } catch (e) { /* 引用记录失败不影响复制 */ }
+    dlg().close(); refresh(); toast(msg, () => { store.del('tracks', tid); store.del('refs', refId); refresh(); });
+    location.hash = '#/t/' + tid; return;
+  }
   if (v === 'new') {
     const cid = 'c' + uid('');
     store.put('cards', cid, { t: quoteMd(SRC.title, SRC.text) + '\n\n', at: SRC.at, c: now });

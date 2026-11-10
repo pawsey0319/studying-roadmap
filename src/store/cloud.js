@@ -10,7 +10,7 @@ import { sameDoc } from '../core/doc.js';
 import { makeBackend, http } from './backend.js';
 
 const SKEY = 'learning-hub.cloud';
-let B = null, S = {}, timer = null, syncing = false, HOSTED = false;
+let B = null, S = {}, timer = null, syncing = false, deleting = false, HOSTED = false, FN = '', PUBW = false, AIURL = '';
 export let error = '';
 const statusFns = new Set();
 export const onStatus = fn => statusFns.add(fn);
@@ -20,7 +20,12 @@ const save = () => { try { localStorage.setItem(SKEY, JSON.stringify(S)); } catc
 
 export function setup(config) {
   B = makeBackend(config);
-  HOSTED = !!(B && B.kind === 'supabase' && config.hostedAI === true);
+  PUBW = config.publicWrite === true;
+  // 平台模型：CloudBase 配了 aiFunction（云函数名，例如 lh-ai）；Supabase 写了 hostedAI: true（旧的内测代理）
+  HOSTED = !!(B && ((B.kind === 'cloudbase' && /^[a-z][a-z0-9-]{1,40}$/.test(config.aiFunction || '')) || (B.kind === 'supabase' && config.hostedAI === true)));
+  FN = HOSTED && B.kind === 'cloudbase' ? config.aiFunction : '';
+  // 备用：网关地址调不通时，在云开发“HTTP 访问服务”里给云函数配一个路径，把完整地址写进 aiUrl
+  AIURL = FN && /^https:\/\/[^\s"']+$/.test(config.aiUrl || '') ? config.aiUrl : '';
   // 换了后端（例如从 Supabase 搬到 CloudBase）：旧的登录凭证作废，需要重新登录
   if (B && S.kind && S.kind !== B.kind) { S = { kind: B.kind, migrated: true }; save(); }
   if (B && !S.kind) { S.kind = B.kind; save(); }
@@ -30,6 +35,8 @@ export const hostedAI = () => HOSTED;
 export const available = () => !!B;
 export const backendName = () => (B ? B.label : '');
 export const supportsPublic = () => !!(B && B.publicArea);
+// 第一版公共区域只读：config.json 写了 "publicWrite": true 才显示“公开我的路线或笔记”（正式版二再打开）
+export const publicWrite = () => supportsPublic() && PUBW;
 export const signedIn = () => !!(B && S.access);
 export const email = () => S.email || '';
 export const uid = () => S.uid || '';
@@ -66,6 +73,24 @@ export async function consumeLink() {
 }
 export function signOut() { S = { kind: B && B.kind }; save(); status(); }
 
+/* ---------- 注销账号（只有 CloudBase）：删云端数据 → 删账号 → 退出登录。本机数据由用户自己决定是否清除 ---------- */
+export const canDelete = () => !!(B && B.reauth);
+export async function startDelete() { if (!canDelete()) throw new Error('这个后端不支持在网站里注销'); await B.reauth(await ensureToken()); }
+export async function finishDelete(code) {
+  if (!canDelete()) throw new Error('这个后端不支持在网站里注销');
+  if (!/^\d{6}$/.test(String(code).trim())) throw new Error('请填邮件里的 6 位验证码');
+  if (!S.uid || deleting) throw new Error('注销操作正在进行，请稍候');
+  deleting = true; clearTimeout(timer); syncing = true;
+  try {
+    const t = await ensureToken();
+    // 这些表允许用户本人删除；验证码错误仍会在 deleteMe 前才暴露原子性限制，内部测试先保留本机数据
+    for (const p of ['/public_items?author=eq.' + encodeURIComponent(S.uid), '/adoptions?user_id=eq.' + encodeURIComponent(S.uid), '/digest_vecs?user_id=eq.' + encodeURIComponent(S.uid), '/docs?user_id=eq.' + encodeURIComponent(S.uid)])
+      await rest(p, { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
+    await B.deleteMe(t, code);
+    signOut();
+  } finally { syncing = false; deleting = false; }
+}
+
 export async function ensureToken() {
   if (!S.refresh) throw new Error('没有登录');
   if (Date.now() < (S.exp || 0) - 120000) return S.access;
@@ -96,7 +121,7 @@ export async function pullPublic() {
 
 /* ---------- 同步 ---------- */
 export async function syncNow() {
-  if (!signedIn() || syncing) return;
+  if (deleting || !signedIn() || syncing) return;
   syncing = true; status('正在同步…');
   try {
     await ensureToken();
@@ -129,15 +154,18 @@ export function queueSync() { if (!signedIn()) return; clearTimeout(timer); time
 
 /* ---------- 内测模型代理（只在 Supabase + hostedAI 时可用，见 supabase/functions/ai） ---------- */
 export async function aiEndpoint() {
-  if (!HOSTED) throw new Error('这个网站没有提供内测模型');
-  if (!S.refresh) throw new Error('内测模型需要先登录：设置 → 账号与云端同步');
+  if (!HOSTED) throw new Error('这个网站没有提供平台模型');
+  if (!S.refresh) throw new Error('平台模型需要先登录：设置 → 账号与云端同步');
   await ensureToken();
+  // CloudBase：HTTP 云函数，经网关访问；用户令牌同时放在 x-user-token，云函数用它确认是谁
+  if (FN) return { url: AIURL || `${B.rest.replace(/\/v1\/rdb\/rest$/, '')}/v1/functions/${FN}?webfn=true`, headers: { authorization: 'Bearer ' + S.access, 'x-user-token': S.access } };
   return { url: B.base + '/functions/v1/ai', headers: B.restHeaders(S.access) };
 }
 export async function aiInfo() {
   const ep = await aiEndpoint();
-  const r = await fetch(ep.url, { headers: ep.headers });
+  // 额度每次都要是最新的：别让浏览器或中间缓存把 GET 结果存下来
+  const r = await fetch(ep.url, { headers: ep.headers, cache: 'no-store' });
   const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(j.error || ('内测模型不可用（' + r.status + '）'));
+  if (!r.ok) throw new Error(j.error || ('平台模型不可用（' + r.status + '）'));
   return j;
 }

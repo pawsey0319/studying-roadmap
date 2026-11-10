@@ -111,7 +111,7 @@ function mobileHome({ T, doing, sugs, un, recent }) {
   const doingP = doing.length ? `<div class="rgs">${doing.map(ring).join('')}</div>` : '<p class="empty">所有阶段都学完了。去领域里挑一条前沿路线“跟踪学习”。</p>';
   const newsP = `<ul class="nlist compact">${un.slice(0, 4).map(n => newsRow(n, { showTrack: true, compact: true })).join('') || '<li><span></span><div class="fnt">都读完了。资讯每天早上 8 点更新。</div><span></span></li>'}</ul>
     <div class="chips pane-f">${T.map(t => `<a class="chip" href="#/t/${t.id}/news" style="text-decoration:none">${esc(t.short || t.name)}</a>`).join('')}</div>`;
-  const pubP = `<p class="mut">别人公开的学习路线，可以采用到自己的方向里，也可以看到他们的更新。</p>
+  const pubP = `<p class="mut">别人公开的学习路线，可以引用到自己的方向里，也可以看到他们的更新。</p>
     <p class="fnt small" style="margin:6px 0 12px">${pub ? '正式版开放发布和收藏，现在可以预览。' : '登录云端之后才能使用。'}</p>
     <a class="btn pri" href="${pub ? '#/public' : '#/settings'}">${pub ? '打开公共区域' : '去登录'}</a>`;
   const body = { doing: doingP, news: newsP, pub: pubP };

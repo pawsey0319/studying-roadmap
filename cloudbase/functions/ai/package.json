@@ -1,0 +1,7 @@
+{
+  "name": "lh-ai",
+  "private": true,
+  "type": "module",
+  "description": "平台模型代理（腾讯云开发 HTTP 云函数）。不依赖任何 npm 包。",
+  "main": "index.mjs"
+}

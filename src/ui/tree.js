@@ -160,7 +160,7 @@ async function aiSplit(root, nodes) {
   const T = makeTree(root);
   busy = true; refresh();
   try {
-    const res = await chat(cfg, [{ role: 'user', content: expandPrompt(T, nodes) }], { maxTokens: 2500, temperature: 0.3 });
+    const res = await chat(cfg, [{ role: 'user', content: expandPrompt(T, nodes) }], { maxTokens: 2500, temperature: 0.3, feat: 'tree' });
     const m = res.text.match(/```(?:json)?\s*([\s\S]*?)```/), kids = cleanKids(looseJSON(m ? m[1] : res.text), new Set(nodes.map(n => n.id)));
     if (!Object.keys(kids).length) toast('AI 没有给出可用的细分，换个模型或稍后再试');
     else PREVIEW = { root, kids };

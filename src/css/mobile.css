@@ -115,6 +115,7 @@
   .mtop+.wrap{padding-top:8px}
   .sign b{font-size:22px;letter-spacing:.02em}
   .nlist .tt a,.lst a,.tline a,.fr h4,.fr p,.mcard p,.ph h1,.lede{overflow-wrap:anywhere}
+  .addit{flex-wrap:wrap}.addit input{min-width:0}
 
   /* 底部导航：首页、领域、Agent（居中）、搜索、我的 */
   .mnav{grid-template-columns:repeat(5,1fr);align-items:stretch;height:calc(62px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--card) 94%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--line)}
@@ -191,3 +192,11 @@
 .av-edit{display:flex;gap:14px;align-items:center;margin:8px 0 4px}
 .av-edit .avatar{width:72px;height:72px;font-size:30px;flex:none;background:var(--accent-soft);color:var(--accent);font-family:var(--font-head);border-radius:50%;box-shadow:0 0 0 1px var(--line)}
 .av-edit .btn{margin-right:6px}
+
+/* 第一版：每条回答下面的 AI 标识和依据；AI 生成的笔记 */
+.mfoot{flex-wrap:wrap;row-gap:4px}
+.mfoot .aitag{order:-1}
+.msrc{flex:1 1 100%;min-width:0;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere;line-height:1.6}
+.msrc a{color:inherit;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:2px}
+.msrc a>span:first-child,.msrc>span:first-child{color:var(--faint)}
+.dw.min .dw-h .aitag{display:inline-block}

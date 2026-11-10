@@ -30,6 +30,13 @@ import { renderPublic, beforePublic, reportDone, checkUpstream } from './ui/publ
 import { renderMe } from './ui/me.js';
 import { renderChannels, loadUserNews, refreshChannels } from './ui/channels.js';
 import { applyAppearance } from './ui/appearance.js';
+import { stat } from './ui/me.js';
+import { md } from './core/md.js';
+// 隐私政策和用户协议：content/legal/*.md，用站内的安全 Markdown 渲染
+async function renderLegal(name) {
+  try { const r = await fetch(`content/legal/${name}.md`, { cache: 'no-cache' }); if (!r.ok) throw new Error(r.status); return `<div class="card" style="padding:16px 18px;margin-top:10px"><div class="md">${md(await r.text())}</div></div>`; }
+  catch (e) { return '<p class="note">没有读到这份文件，请稍后再试。</p>'; }
+}
 import './ui/react.js';
 import './ui/tabsort.js';
 import './ui/floatwin.js';
@@ -64,6 +71,7 @@ async function render(opts = {}) {
     else if (page === 'settings') { html = await renderSettings(); after = afterSettings; }
     else if (page === 'me' || page === 'more') html = renderMe();
     else if (page === 'channels') html = renderChannels();
+    else if (page === 'legal' && seg.length === 2 && ['privacy', 'terms'].includes(seg[1])) html = await renderLegal(seg[1]);
     else html = '<p class="empty">没有这个页面。<a href="#/">回到工作台</a></p>';
   } catch (e) {
     console.error(e);
@@ -136,7 +144,7 @@ act('qn-open', () => openQuick());
 act('lang', () => setLang(isEn() ? 'zh' : 'en'));
 document.addEventListener('change', e => {
   const cb = e.target.closest && e.target.closest('input[data-done]');
-  if (cb) { store.setDone(cb.dataset.done, cb.checked, iso(new Date())); M.invalidate(); setTimeout(() => refresh(), 120); }
+  if (cb) { store.setDone(cb.dataset.done, cb.checked, iso(new Date())); if (cb.checked) stat('t'); M.invalidate(); setTimeout(() => refresh(), 120); }
 });
 document.addEventListener('click', e => {
   const rl = e.target.closest('[data-reload]');
@@ -195,6 +203,9 @@ async function boot() {
   window.addEventListener('hashchange', () => render());
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncNow(); });
   await render();
+  stat('o');
+  // 直接打开“我的”时，统计行是在 stat('o') 之前渲染的；补一次刷新，今天才会算进“打开 N 天”
+  if (parse().seg[0] === 'me' || parse().seg[0] === 'more') refresh();
   syncNow();
   // App：内容先用安装包里的，立刻显示；网站上有更新的在后台换上
   refreshLive(C).then(ch => { if (ch) { M.invalidate(); refresh(); } }).catch(() => {});

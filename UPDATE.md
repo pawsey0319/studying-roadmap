@@ -112,3 +112,13 @@
 4. 换掉旧电脑时，删除旧电脑上的 `.deploy-token`，并在 GitHub 设置里吊销旧令牌。
 
 公用或别人的电脑上不要存 `.deploy-token`，也不要在网站里填 AI Key 或同步令牌。
+
+## 第一版新增（平台模型、注销、导出 Skill）
+
+- 平台模型：云函数在 `cloudbase/functions/ai/`，部署和环境变量见那里的 README。数据库第 11 段（额度、用量、订阅预留）。
+  `config.json` 的 `aiFunction` 填了云函数名，网站才会提供“平台模型”。改额度：改云函数环境变量，不用发版。
+  给某人开订阅额度（第一版没有支付）：执行第 11 段末尾注释里的 SQL。
+- 公共区域第一版只读：`config.json` 写 `"publicWrite": true` 才显示“公开我的路线或笔记”。
+- 隐私政策和用户协议：`content/legal/*.md`，上线前把空白处填好并请律师审定。
+- 溢出检查：`python3 tools/check_layout.py`（需要 `pip install playwright` 和 `python3 -m playwright install chromium`）。
+- 安卓版本号从第一版起是 `3.1.<运行编号>`，打标签用 `v3.1.0` 这样的格式。

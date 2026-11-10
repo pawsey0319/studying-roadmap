@@ -76,7 +76,7 @@ async function talk(text) {
     const history = S.msgs.filter(m => m.role !== 'err').map(m => ({ role: m.role, content: m.content }));
     if (S.round >= MAX_ROUNDS - 1) history.push({ role: 'user', content: '（已经是最后一轮了：不要再追问，把仍不清楚的项写进 unclear，按合理默认值填好摘要，ready 设为 true。）' });
     let acc = '';
-    const res = await chat(cfg, [{ role: 'system', content: sys }, ...history], { onDelta: d => { acc += d; el.className = 'ai md'; el.innerHTML = md(extractBlocks(acc.replace(/```summary[\s\S]*$/, '')).text); chatEl.scrollTop = chatEl.scrollHeight; } });
+    const res = await chat(cfg, [{ role: 'system', content: sys }, ...history], { onDelta: d => { acc += d; el.className = 'ai md'; el.innerHTML = md(extractBlocks(acc.replace(/```summary[\s\S]*$/, '')).text); chatEl.scrollTop = chatEl.scrollHeight; }, feat: 'onboard' });
     await addUsage(cfg, res.usage);
     S.msgs.push({ role: 'assistant', content: res.text });
     const sum = extractBlocks(res.text).blocks.find(b => b.type === 'summary');
@@ -104,7 +104,7 @@ async function generate() {
         line(`正在生成“${esc(pub.name)}”…`);
         const st = M.state(pub.id);
         const text = st.stages.map((s, i) => `## 阶段 ${i + 1}\n` + stageContext({ ...s, items: s.items.map(x => ({ ...x, done: store.isDone(x.id) })) }, pub)).join('\n');
-        const res = await chat(cfg, [{ role: 'system', content: sys }, { role: 'user', content: planForTrackPrompt(pub, text, t) }], { maxTokens: 3000 });
+        const res = await chat(cfg, [{ role: 'system', content: sys }, { role: 'user', content: planForTrackPrompt(pub, text, t) }], { maxTokens: 3000, feat: 'onboard' });
         await addUsage(cfg, res.usage);
         const { text: rest, blocks } = extractBlocks(res.text);
         for (const b of blocks.filter(b => b.type === 'plan')) {
@@ -114,7 +114,7 @@ async function generate() {
         if (rest) S.genNotes += `**${pub.name}**：${rest}\n\n`;
       } else if (t.name) {
         line(`正在起草新方向“${esc(t.name)}”…`);
-        const res = await chat(cfg, [{ role: 'system', content: sys }, { role: 'user', content: draftTrackPrompt(t.name, t) }], { maxTokens: 3500 });
+        const res = await chat(cfg, [{ role: 'system', content: sys }, { role: 'user', content: draftTrackPrompt(t.name, t) }], { maxTokens: 3500, feat: 'onboard' });
         await addUsage(cfg, res.usage);
         const b = extractBlocks(res.text).blocks.find(b => b.type === 'track');
         if (b) { const nt = normalizeTrack({ ...b.data, name: b.data.name || t.name }, { source: 'Agent 起草' }); if (nt.stages.length) S.drafts.push(nt); }

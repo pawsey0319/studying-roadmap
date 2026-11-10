@@ -39,7 +39,7 @@ jobs:
           npx cap add android
           npx capacitor-assets generate --android
           npx cap sync android
-          python3 patch-android.py "${{ github.run_number }}" "3.0.${{ github.run_number }}"
+          python3 patch-android.py "${{ github.run_number }}" "3.1.${{ github.run_number }}"
       - name: 还原签名文件
         env:
           KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -58,7 +58,7 @@ jobs:
           ./gradlew --no-daemon assembleRelease
           APK=app/build/outputs/apk/release/app-release.apk
           "$ANDROID_HOME"/build-tools/$(ls "$ANDROID_HOME"/build-tools | sort -V | tail -1)/apksigner verify --print-certs "$APK" | head -3
-          mkdir -p "$GITHUB_WORKSPACE/out" && cp "$APK" "$GITHUB_WORKSPACE/out/learning-hub-3.0.${{ github.run_number }}.apk"
+          mkdir -p "$GITHUB_WORKSPACE/out" && cp "$APK" "$GITHUB_WORKSPACE/out/learning-hub-3.1.${{ github.run_number }}.apk"
       - name: 删掉签名文件
         if: always()
         run: rm -f "$RUNNER_TEMP/release.jks"
@@ -84,7 +84,7 @@ jobs:
           import hashlib, json, os, datetime
           apk = os.environ["APK"]; name = os.path.basename(apk)
           data = {
-              "versionCode": int("${{ github.run_number }}"), "versionName": "3.0.${{ github.run_number }}", "tag": "${{ github.ref_name }}",
+              "versionCode": int("${{ github.run_number }}"), "versionName": "3.1.${{ github.run_number }}", "tag": "${{ github.ref_name }}",
               "url": f"https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/{name}",
               "sha256": hashlib.sha256(open(apk, "rb").read()).hexdigest(), "size": os.path.getsize(apk),
               "notes": os.environ.get("NOTES", "").strip()[:1500], "date": datetime.date.today().isoformat(),

@@ -1,7 +1,7 @@
 // 我的学习方法：学习 Agent 从每段对话里沉淀出的“你怎么学”，以及对话纪要。
 // 档案从一张白纸开始，每整理一段对话就自动增删改几条；前期变化快、后期变化慢。你随时可以改、删、自己加；
 // 你改过的条目 AI 不会再改写文字，也不会自动删掉。
-import { $, esc } from '../util.js';
+import { $, esc, iso } from '../util.js';
 import * as store from '../store/index.js';
 import { md } from '../core/md.js';
 import { uid } from '../core/ids.js';
@@ -10,6 +10,10 @@ import { dropDigest } from '../ai/embed.js';
 import { act, refresh, toast } from './kit.js';
 import { stageLabel } from './home.js';
 import { idleHours } from './agentui.js';
+import { agentSkill } from '../core/ctxpack.js';
+import { activeMethod } from '../core/method.js';
+import { saveFile } from '../native.js';
+import * as M from '../model.js';
 
 const pct = w => Math.round(w * 100);
 const level = w => w >= 0.7 ? '很有把握' : w >= ACTIVE ? '较有把握，会用来调整讲法' : '待观察，还不会用';
@@ -33,7 +37,7 @@ export function renderMethod(q = {}) {
   const tab = q.tab === 'digests' ? 'digests' : 'method';
   const E = Object.entries(store.all('method')), n = store.get('meta', 'methodN') || 0;
   const head = `<div class="ph"><h1>我的学习方法</h1><span class="mut">学习 Agent 从你们的每段对话里，慢慢总结出你适合怎么学</span>
-    <span class="r"><button class="btn sm gh" data-act="anki" title="自测题和卡片笔记（第一行当正面），重复导入只更新不新建">导出 Anki</button></span></div>
+    <span class="r"><button class="btn sm gh" data-act="skill-export" title="导出成 SKILL.md，放进支持 Agent Skills 的个人 Agent 里用">导出我的学习 Agent</button><button class="btn sm gh" data-act="anki" title="自测题和卡片笔记（第一行当正面），重复导入只更新不新建">导出 Anki</button></span></div>
     <nav class="tabs" style="margin-top:10px"><a href="#/method" aria-current="${tab === 'method' ? 'page' : 'false'}">学习方法档案</a><a href="#/method?tab=digests" aria-current="${tab === 'digests' ? 'page' : 'false'}">对话纪要 ${Object.keys(store.all('digests')).length || ''}</a></nav>`;
   if (tab === 'digests') return head + digestsHtml();
   const edit = store.ui().methodEdit;
@@ -101,4 +105,20 @@ document.addEventListener('submit', e => {
     if (!(h >= 1 && h <= 720)) { toast('请填 1 到 720 之间的小时数'); return; }
     store.put('meta', 'idleHours', h); toast(`已保存：离开 ${h} 小时后整理`);
   }
+});
+
+// 导出我的学习 Agent（SKILL.md）：只含你自己的数据；默认带学习方法、档案和在学阶段，不带笔记原文和对话纪要
+act('skill-export', async () => {
+  if (!confirm('将导出你的学习方法档案、学习者档案和当前在学的阶段，生成一个 SKILL.md 文件。文件交给别的 AI 工具后就收不回来了。继续吗？')) return;
+  // 用本地日期，和 version 的本地时分保持一致（不能用 toISOString，否则北京时间 0–8 点会写成前一天）
+  const d = new Date(), date = iso(d), version = date.replace(/-/g, '') + '-' + String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0');
+  const method = activeMethod(store.all('method')).map(([, x]) => `- ${x.d}：${x.t}`).join('\n');
+  const doing = M.doing().map(x => x.kind === 'stage' ? `- ${x.t.name} / ${x.s.title}：${x.s.goal || ''}` : `- ${x.t.name} / 前沿：${x.r.title}`).join('\n');
+  const o = agentSkill({ date, version, sections: [
+    { h: '学习者档案', body: store.get('meta', 'profile') || '' },
+    { h: '我的学习方法', body: method },
+    { h: '我现在在学', body: doing }] });
+  try { await saveFile('SKILL.md', o.parts[0], 'text/markdown'); }
+  catch (e) { toast('保存失败：' + (e && e.message ? e.message : e)); return; }
+  toast(`已导出。把它放进 skills/${o.dir}/ 文件夹里使用`);
 });

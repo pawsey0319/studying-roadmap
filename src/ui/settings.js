@@ -14,7 +14,7 @@ import { appearanceHtml } from './appearance.js';
 import { pendingSuggestions } from './suggest.js';
 import { isEn } from '../i18n.js';
 
-let hostedInfo = null;  // 内测模型的可选模型和用量，进设置页时取一次
+let hostedInfo = null;  // 平台模型的可选模型和用量，进设置页时取一次
 
 export async function renderSettings() {
   document.documentElement.style.setProperty('--c', '#1B2430');
@@ -34,7 +34,7 @@ export async function renderSettings() {
       <button type="button" class="srow" data-act="lang"><b>${isEn() ? '中文' : 'English'}</b><span class="fnt">${isEn() ? '切换到中文' : 'Switch language'}</span><i aria-hidden="true">›</i></button></section>
     ${appearanceHtml()}
     <section class="card set"><h3>AI 服务</h3>
-      <p class="hint">${hosted ? '内测期间学习 Agent 用管理员提供的模型，登录后就能用，不需要自己的 Key。也可以换成自己的服务商。' : 'Key 只保存在这台设备的浏览器里，不会同步到其他设备，只发给你选的服务商。公用电脑上不要填。'}</p>
+      <p class="hint">${hosted ? '学习 Agent 用本站提供的模型，登录后就能用，不需要自己的 Key。每天和每月有免费次数，用完后可以换成自己的服务商。' : 'Key 只保存在这台设备的浏览器里，不会同步到其他设备，只发给你选的服务商。公用电脑上不要填。'}</p>
       <label class="field"><span>服务商</span><select id="aiProv">${Object.entries(PROVIDERS).filter(([k, v]) => !v.hosted || cloud.hostedAI()).map(([k, v]) => `<option value="${k}"${k === c.provider ? ' selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>
       <p class="hint">${esc(p.help || '')}</p>
       <label class="ck small"><input type="checkbox" data-autosum${store.ui().autoSum === false ? '' : ' checked'}> 点开资讯时自动生成“讲了什么”的总结。每条用量很小；在 App 里会读取原文的前几千字，网页版只用标题和来源摘要。</label>
@@ -68,9 +68,10 @@ export async function renderSettings() {
       <div class="chips">${allTracks.map(t => `<button class="chip" data-act="track-vis" data-id="${t.id}" aria-pressed="${!hidden[t.id]}">${esc(t.name)}</button>`).join('')}</div></section>
     <section class="card set"><h3>账号与云端同步</h3>
       ${cloud.available() ? (cloud.signedIn() ? `<p class="small">已登录（${esc(cloud.backendName())}）：${esc(cloud.email())}。${cloud.error ? `<span class="err">同步失败：${esc(cloud.error)}</span>` : cloud.lastSync() ? '最后同步 ' + new Date(cloud.lastSync()).toLocaleString('zh-CN', { hour12: false }) : ''}</p>
-          <div class="sa"><button class="btn" data-act="cloud-sync">立即同步</button><button class="btn gh" data-act="cloud-out">退出登录</button></div>`
+          <div class="sa"><button class="btn" data-act="cloud-sync">立即同步</button><button class="btn gh" data-act="cloud-out">退出登录</button>${cloud.canDelete() ? '<button class="btn gh" data-act="cloud-del">注销账号</button>' : ''}</div>`
         : `${cloud.justMigrated() ? '<p class="note small">云端已经换到新的服务器。用同一个邮箱重新登录一次，这台设备上的数据会自动推上去。</p>' : ''}<p class="hint">用邮箱验证码登录（${esc(cloud.backendName())}）。第一次登录会自动建账号。登录后进度、调整、笔记、导入的路线会保存到云端，任何设备登录都能看到。AI 的 Key 和原始对话不会上传。</p>
           <form id="cloudForm" class="addit"><input id="cloudEmail" type="email" placeholder="邮箱" required><button class="btn sm">发验证码</button></form>
+          <label class="ck small"><input type="checkbox" id="cloudAgree"> 我已阅读并同意<a href="#/legal/terms">《用户协议》</a>和<a href="#/legal/privacy">《隐私政策》</a></label>
           <form id="cloudVerify" class="addit"${cloud.pendingEmail() ? '' : ' hidden'}><input id="cloudCode" inputmode="numeric" placeholder="邮件里的 6 位验证码"><button class="btn sm pri">登录</button></form>
           <p id="cloudMsg" class="small"></p>`)
       : '<p class="hint">这个网站还没有接云端（仓库里没有 config.json）。可以用下面的 GitHub Gist 同步。</p>'}
@@ -84,6 +85,7 @@ export async function renderSettings() {
       <p class="hint">导出一份包含所有进度、调整、笔记和导入内容的文件，可以在任何设备上导入恢复。</p>
       <div class="sa"><button class="btn" data-act="exp">导出备份</button><button class="btn" data-act="imp">导入备份</button><input type="file" id="impBak" accept="application/json" hidden></div>
       <h3 style="margin-top:18px">关于数据</h3>
+      <p class="small"><a href="#/legal/privacy">隐私政策</a> · <a href="#/legal/terms">用户协议</a></p>
       <p class="small mut">公共路线和资讯：${esc(M.C.feed.updated)} 更新精选；${M.C.sources ? '快照 ' + esc(M.C.sources.updated) : '还没有每日快照'}。个人数据存在这台设备的浏览器里${cloud.signedIn() ? '，并同步到云端' : gist.enabled() ? '，并同步到你的私有 Gist' : ''}。AI 对话只留在这台设备。</p></section>
   </div>`;
 }
@@ -106,12 +108,12 @@ document.addEventListener('submit', async e => {
   $('#rmMsg').innerHTML = err ? `<span class="err">${esc(err)}</span>` : cfg.on ? `已设好：每天 ${f.t.value} 提醒` : '已关闭提醒';
 });
 function hostedHtml(c) {
-  if (!cloud.signedIn()) return '<p class="small err">先在右边“账号与云端同步”里用邮箱登录，才能用内测模型。</p>';
+  if (!cloud.signedIn()) return '<p class="small err">先在“账号与云端同步”里用邮箱登录，才能用平台模型。</p>';
   const h = hostedInfo || {};
   if (h.error) return `<p class="small err">${esc(h.error)}</p>`;
   const ms = h.models || [];
   return `${ms.length > 1 ? `<label class="field"><span>模型</span><select id="aiHostedModel">${ms.map((m, i) => `<option value="${esc(m)}"${m === c.model || (!c.model && !i) ? ' selected' : ''}>${esc(m)}${i ? '' : '（默认）'}</option>`).join('')}</select></label>` : ''}
-    ${h.monthLimit ? `<p class="small">内测额度：今天 ${h.day}/${h.dayLimit} 次，本月 ${h.month}/${h.monthLimit} 次。</p>` : ''}`;
+    ${h.monthLimit ? `<p class="small">${h.plan === 'sub' ? '订阅额度' : '免费额度'}：今天 ${h.day}/${h.dayLimit} 次，本月 ${h.month}/${h.monthLimit} 次${h.lightLimit ? `；自动总结和翻译今天 ${h.light || 0}/${h.lightLimit} 次` : ''}。</p>` : ''}`;
 }
 
 export function afterSettings() {
@@ -119,7 +121,7 @@ export function afterSettings() {
   const prov = $('#aiProv'); if (!prov) return;
   prov.onchange = async () => { const c = await aiCfg(), p = PROVIDERS[prov.value]; await saveCfg({ ...c, provider: prov.value, model: p.model, budget: p.hosted ? 0 : (c.budget || 30), price: p.price, base: prov.value === 'custom' ? c.base : '' }); refresh(); };
   const cf = $('#cloudForm');
-  if (cf) cf.onsubmit = async e => { e.preventDefault(); const m = $('#cloudMsg'); m.textContent = '正在发送…'; try { await cloud.sendCode($('#cloudEmail').value.trim()); m.textContent = '验证码已发到邮箱（10 分钟内有效），填到下面。'; $('#cloudVerify').hidden = false; $('#cloudCode').focus(); } catch (err) { m.innerHTML = `<span class="err">${esc(err.message)}</span>`; } };
+  if (cf) cf.onsubmit = async e => { e.preventDefault(); const m = $('#cloudMsg'); if (!$('#cloudAgree').checked) { m.innerHTML = '<span class="err">请先勾选同意《用户协议》和《隐私政策》</span>'; return; } m.textContent = '正在发送…'; try { await cloud.sendCode($('#cloudEmail').value.trim()); m.textContent = '验证码已发到邮箱（10 分钟内有效），填到下面。'; $('#cloudVerify').hidden = false; $('#cloudCode').focus(); } catch (err) { m.innerHTML = `<span class="err">${esc(err.message)}</span>`; } };
   const cv = $('#cloudVerify');
   if (cv) cv.onsubmit = async e => { e.preventDefault(); const m = $('#cloudMsg'); try { await cloud.verify($('#cloudCode').value); m.textContent = '登录成功，正在同步…'; await cloud.syncNow(); refresh(); toast('已登录并同步'); } catch (err) { m.innerHTML = `<span class="err">${esc(err.message)}</span>`; } };
   $('#gistForm').onsubmit = async e => { e.preventDefault(); const t = $('#gistTok').value.trim(); if (!gist.TOKEN_RE.test(t)) { toast('令牌格式不对：应以 github_pat_ 或 ghp_ 开头'); return; } gist.setToken(t); await gist.syncNow(); refresh(); };
@@ -138,7 +140,7 @@ act('ai-test', async () => {
   const hm = $('#aiHostedModel');
   const c = $('#aiProv').value === 'hosted' ? { ...(await aiCfg()), model: hm ? hm.value : '' }
     : { provider: $('#aiProv').value, model: $('#aiModel').value.trim(), key: $('#aiKey').value.trim(), base: base ? base.value.trim() : '' };
-  try { const r = await chat(c, [{ role: 'user', content: '只回复两个字：可以' }], { maxTokens: 20 }); m.innerHTML = `<span style="color:var(--ok)">连接成功：${esc(r.text.slice(0, 20))}</span>`; }
+  try { const r = await chat(c, [{ role: 'user', content: '只回复两个字：可以' }], { maxTokens: 20, feat: 'test' }); m.innerHTML = `<span style="color:var(--ok)">连接成功：${esc(r.text.slice(0, 20))}</span>`; }
   catch (e) { m.innerHTML = `<span class="err">${esc(e.message)}</span>`; }
 });
 act('prof-save', () => { store.put('meta', 'profile', $('#prof').value.trim()); store.put('meta', 'memory', $('#mem').value.trim()); toast('已保存'); });
@@ -158,4 +160,13 @@ act('em-save', async () => {
   if (!c.key && /siliconflow/.test(c.base)) { m.textContent = '已保存。还没有填 Key，先按关键词查找'; return; }
   try { await embed(c, ['测试']); m.innerHTML = `<span style="color:var(--ok)">可以用（1024 维）${cloud.signedIn() ? '' : '，登录腾讯云开发后生效'}</span>`; }
   catch (e) { m.innerHTML = `<span class="err">${esc(e.message)}</span>`; }
+});
+
+// 注销账号：两次确认 + 邮箱验证码。云端数据和账号删除后不能恢复；本机数据保留，需要的话用“导出备份”另存
+act('cloud-del', async () => {
+  if (!confirm('注销后，云端的进度、笔记、纪要、你公开的内容和账号都会删除，不能恢复。这台设备上的数据会保留。建议先“导出备份”。继续吗？')) return;
+  try { await cloud.startDelete(); } catch (e) { toast(e.message); return; }
+  const code = prompt('验证码已发到你的登录邮箱（5 分钟内有效）。填入验证码，确认注销：');
+  if (!code) { toast('已取消注销'); return; }
+  try { await cloud.finishDelete(code); refresh(); toast('账号已注销'); } catch (e) { toast(e.message); }
 });
